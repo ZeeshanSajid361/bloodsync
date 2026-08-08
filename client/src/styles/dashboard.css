@@ -251,7 +251,10 @@
 
 .sidebar:hover .sidebar-nav-link span {
   opacity: 1;
-  display: inline;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
 }
 
 .sidebar-nav-link:hover {

@@ -1490,7 +1490,7 @@ export default function HospitalDashboard() {
                 className={`sidebar-nav-link${tab === id ? ' active' : ''}`}
                 style={{
                   ...(tab === id ? { background: 'rgba(21, 101, 192, 0.15)', color: 'var(--blue-300)' } : {}),
-                  ...(isLocked ? { opacity: 0.6 } : {})
+                  ...(isLocked ? { opacity: 0.65 } : {})
                 }}
                 onClick={() => {
                   if (isLocked) {
@@ -1499,10 +1499,15 @@ export default function HospitalDashboard() {
                   setTab(id);
                 }}
               >
-                <Icon size={20} />
-                <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <Icon size={20} />
+                  {isLocked && (
+                    <span style={{ position: 'absolute', top: -2, right: -2, width: 7, height: 7, borderRadius: '50%', background: '#f59e0b', border: '1px solid #0f172a' }} />
+                  )}
+                </div>
+                <span>
                   {label}
-                  {isLocked && <Lock size={13} color="#f59e0b" style={{ marginLeft: 4 }} />}
+                  {isLocked && <Lock size={13} color="#f59e0b" style={{ marginLeft: 6, flexShrink: 0 }} />}
                 </span>
               </button>
             );
@@ -1560,16 +1565,34 @@ export default function HospitalDashboard() {
               {tab === 'profile'   && <ProfileTab   profile={profile} hooks={hookData} />}
               
               {!isApproved && tab !== 'overview' && tab !== 'profile' ? (
-                <div className="card animate-fade-up" style={{ padding: 'var(--space-8)', textAlign: 'center', background: 'rgba(15, 23, 42, 0.85)', border: '1px solid rgba(245, 158, 11, 0.3)', marginTop: 16, borderRadius: 16 }}>
-                  <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'rgba(245, 158, 11, 0.15)', display: 'grid', placeItems: 'center', margin: '0 auto 16px' }}>
-                    <Lock size={26} color="#f59e0b" />
+                <div 
+                  className="card animate-fade-up" 
+                  style={{ 
+                    padding: 'clamp(24px, 5vw, 48px) clamp(16px, 4vw, 36px)', 
+                    textAlign: 'center', 
+                    background: 'linear-gradient(145deg, rgba(15, 23, 42, 0.9), rgba(30, 41, 59, 0.6))', 
+                    border: '1px solid rgba(245, 158, 11, 0.3)', 
+                    marginTop: 16, 
+                    borderRadius: 20,
+                    maxWidth: 620,
+                    margin: '20px auto 0',
+                    boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center'
+                  }}
+                >
+                  <div style={{ width: 60, height: 60, borderRadius: '50%', background: 'rgba(245, 158, 11, 0.15)', border: '1px solid rgba(245, 158, 11, 0.3)', display: 'grid', placeItems: 'center', marginBottom: 20, boxShadow: '0 0 25px rgba(245, 158, 11, 0.2)' }}>
+                    <Lock size={28} color="#f59e0b" />
                   </div>
-                  <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#f8fafc', marginBottom: 8 }}>Feature Locked — Awaiting Admin Approval</h3>
-                  <p style={{ color: 'var(--text-muted)', maxWidth: 480, margin: '0 auto 16px', fontSize: '0.88rem', lineHeight: 1.5 }}>
+                  <h3 style={{ fontSize: 'clamp(1.1rem, 3.5vw, 1.35rem)', fontWeight: 800, color: '#f8fafc', marginBottom: 10 }}>
+                    Feature Locked — Awaiting Admin Approval
+                  </h3>
+                  <p style={{ color: 'var(--text-muted)', maxWidth: 480, margin: '0 auto 20px', fontSize: '0.88rem', lineHeight: 1.6 }}>
                     Counter Check-In, QR Verification, Request Fulfillment, History Logs, and Blood Inventory will automatically unlock once an Administrator verifies and approves your hospital registration.
                   </p>
-                  <div className="badge badge-amber" style={{ fontSize: '0.82rem', padding: '6px 14px' }}>
-                    Status: {profile?.org?.status === 'pending' ? '⏳ Under Admin Review' : '❌ Registration Rejected'}
+                  <div className="badge badge-amber" style={{ fontSize: '0.82rem', padding: '8px 18px', borderRadius: 20, letterSpacing: '0.04em' }}>
+                    STATUS: {profile?.org?.status === 'pending' ? '⏳ UNDER ADMIN REVIEW' : '❌ REGISTRATION REJECTED'}
                   </div>
                 </div>
               ) : (
