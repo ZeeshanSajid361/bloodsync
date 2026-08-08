@@ -350,6 +350,24 @@ function InventoryTab({ profile, hooks }) {
 
   return (
     <>
+      {org?.type === 'api_hospital' && (
+        <div className="card" style={{ padding: '14px 18px', marginBottom: '20px', background: 'rgba(37, 99, 235, 0.12)', border: '1px solid rgba(59, 130, 246, 0.3)', borderRadius: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
+            <div>
+              <div style={{ fontWeight: 800, color: '#60a5fa', fontSize: '0.92rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                ⚡ Automated EMN API Stock Synchronization Active
+              </div>
+              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                This hospital is configured for Automated Enterprise Medical Network integration. Blood inventory updates sync in real-time from your Electronic Health Record (EHR/HIS) system via secure REST API.
+              </div>
+            </div>
+            <span className="badge badge-blue" style={{ fontSize: '0.75rem', padding: '4px 10px' }}>
+              API SYNC ENABLED
+            </span>
+          </div>
+        </div>
+      )}
+
       {!isApproved && <PendingBanner />}
 
       {isApproved && (
@@ -1258,36 +1276,6 @@ function RequestsTab({ onNavigateToHistory }) {
                 </div>
               )}
             </div>
-
-            {/* Pending Admin Review Queue (Not Open for Check-In Yet) */}
-            {pendingAdminRequests.length > 0 && (
-              <div style={{ marginTop: 'var(--space-6)' }}>
-                <h3 style={{ fontSize: '0.95rem', fontWeight: 700, margin: '0 0 var(--space-3)', color: '#f59e0b', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  ⏳ Awaiting Admin Approval ({pendingAdminRequests.length})
-                </h3>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
-                  {pendingAdminRequests.map(req => (
-                    <div key={req._id} className="card" style={{ padding: 'var(--space-4) var(--space-5)', borderLeft: '4px solid #f59e0b', background: 'rgba(245, 158, 11, 0.05)' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                        <span style={{ background: 'rgba(245, 158, 11, 0.2)', color: '#f59e0b', padding: '2px 8px', borderRadius: 12, fontSize: '0.78rem', fontWeight: 800 }}>
-                          {req.patientBloodGroup}
-                        </span>
-                        <span style={{ fontWeight: 600, fontSize: '0.92rem' }}>Request #{req._id.slice(-6)}</span>
-                        <span className="badge badge-amber" style={{ fontSize: '0.72rem' }}>
-                          ⏳ PENDING ADMIN REVIEW
-                        </span>
-                      </div>
-                      <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
-                        Patient: {req.patientName || 'Anonymous'} · Units Needed: {req.unitsNeeded} · Urgency: {req.urgency.toUpperCase()}
-                      </div>
-                      <div style={{ fontSize: '0.75rem', color: '#f59e0b', marginTop: 6, fontStyle: 'italic' }}>
-                        ℹ️ Donors cannot see or check in for this request until an Admin approves it.
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
 
             {/* Historical Audit Log Preview (Max 2 recent items) */}
             {historyRequests.length > 0 && (
