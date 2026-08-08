@@ -158,15 +158,26 @@ function OverviewTab({ profile }) {
           </h3>
           {inventory
             .filter(i => i.units <= i.lowStockThreshold)
-            .map(i => (
-              <div key={i._id} className="pending-banner" style={{ marginBottom: 'var(--space-3)', background: 'rgba(245,158,11,0.07)' }}>
-                <AlertTriangle size={18} />
-                <div>
-                  <h4 style={{ color: 'var(--color-warning)' }}>{i.bloodGroup} — {i.units} units remaining</h4>
-                  <p>Below threshold of {i.lowStockThreshold}. Consider issuing a Code Red from the Inventory tab.</p>
+            .map(i => {
+              const codeRedActive = isCodeRedLive(i);
+              return (
+                <div key={i._id} className="pending-banner" style={{ marginBottom: 'var(--space-3)', background: codeRedActive ? 'rgba(239,68,68,0.1)' : 'rgba(245,158,11,0.07)', border: `1px solid ${codeRedActive ? 'rgba(239,68,68,0.3)' : 'rgba(245,158,11,0.3)'}` }}>
+                  <AlertTriangle size={18} color={codeRedActive ? '#ef4444' : '#f59e0b'} />
+                  <div>
+                    <h4 style={{ color: codeRedActive ? '#ef4444' : 'var(--color-warning)', display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 6 }}>
+                      {i.bloodGroup} — {i.units} units remaining
+                      {codeRedActive && <span className="badge badge-red" style={{ fontSize: '0.72rem', padding: '2px 8px' }}>🚨 CODE RED BROADCAST ACTIVE</span>}
+                    </h4>
+                    <p>
+                      {codeRedActive
+                        ? `Critical low stock (below threshold of ${i.lowStockThreshold}). Emergency Code Red alert is currently active and broadcasted to nearby donors.`
+                        : `Stock is below threshold of ${i.lowStockThreshold}. You can broadcast an Emergency Code Red alert from the Inventory tab.`
+                      }
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ))
+              );
+            })
           }
         </div>
       )}
