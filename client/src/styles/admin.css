@@ -352,15 +352,20 @@
 /* ── Admin nav badge inside shared sidebar-nav-link span ─────────────────── */
 .sidebar-nav-link .admin-nav-badge {
   margin-left: auto;
-  background: var(--red-600);
-  color: #fff;
-  font-size: 0.6rem;
-  font-weight: 700;
-  padding: 1px 5px;
-  border-radius: var(--radius-full);
-  min-width: 16px;
-  text-align: center;
-  display: inline-block;
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: #ffffff;
+  font-size: 0.7rem;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 10px;
+  min-width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(239, 68, 68, 0.4);
+  line-height: 1;
+  flex-shrink: 0;
 }
 
 /* ── Responsive: mobile overrides ────────────────────────────────────────── */

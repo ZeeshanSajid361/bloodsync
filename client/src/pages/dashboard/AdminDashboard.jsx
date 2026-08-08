@@ -664,20 +664,28 @@ export default function AdminDashboard() {
 
         <nav className="sidebar-nav">
           <div className="sidebar-nav-label">Navigation</div>
-          {TABS.map(({ id, label, icon: Icon }) => (
-            <button
-              key={id}
-              className={`sidebar-nav-link${tab === id ? ' active' : ''}`}
-              onClick={() => setTab(id)}
-            >
-              <Icon size={20} />
-              <span>
-                {label}
-                {id === 'hospitals' && pendingHospitals > 0 && <span className="admin-nav-badge">{pendingHospitals}</span>}
-                {id === 'requests'  && pendingRequests  > 0 && <span className="admin-nav-badge">{pendingRequests}</span>}
-              </span>
-            </button>
-          ))}
+          {TABS.map(({ id, label, icon: Icon }) => {
+            const hasNotification = (id === 'hospitals' && pendingHospitals > 0) || (id === 'requests' && pendingRequests > 0);
+            return (
+              <button
+                key={id}
+                className={`sidebar-nav-link${tab === id ? ' active' : ''}`}
+                onClick={() => setTab(id)}
+              >
+                <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <Icon size={20} />
+                  {hasNotification && (
+                    <div style={{ position: 'absolute', top: -3, right: -3, width: 7, height: 7, borderRadius: '50%', background: '#ef4444', border: '1px solid #0f172a', pointerEvents: 'none' }} />
+                  )}
+                </div>
+                <span>
+                  <span style={{ flex: 1 }}>{label}</span>
+                  {id === 'hospitals' && pendingHospitals > 0 && <span className="admin-nav-badge">{pendingHospitals}</span>}
+                  {id === 'requests'  && pendingRequests  > 0 && <span className="admin-nav-badge">{pendingRequests}</span>}
+                </span>
+              </button>
+            );
+          })}
         </nav>
 
         <div className="sidebar-footer">
