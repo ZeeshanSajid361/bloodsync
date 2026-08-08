@@ -247,13 +247,14 @@
   opacity: 0;
   display: none;
   transition: opacity 0.2s ease;
+  white-space: nowrap;
 }
 
 .sidebar:hover .sidebar-nav-link span {
   opacity: 1;
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 6px;
   width: 100%;
 }
 

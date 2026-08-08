@@ -1502,12 +1502,12 @@ export default function HospitalDashboard() {
                 <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                   <Icon size={20} />
                   {isLocked && (
-                    <span style={{ position: 'absolute', top: -2, right: -2, width: 7, height: 7, borderRadius: '50%', background: '#f59e0b', border: '1px solid #0f172a' }} />
+                    <div style={{ position: 'absolute', top: -3, right: -3, width: 7, height: 7, borderRadius: '50%', background: '#f59e0b', border: '1px solid #0f172a', pointerEvents: 'none' }} />
                   )}
                 </div>
                 <span>
-                  {label}
-                  {isLocked && <Lock size={13} color="#f59e0b" style={{ marginLeft: 6, flexShrink: 0 }} />}
+                  <span style={{ flex: 1 }}>{label}</span>
+                  {isLocked && <Lock size={13} color="#f59e0b" style={{ marginLeft: 'auto', flexShrink: 0 }} />}
                 </span>
               </button>
             );
