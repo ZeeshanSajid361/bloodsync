@@ -667,25 +667,36 @@ function ProfileTab({ profile, hooks }) {
 
         {/* Interactive Location & Google Maps Pin */}
         <div className="input-group" style={{ gridColumn: '1 / -1' }}>
-          <label className="input-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span>🗺️ Exact Hospital Map Pin & Address</span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '6px' }}>
+            <label className="input-label" style={{ margin: 0 }}>🗺️ Exact Hospital Map Pin & Address</label>
             <button
               type="button"
               className="btn btn-ghost btn-sm"
               onClick={() => setShowMapPicker(true)}
-              style={{ fontSize: '0.78rem', color: '#60a5fa', padding: '3px 10px', background: 'rgba(37, 99, 235, 0.15)', borderRadius: '6px', border: '1px solid rgba(59, 130, 246, 0.3)' }}
+              style={{
+                fontSize: '0.78rem',
+                color: '#60a5fa',
+                padding: '4px 10px',
+                background: 'rgba(37, 99, 235, 0.15)',
+                borderRadius: '8px',
+                border: '1px solid rgba(59, 130, 246, 0.3)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                whiteSpace: 'nowrap'
+              }}
             >
-              📍 Pick or Detect Location on Map
+              📍 Pick Location on Map
             </button>
-          </label>
-          <div className="input-wrapper" style={{ display: 'flex', gap: '8px' }}>
-            <div style={{ position: 'relative', flex: 1 }}>
+          </div>
+          <div className="input-wrapper" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+            <div style={{ position: 'relative', flex: '1 1 200px', minWidth: 0 }}>
               <MapPin className="input-icon" size={17} />
               <input
                 className="input has-icon"
                 value={form.mapsUrl}
                 onChange={e => setForm(p => ({ ...p, mapsUrl: e.target.value }))}
-                placeholder="Paste Google Maps URL or click 'Pick or Detect Location on Map'"
+                placeholder="Paste Google Maps URL or click 'Pick Location on Map'"
               />
             </div>
             {form.mapsUrl && (
@@ -694,13 +705,13 @@ function ProfileTab({ profile, hooks }) {
                 target="_blank"
                 rel="noreferrer"
                 className="btn btn-ghost btn-sm"
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', textDecoration: 'none', background: 'rgba(59, 130, 246, 0.15)', color: '#60a5fa' }}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', textDecoration: 'none', background: 'rgba(59, 130, 246, 0.15)', color: '#60a5fa', whiteSpace: 'nowrap', flexShrink: 0 }}
               >
                 <ExternalLink size={14} /> Open Pin
               </a>
             )}
           </div>
-          <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '4px' }}>
+          <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '6px' }}>
             Allows blood seekers to navigate directly to your hospital gate on Google Maps.
           </div>
         </div>
@@ -846,22 +857,33 @@ function RegisterOrgForm({ onSave }) {
 
             {/* Exact Location & Google Maps Pin */}
             <div className="input-group" style={{ gridColumn: '1 / -1' }}>
-              <label className="input-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span>🗺️ Exact Hospital Map Pin & Address</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '6px' }}>
+                <label className="input-label" style={{ margin: 0 }}>🗺️ Exact Hospital Map Pin & Address</label>
                 <button
                   type="button"
                   className="btn btn-ghost btn-sm"
                   onClick={() => setShowMapPicker(true)}
-                  style={{ fontSize: '0.78rem', color: '#60a5fa', padding: '3px 10px', background: 'rgba(37, 99, 235, 0.15)', borderRadius: '6px', border: '1px solid rgba(59, 130, 246, 0.3)' }}
+                  style={{
+                    fontSize: '0.78rem',
+                    color: '#60a5fa',
+                    padding: '4px 10px',
+                    background: 'rgba(37, 99, 235, 0.15)',
+                    borderRadius: '8px',
+                    border: '1px solid rgba(59, 130, 246, 0.3)',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    whiteSpace: 'nowrap'
+                  }}
                 >
-                  📍 Pick or Detect Location on Map
+                  📍 Pick Location on Map
                 </button>
-              </label>
+              </div>
               <input
                 className="input"
                 value={form.mapsUrl}
                 onChange={e => setForm(p => ({ ...p, mapsUrl: e.target.value }))}
-                placeholder="Paste Google Maps URL or click 'Pick or Detect Location on Map'"
+                placeholder="Paste Google Maps URL or click 'Pick Location on Map'"
               />
             </div>
             

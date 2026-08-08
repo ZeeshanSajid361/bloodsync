@@ -678,17 +678,17 @@ function RequestTab({ onSubmitted }) {
 
             {/* Hospital Street Address & Area / Landmark */}
             <div className="input-group full">
-              <label className="input-label" htmlFor="req-haddress" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span>Exact Hospital Street Address & Landmark</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '6px' }}>
+                <label className="input-label" htmlFor="req-haddress" style={{ margin: 0 }}>Exact Hospital Street Address & Landmark</label>
                 <button
                   type="button"
                   className="btn btn-ghost btn-sm"
                   onClick={() => setShowMapPicker(true)}
-                  style={{ color: '#60a5fa', padding: '3px 10px', fontSize: '0.78rem', display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(37, 99, 235, 0.15)', borderRadius: '6px', border: '1px solid rgba(59, 130, 246, 0.3)' }}
+                  style={{ color: '#60a5fa', padding: '4px 10px', fontSize: '0.78rem', display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(37, 99, 235, 0.15)', borderRadius: '8px', border: '1px solid rgba(59, 130, 246, 0.3)', whiteSpace: 'nowrap' }}
                 >
                   <MapPin size={13} /> 📍 Pick Location on Map
                 </button>
-              </label>
+              </div>
               <input
                 id="req-haddress"
                 name="hospitalAddress"
