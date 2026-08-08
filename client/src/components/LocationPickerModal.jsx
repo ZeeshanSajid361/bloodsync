@@ -32,6 +32,7 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
 
   const [loading, setLoading]         = useState(false);
   const [geocoding, setGeocoding]     = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const [mapQuery, setMapQuery]       = useState('');
 
   useEffect(() => {
