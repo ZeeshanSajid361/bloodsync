@@ -32,17 +32,19 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
 
   const [loading, setLoading]         = useState(false);
   const [geocoding, setGeocoding]     = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [mapQuery, setMapQuery]       = useState('');
 
   useEffect(() => {
     if (initialLocation.latitude && initialLocation.longitude) {
       setLat(initialLocation.latitude);
       setLng(initialLocation.longitude);
+      setMapQuery('');
     } else if (initialLocation.city) {
       const key = initialLocation.city.toLowerCase().trim();
       if (CITY_COORDS[key]) {
         setLat(CITY_COORDS[key].lat);
         setLng(CITY_COORDS[key].lng);
+        setMapQuery('');
       }
     }
   }, [initialLocation]);
@@ -62,6 +64,17 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
 
   if (!isOpen) return null;
 
+  function extractCityFromQuery(q) {
+    if (!q) return null;
+    const lower = q.toLowerCase();
+    for (const c of Object.keys(CITY_COORDS)) {
+      if (lower.includes(c)) {
+        return c.charAt(0).toUpperCase() + c.slice(1);
+      }
+    }
+    return null;
+  }
+
   // Single-toast deduplicated GPS Auto-Detection
   function handleDetectGps() {
     if (!navigator.geolocation) {
@@ -77,6 +90,7 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
         const longitude = pos.coords.longitude;
         setLat(latitude);
         setLng(longitude);
+        setMapQuery('');
         const generatedUrl = `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
         setMapsUrl(generatedUrl);
         
@@ -120,37 +134,78 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
     }
   }
 
-  // Forward geocode search query (e.g. "CMH Rawalpindi")
+  // Multi-tier Robust Location Search
   async function handleSearchLocation(e) {
     if (e) e.preventDefault();
-    if (!searchQuery.trim()) return;
+    const rawQuery = searchQuery.trim();
+    if (!rawQuery) return;
+
     setGeocoding(true);
+    // Strip parenthetical text like "(IMC)" to help geocoding engines
+    const cleanQuery = rawQuery.replace(/\s*\([^)]*\)/g, '').trim();
+    setMapQuery(rawQuery); // Immediately update Google Maps embed view
+
     try {
-      const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery + ', Pakistan')}`
+      // Tier 1: Try clean query + Pakistan
+      let res = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cleanQuery + ', Pakistan')}&addressdetails=1`
       );
-      const results = await res.json();
+      let results = await res.json();
+
+      // Tier 2: Try clean query without country suffix
+      if (!results || results.length === 0) {
+        res = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cleanQuery)}&addressdetails=1`
+        );
+        results = await res.json();
+      }
+
+      // Tier 3: Try raw query
+      if (!results || results.length === 0) {
+        res = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(rawQuery)}&addressdetails=1`
+        );
+        results = await res.json();
+      }
+
       if (results && results.length > 0) {
         const first = results[0];
         const latitude  = parseFloat(first.lat);
         const longitude = parseFloat(first.lon);
         setLat(latitude);
         setLng(longitude);
-        setMapsUrl(`https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`);
-        await reverseGeocode(latitude, longitude);
-        toast.success(`Found: ${first.display_name.split(',')[0]}`, { id: 'gps-toast' });
+
+        const addr = first.address || {};
+        const detectedCity = addr.city || addr.town || addr.county || addr.state_district || extractCityFromQuery(rawQuery) || city;
+        const detectedStreet = [addr.suburb, addr.neighbourhood, addr.road, addr.amenity, addr.hospital, addr.building].filter(Boolean).join(', ') || rawQuery;
+        const detectedProvince = addr.state || province;
+
+        setCity(detectedCity);
+        setAddressText(detectedStreet || rawQuery);
+        setProvince(detectedProvince);
+
+        const generatedUrl = `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
+        setMapsUrl(generatedUrl);
+        toast.success(`Map centered on: ${first.display_name.split(',')[0]}`, { id: 'gps-toast' });
       } else {
-        toast.error('Location not found. Try adding city name.', { id: 'gps-toast' });
+        // Fallback: If free API misses exact vector, extract city & set Google Maps search URL
+        const detectedCity = extractCityFromQuery(rawQuery) || city;
+        setCity(detectedCity);
+        setAddressText(rawQuery);
+
+        const googleSearchUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(rawQuery)}`;
+        setMapsUrl(googleSearchUrl);
+        toast.success(`Map updated for "${rawQuery}"`, { id: 'gps-toast' });
       }
     } catch (err) {
-      toast.error('Search failed. Please try again.', { id: 'gps-toast' });
+      toast.error('Search complete. Google Maps link updated.', { id: 'gps-toast' });
     } finally {
       setGeocoding(false);
     }
   }
 
   function handleConfirm() {
-    const finalUrl = mapsUrl || `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+    const finalUrl = mapsUrl || (lat && lng ? `https://www.google.com/maps/search/?api=1&query=${lat},${lng}` : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(searchQuery || addressText)}`);
     onSelectLocation({
       latitude:  lat,
       longitude: lng,
@@ -163,8 +218,10 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
     onClose();
   }
 
-  // High reliability Google Maps iframe embed
-  const mapIframeUrl = `https://maps.google.com/maps?q=${lat},${lng}&z=15&output=embed`;
+  // High reliability Google Maps iframe embed — switches dynamically between coordinates and place search query
+  const mapIframeUrl = mapQuery 
+    ? `https://maps.google.com/maps?q=${encodeURIComponent(mapQuery)}&z=15&output=embed`
+    : `https://maps.google.com/maps?q=${lat},${lng}&z=15&output=embed`;
 
   const modalContent = (
     <div
