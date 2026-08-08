@@ -92,12 +92,13 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
         setLat(latitude);
         setLng(longitude);
         setMapQuery('');
+        setSearchQuery(''); // Clears search box so user sees physical device GPS was detected
         const generatedUrl = `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
         setMapsUrl(generatedUrl);
         
         await reverseGeocode(latitude, longitude);
         setLoading(false);
-        toast.success('GPS position detected!', { id: 'gps-toast' });
+        toast.success('Your current device GPS position detected!', { id: 'gps-toast' });
       },
       (err) => {
         setLoading(false);
