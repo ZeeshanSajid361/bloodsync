@@ -246,7 +246,7 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
         {/* Top Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
           <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '6px', color: '#f8fafc' }}>
-            <MapPin size={18} color="#ef4444" /> Select Exact Location
+            <MapPin size={18} color="#ef4444" /> Select Destination Hospital Location
           </h3>
           <button onClick={onClose} className="btn btn-ghost btn-sm" style={{ padding: '2px 6px' }}>
             <X size={18} />
@@ -254,12 +254,12 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
         </div>
 
         {/* Search Bar & GPS Auto-Detect */}
-        <div style={{ display: 'flex', gap: '6px', marginBottom: '10px' }}>
+        <div style={{ display: 'flex', gap: '6px', marginBottom: '8px' }}>
           <form onSubmit={handleSearchLocation} style={{ flex: 1, display: 'flex', gap: '4px' }}>
             <input
               className="input"
               style={{ fontSize: '0.8rem', padding: '6px 10px' }}
-              placeholder="Search area, hospital or landmark…"
+              placeholder="Type destination hospital name, clinic or city…"
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
             />
@@ -270,13 +270,14 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
 
           <button
             type="button"
-            className="btn btn-primary btn-sm"
+            className="btn btn-secondary btn-sm"
             onClick={handleDetectGps}
             disabled={loading}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '0.78rem', background: '#2563eb', padding: '6px 10px', whiteSpace: 'nowrap' }}
+            title="Use current device location if you are physically at the hospital"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem', padding: '6px 10px', whiteSpace: 'nowrap', opacity: 0.9 }}
           >
             {loading ? <Loader2 size={13} className="spin" /> : <Navigation size={13} />}
-            <span>GPS Auto-Detect</span>
+            <span>Device GPS</span>
           </button>
         </div>
 
