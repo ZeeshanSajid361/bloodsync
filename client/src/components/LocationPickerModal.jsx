@@ -253,32 +253,21 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
           </button>
         </div>
 
-        {/* Search Bar & GPS Auto-Detect */}
-        <div style={{ display: 'flex', gap: '6px', marginBottom: '8px' }}>
-          <form onSubmit={handleSearchLocation} style={{ flex: 1, display: 'flex', gap: '4px' }}>
+        {/* Search Bar (100% Full Width) */}
+        <div style={{ marginBottom: '10px' }}>
+          <form onSubmit={handleSearchLocation} style={{ display: 'flex', gap: '6px' }}>
             <input
               className="input"
-              style={{ fontSize: '0.8rem', padding: '6px 10px' }}
-              placeholder="Type destination hospital name, clinic or city…"
+              style={{ fontSize: '0.82rem', padding: '7px 12px', flex: 1 }}
+              placeholder="Search destination hospital name, clinic or landmark…"
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
             />
-            <button type="submit" className="btn btn-secondary btn-sm" disabled={geocoding} style={{ padding: '6px 12px' }}>
-              {geocoding ? <Loader2 size={13} className="spin" /> : <Search size={13} />}
+            <button type="submit" className="btn btn-primary btn-sm" disabled={geocoding} style={{ padding: '7px 16px', background: '#2563eb', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+              {geocoding ? <Loader2 size={14} className="spin" /> : <Search size={14} />}
+              <span>Search Map</span>
             </button>
           </form>
-
-          <button
-            type="button"
-            className="btn btn-secondary btn-sm"
-            onClick={handleDetectGps}
-            disabled={loading}
-            title="Use current device location if you are physically at the hospital"
-            style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem', padding: '6px 10px', whiteSpace: 'nowrap', opacity: 0.9 }}
-          >
-            {loading ? <Loader2 size={13} className="spin" /> : <Navigation size={13} />}
-            <span>Device GPS</span>
-          </button>
         </div>
 
         {/* Interactive Map Embed (Compact 160px height) */}
