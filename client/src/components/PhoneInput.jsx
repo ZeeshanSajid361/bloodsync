@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 
 const COUNTRY_CODES = [
   { code: '+92', flag: '🇵🇰', label: 'PK' },
-  { code: '+1',  flag: '🇺🇸', label: 'US/CA' },
+  { code: '+1',  flag: '🇺🇸', label: 'US' },
   { code: '+44', flag: '🇬🇧', label: 'UK' },
   { code: '+971', flag: '🇦🇪', label: 'UAE' },
   { code: '+966', flag: '🇸🇦', label: 'SA' }
@@ -61,19 +61,19 @@ export default function PhoneInput({ value = '', onChange, name = 'phone', place
   }
 
   return (
-    <div style={{ display: 'flex', gap: '8px' }}>
-      <div style={{ position: 'relative', width: '110px' }}>
+    <div style={{ display: 'flex', gap: '6px', width: '100%' }}>
+      <div style={{ position: 'relative', width: '84px', flexShrink: 0 }}>
         <select 
           className="input" 
           value={country} 
           onChange={handleCountryChange}
-          style={{ paddingLeft: '32px', cursor: 'pointer' }}
+          style={{ paddingLeft: '24px', paddingRight: '12px', fontSize: '0.8rem', cursor: 'pointer' }}
         >
           {COUNTRY_CODES.map(c => (
             <option key={c.code} value={c.code}>{c.code}</option>
           ))}
         </select>
-        <div style={{ position: 'absolute', top: '50%', left: '10px', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
+        <div style={{ position: 'absolute', top: '50%', left: '6px', transform: 'translateY(-50%)', pointerEvents: 'none', fontSize: '0.8rem' }}>
           {COUNTRY_CODES.find(c => c.code === country)?.flag}
         </div>
       </div>
@@ -84,7 +84,7 @@ export default function PhoneInput({ value = '', onChange, name = 'phone', place
         placeholder={placeholder}
         value={localNumber}
         onChange={handleNumberChange}
-        style={{ flex: 1 }}
+        style={{ flex: 1, minWidth: 0, fontSize: '0.82rem', paddingLeft: '8px', paddingRight: '8px' }}
       />
     </div>
   );
