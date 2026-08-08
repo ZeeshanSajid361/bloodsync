@@ -351,21 +351,22 @@
 
 /* ── Admin nav badge inside shared sidebar-nav-link span ─────────────────── */
 .sidebar-nav-link .admin-nav-badge {
-  margin-left: auto;
-  background: linear-gradient(135deg, #ef4444, #dc2626);
-  color: #ffffff;
-  font-size: 0.7rem;
-  font-weight: 800;
-  padding: 2px 7px;
-  border-radius: 10px;
-  min-width: 18px;
-  height: 18px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 2px 6px rgba(239, 68, 68, 0.4);
-  line-height: 1;
-  flex-shrink: 0;
+  margin-left: auto !important;
+  background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+  color: #ffffff !important;
+  font-size: 0.72rem !important;
+  font-weight: 800 !important;
+  width: 20px !important;
+  height: 20px !important;
+  min-width: 20px !important;
+  max-width: 20px !important;
+  border-radius: 50% !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.45) !important;
+  line-height: 1 !important;
+  flex-shrink: 0 !important;
 }
 
 /* ── Responsive: mobile overrides ────────────────────────────────────────── */
