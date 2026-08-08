@@ -580,7 +580,29 @@ function ProfileTab({ profile, hooks }) {
 
   return (
     <div className="hospital-profile-card">
-      <h3>Organisation Profile</h3>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <h3 style={{ margin: 0 }}>Organisation Profile</h3>
+      </div>
+
+      {/* Account Type / EMN Integration Banner */}
+      <div className="card" style={{ padding: '16px 20px', marginBottom: 20, background: org.type === 'api_hospital' ? 'rgba(59, 130, 246, 0.1)' : 'rgba(15, 23, 42, 0.6)', border: `1px solid ${org.type === 'api_hospital' ? 'rgba(59, 130, 246, 0.3)' : 'var(--surface-border)'}`, borderRadius: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
+          <div>
+            <div style={{ fontSize: '0.95rem', fontWeight: 800, color: org.type === 'api_hospital' ? '#60a5fa' : '#f8fafc', display: 'flex', alignItems: 'center', gap: 8 }}>
+              {org.type === 'api_hospital' ? '⚡ Enterprise Medical Network (EMN Automated Sync)' : '🌐 Web Portal Hospital (Manual Management)'}
+            </div>
+            <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginTop: 4, maxWidth: 600 }}>
+              {org.type === 'api_hospital'
+                ? 'Your hospital is configured for Automated API Integration. Blood stock and check-ins sync directly with your Electronic Health Record (EHR/HIS) system via secure API key.'
+                : 'Your hospital uses manual Web Portal management. Inventory units and donor QR check-ins are managed manually by hospital counter staff.'}
+            </div>
+          </div>
+          <div className={`badge ${org.type === 'api_hospital' ? 'badge-blue' : 'badge-amber'}`} style={{ padding: '6px 12px', fontSize: '0.78rem' }}>
+            {org.type === 'api_hospital' ? '🔑 AUTOMATED API SYNC' : '✍️ MANUAL WEB PORTAL'}
+          </div>
+        </div>
+      </div>
+
       <div className="profile-form-grid">
         {[
           { label: 'Organisation Name', key: 'name', icon: Building2 },
@@ -1183,7 +1205,8 @@ function RequestsTab({ onNavigateToHistory }) {
 
       {/* Active Incoming Requests List */}
       {(() => {
-        const activeRequests = requests.filter(r => ['approved', 'pending_review'].includes(r.status));
+        const activeRequests = requests.filter(r => r.status === 'approved');
+        const pendingAdminRequests = requests.filter(r => r.status === 'pending_review');
         const historyRequests = requests.filter(r => ['fulfilled', 'cancelled', 'rejected'].includes(r.status));
 
         return (
@@ -1202,7 +1225,7 @@ function RequestsTab({ onNavigateToHistory }) {
                 </div>
               ) : activeRequests.length === 0 ? (
                 <div className="card" style={{ padding: 'var(--space-6)', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-                  🏥 No active incoming requests at your hospital counter right now.
+                  🏥 No approved incoming requests open for donor check-in right now.
                 </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
@@ -1217,7 +1240,7 @@ function RequestsTab({ onNavigateToHistory }) {
                             </span>
                             <span style={{ fontWeight: 600, fontSize: '0.92rem' }}>Request #{req._id.slice(-6)}</span>
                             <span className="badge badge-blue">
-                              {req.status.toUpperCase()}
+                              READY FOR CHECK-IN
                             </span>
                             {enRouteCount > 0 && (
                               <span style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#34d399', padding: '2px 8px', borderRadius: 10, fontSize: '0.75rem', fontWeight: 700 }}>
@@ -1235,6 +1258,36 @@ function RequestsTab({ onNavigateToHistory }) {
                 </div>
               )}
             </div>
+
+            {/* Pending Admin Review Queue (Not Open for Check-In Yet) */}
+            {pendingAdminRequests.length > 0 && (
+              <div style={{ marginTop: 'var(--space-6)' }}>
+                <h3 style={{ fontSize: '0.95rem', fontWeight: 700, margin: '0 0 var(--space-3)', color: '#f59e0b', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  ⏳ Awaiting Admin Approval ({pendingAdminRequests.length})
+                </h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+                  {pendingAdminRequests.map(req => (
+                    <div key={req._id} className="card" style={{ padding: 'var(--space-4) var(--space-5)', borderLeft: '4px solid #f59e0b', background: 'rgba(245, 158, 11, 0.05)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                        <span style={{ background: 'rgba(245, 158, 11, 0.2)', color: '#f59e0b', padding: '2px 8px', borderRadius: 12, fontSize: '0.78rem', fontWeight: 800 }}>
+                          {req.patientBloodGroup}
+                        </span>
+                        <span style={{ fontWeight: 600, fontSize: '0.92rem' }}>Request #{req._id.slice(-6)}</span>
+                        <span className="badge badge-amber" style={{ fontSize: '0.72rem' }}>
+                          ⏳ PENDING ADMIN REVIEW
+                        </span>
+                      </div>
+                      <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+                        Patient: {req.patientName || 'Anonymous'} · Units Needed: {req.unitsNeeded} · Urgency: {req.urgency.toUpperCase()}
+                      </div>
+                      <div style={{ fontSize: '0.75rem', color: '#f59e0b', marginTop: 6, fontStyle: 'italic' }}>
+                        ℹ️ Donors cannot see or check in for this request until an Admin approves it.
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Historical Audit Log Preview (Max 2 recent items) */}
             {historyRequests.length > 0 && (
