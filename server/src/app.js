@@ -24,7 +24,8 @@ const hospitalRouter      = require('./routes/hospitals');
 const adminRouter         = require('./routes/admin');
 const notificationRouter  = require('./routes/notifications');
 const qrRouter            = require('./routes/qr');
-const partnerRouter        = require('./routes/partners');
+const docsRouter          = require('./routes/docs');
+const partnerRouter       = require('./routes/partners');
 
 const app = express();
 
