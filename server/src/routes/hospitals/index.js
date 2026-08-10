@@ -89,7 +89,7 @@ async function requireApiKey(req, res, next) {
     // whose hashed key matches. bcrypt.compare is used; it's safe to loop
     // through approved hospitals because the set is small and we exit on first match.
     const hospitals = await Organization.find(
-      { type: 'hospital', status: 'approved' },
+      { type: { $in: ['hospital', 'web_hospital', 'api_hospital'] }, status: 'approved' },
       { apiKeyHash: 1 }   // select: false is on the field; explicit projection overrides
     ).lean();
 
@@ -162,6 +162,37 @@ router.post('/inventory/sync', requireApiKey, async (req, res, next) => {
       success: true,
       message: 'Sync complete.',
       data: { results, lastSyncedAt: new Date() },
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * POST /api/hospitals/requests/:id/fulfill-api
+ * Machine-to-machine fulfillment API endpoint for EMN hospitals.
+ * Header: Authorization: ApiKey bl_xxx
+ */
+router.post('/requests/:id/fulfill-api', requireApiKey, async (req, res, next) => {
+  try {
+    const { Request } = require('../../models/Request');
+    const request = await Request.findOne({ _id: req.params.id, hospital: req.apiHospitalId, status: 'approved' });
+
+    if (!request) {
+      return res.status(4404 || 404).json({ success: false, message: 'Approved request not found for this hospital.' });
+    }
+
+    request.status       = 'fulfilled';
+    request.fulfilledVia = 'api';
+    request.fulfilledAt  = new Date();
+    await request.save();
+
+    await Organization.findByIdAndUpdate(req.apiHospitalId, { lastSyncedAt: new Date() });
+
+    res.json({
+      success: true,
+      message: 'Request marked as fulfilled via EMN API.',
+      data: { requestId: request._id, status: request.status, fulfilledVia: 'api' },
     });
   } catch (err) {
     next(err);
