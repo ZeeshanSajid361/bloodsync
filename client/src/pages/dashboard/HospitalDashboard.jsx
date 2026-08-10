@@ -24,6 +24,7 @@ import PhoneInput from '../../components/PhoneInput';
 import LocationPickerModal from '../../components/LocationPickerModal';
 import api from '../../lib/api';
 import jsQR from 'jsqr';
+import PartnerDashboard from './PartnerDashboard';
 import '../../styles/dashboard.css';
 import '../../styles/hospital.css';
 
@@ -111,6 +112,15 @@ function OverviewTab({ profile }) {
 
   return (
     <>
+      {org.type === 'api_hospital' && (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12 }}>
+          <div className="badge badge-blue" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 14px', fontSize: '0.8rem', background: 'rgba(59, 130, 246, 0.15)', border: '1px solid rgba(59, 130, 246, 0.3)' }}>
+            <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#34d399', display: 'inline-block' }} />
+            EMN API Connected · Last Synced: {org.lastSyncedAt ? new Date(org.lastSyncedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Never synced yet'}
+          </div>
+        </div>
+      )}
+
       {org.status === 'pending' && <PendingBanner />}
 
       {org.status === 'rejected' && (
@@ -607,6 +617,8 @@ function ProfileTab({ profile, hooks }) {
     }
   }
 
+  const [showApiDocs, setShowApiDocs] = useState(false);
+
   return (
     <div className="hospital-profile-card">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
@@ -626,8 +638,15 @@ function ProfileTab({ profile, hooks }) {
                 : 'Your hospital uses manual Web Portal management. Inventory units and donor QR check-ins are managed manually by hospital counter staff.'}
             </div>
           </div>
-          <div className={`badge ${org.type === 'api_hospital' ? 'badge-blue' : 'badge-amber'}`} style={{ padding: '6px 12px', fontSize: '0.78rem' }}>
-            {org.type === 'api_hospital' ? '🔑 AUTOMATED API SYNC' : '✍️ MANUAL WEB PORTAL'}
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            {org.type === 'api_hospital' && (
+              <button className="btn btn-ghost btn-sm" style={{ color: '#60a5fa', border: '1px solid rgba(59, 130, 246, 0.4)', background: 'rgba(59, 130, 246, 0.15)' }} onClick={() => setShowApiDocs(true)}>
+                📖 View Sync API Docs
+              </button>
+            )}
+            <div className={`badge ${org.type === 'api_hospital' ? 'badge-blue' : 'badge-amber'}`} style={{ padding: '6px 12px', fontSize: '0.78rem' }}>
+              {org.type === 'api_hospital' ? '🔑 AUTOMATED API SYNC' : '✍️ MANUAL WEB PORTAL'}
+            </div>
           </div>
         </div>
       </div>
@@ -750,6 +769,52 @@ function ProfileTab({ profile, hooks }) {
           }));
         }}
       />
+      {/* EMN API Documentation Modal */}
+      {showApiDocs && (
+        <div className="code-red-overlay" onClick={() => setShowApiDocs(false)}>
+          <div className="code-red-modal" style={{ maxWidth: 650, width: '100%', padding: 24 }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <h3 style={{ margin: 0, fontSize: '1.15rem', color: '#60a5fa', display: 'flex', alignItems: 'center', gap: 8 }}>
+                ⚡ Enterprise EMN REST API Documentation
+              </h3>
+              <button className="btn btn-ghost btn-sm" onClick={() => setShowApiDocs(false)}><X size={18} /></button>
+            </div>
+
+            <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: 16 }}>
+              Use your secure API Key to synchronize EHR/HIS blood stock and trigger automated donation request fulfillment.
+            </div>
+
+            <div style={{ background: '#0f172a', padding: 14, borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', fontSize: '0.8rem', color: '#f8fafc', marginBottom: 16 }}>
+              <strong>Header Format:</strong><br />
+              <code style={{ color: '#34d399' }}>Authorization: ApiKey {org.apiKey || 'bl_live_your_api_key'}</code>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div style={{ background: '#1e293b', padding: 12, borderRadius: 8 }}>
+                <div style={{ color: '#60a5fa', fontWeight: 700, fontSize: '0.82rem', marginBottom: 4 }}>1. Bulk Inventory Sync</div>
+                <code style={{ fontSize: '0.78rem', color: '#f8fafc', display: 'block' }}>POST /api/hospitals/inventory/sync</code>
+                <pre style={{ background: '#0f172a', padding: 8, borderRadius: 6, fontSize: '0.75rem', color: '#cbd5e1', marginTop: 6, margin: 0 }}>
+{`{
+  "updates": [
+    { "bloodGroup": "O+", "units": 45 },
+    { "bloodGroup": "A-", "units": 8 }
+  ]
+}`}
+                </pre>
+              </div>
+
+              <div style={{ background: '#1e293b', padding: 12, borderRadius: 8 }}>
+                <div style={{ color: '#60a5fa', fontWeight: 700, fontSize: '0.82rem', marginBottom: 4 }}>2. Fulfill Request via API</div>
+                <code style={{ fontSize: '0.78rem', color: '#f8fafc', display: 'block' }}>POST /api/hospitals/requests/:id/fulfill-api</code>
+              </div>
+            </div>
+
+            <div style={{ marginTop: 20, textAlign: 'right' }}>
+              <button className="btn btn-secondary btn-sm" onClick={() => setShowApiDocs(false)}>Close</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -1081,7 +1146,7 @@ function LiveCameraScannerModal({ onScan, onClose }) {
 
 /* ── tabs ────────────────────────────────────────────────────────────────── */
 
-function RequestsTab({ onNavigateToHistory }) {
+function RequestsTab({ profile, onNavigateToHistory }) {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [qrTokenInput, setQrTokenInput] = useState('');
@@ -1089,6 +1154,9 @@ function RequestsTab({ onNavigateToHistory }) {
   const [verifyResult, setVerifyResult] = useState(null);
   const [verifyError, setVerifyError] = useState(null);
   const [showCameraModal, setShowCameraModal] = useState(false);
+  const [showManualOverride, setShowManualOverride] = useState(false);
+
+  const isApiHospital = profile?.org?.type === 'api_hospital';
 
   const fetchRequests = useCallback(() => {
     setLoading(true);
@@ -1178,19 +1246,45 @@ function RequestsTab({ onNavigateToHistory }) {
         />
       )}
 
-      {/* Counter Verification Card */}
-      <div className="card animate-fade-up" style={{ padding: 'var(--space-6)', background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.9))', border: '1px solid rgba(59, 130, 246, 0.3)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', marginBottom: 'var(--space-3)' }}>
-          <div style={{ background: 'rgba(59, 130, 246, 0.2)', padding: '10px', borderRadius: '12px', color: '#60a5fa' }}>
-            <QrCode size={24} />
-          </div>
-          <div>
-            <h3 style={{ fontSize: '1.1rem', fontWeight: 700, margin: 0, color: 'var(--text-primary)' }}>Hospital Counter QR Check-In</h3>
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: 0 }}>
-              Scan donor QR code image or enter their 8-character token code to verify donation and mark request as fulfilled.
-            </p>
+      {/* EMN Automated Sync Banner & Manual Safety Net Toggle */}
+      {isApiHospital && (
+        <div className="card animate-fade-up" style={{ padding: '16px 20px', background: 'rgba(59, 130, 246, 0.12)', border: '1px solid rgba(59, 130, 246, 0.3)', borderRadius: '12px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+            <div>
+              <div style={{ fontWeight: 800, color: '#60a5fa', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: 8 }}>
+                ⚡ Read-Only Counter Queue (EMN EHR Integration Active)
+              </div>
+              <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginTop: 4 }}>
+                For EMN hospitals, donation requests update automatically once confirmed in your hospital system via REST API key.
+              </div>
+            </div>
+            <button
+              className="btn btn-ghost btn-sm"
+              onClick={() => setShowManualOverride(p => !p)}
+              style={{ fontSize: '0.78rem', color: '#94a3b8', background: 'rgba(255, 255, 255, 0.05)', padding: '6px 12px', borderRadius: 8 }}
+            >
+              {showManualOverride ? '▲ Hide Manual Safety Net' : '⚙️ Not syncing? Mark fulfilled manually ▼'}
+            </button>
           </div>
         </div>
+      )}
+
+      {/* Counter Verification Card (Shown for Web Hospitals, or EMN Manual Safety Net) */}
+      {(!isApiHospital || showManualOverride) && (
+        <div className="card animate-fade-up" style={{ padding: 'var(--space-6)', background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.9))', border: '1px solid rgba(59, 130, 246, 0.3)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', marginBottom: 'var(--space-3)' }}>
+            <div style={{ background: 'rgba(59, 130, 246, 0.2)', padding: '10px', borderRadius: '12px', color: '#60a5fa' }}>
+              <QrCode size={24} />
+            </div>
+            <div>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 700, margin: 0, color: 'var(--text-primary)' }}>
+                {isApiHospital ? '⚠️ Manual Safety Net QR Check-In' : 'Hospital Counter QR Check-In'}
+              </h3>
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: 0 }}>
+                Scan donor QR code image or enter their 8-character token code to verify donation and mark request as fulfilled.
+              </p>
+            </div>
+          </div>
 
         <div style={{ display: 'flex', gap: 'var(--space-3)', marginTop: 'var(--space-4)', flexWrap: 'wrap', alignItems: 'center' }}>
           <input
@@ -1253,6 +1347,7 @@ function RequestsTab({ onNavigateToHistory }) {
           </div>
         )}
       </div>
+      )}
 
       {/* Active Incoming Requests List */}
       {(() => {
@@ -1464,6 +1559,11 @@ function HistoryTab() {
                   <span className={`badge ${req.status === 'fulfilled' ? 'badge-green' : 'badge-red'}`}>
                     {req.status.toUpperCase()}
                   </span>
+                  {req.status === 'fulfilled' && (
+                    <span className={`badge ${req.fulfilledVia === 'api' ? 'badge-blue' : 'badge-amber'}`} style={{ fontSize: '0.72rem' }}>
+                      {req.fulfilledVia === 'api' ? '⚡ VIA EMN API' : '✍️ MANUAL OVERRIDE'}
+                    </span>
+                  )}
                 </div>
                 <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
                   Patient: {req.patientName || 'Anonymous'} · Units: {req.unitsNeeded || 1} · Date: {new Date(req.updatedAt || req.createdAt).toLocaleString('en-PK')}
@@ -1524,6 +1624,10 @@ export default function HospitalDashboard() {
   }
 
   const isApproved = profile?.org?.status === 'approved';
+
+  if (profile?.org?.type === 'partner') {
+    return <PartnerDashboard profile={profile} hooks={hooks} onLogout={handleLogout} />;
+  }
 
   return (
     <div className="dashboard-shell">
@@ -1671,7 +1775,7 @@ export default function HospitalDashboard() {
                 </div>
               ) : (
                 <>
-                  {tab === 'requests'  && <RequestsTab  onNavigateToHistory={() => setTab('history')} />}
+                  {tab === 'requests'  && <RequestsTab profile={profile} onNavigateToHistory={() => setTab('history')} />}
                   {tab === 'history'   && <HistoryTab />}
                   {tab === 'inventory' && <InventoryTab profile={profile} hooks={hookData} />}
                 </>

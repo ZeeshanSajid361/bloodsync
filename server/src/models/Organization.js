@@ -97,6 +97,15 @@ const organizationSchema = new mongoose.Schema(
       trim: true,
     },
 
+    // SECP / Charity registration number for Partner Organisations
+    secpRegistrationNo: {
+      type: String,
+      trim: true,
+    },
+
+    // Timestamp of last automated API sync for EMN hospitals
+    lastSyncedAt: Date,
+
     rejectedAt: Date,
     approvedAt: Date,
   },

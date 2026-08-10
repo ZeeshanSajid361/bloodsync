@@ -155,10 +155,74 @@ router.post('/inventory/sync', requireApiKey, async (req, res, next) => {
       results.push({ bloodGroup: inv.bloodGroup, units: inv.units, status: 'synced' });
     }
 
+    // Update lastSyncedAt on Organisation
+    await Organization.findByIdAndUpdate(req.apiHospitalId, { lastSyncedAt: new Date() });
+
     res.json({
       success: true,
       message: 'Sync complete.',
-      data: { results },
+      data: { results, lastSyncedAt: new Date() },
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * POST /api/hospitals/inventory/discrepancy
+ * Report an inventory discrepancy for admin review.
+ */
+router.post('/inventory/discrepancy', requireAuth, requireRole(['hospital', 'admin']), requireOrg, async (req, res, next) => {
+  try {
+    const { bloodGroup, reportedUnits, expectedUnits, notes, inventoryId } = req.body;
+    if (!bloodGroup || reportedUnits === undefined || expectedUnits === undefined) {
+      return res.status(400).json({ success: false, message: 'Blood group, reported units, and expected units are required.' });
+    }
+
+    const { Discrepancy } = require('../../models/Discrepancy');
+    const report = await Discrepancy.create({
+      organizationId: req.org._id,
+      inventoryId: inventoryId || undefined,
+      bloodGroup,
+      reportedUnits: Number(reportedUnits),
+      expectedUnits: Number(expectedUnits),
+      notes: notes || '',
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'Discrepancy report logged and sent to System Admins for review.',
+      data: report,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * POST /api/hospitals/requests/:id/fulfill-api
+ * Machine-to-machine REST API endpoint to fulfill a request for EMN hospitals.
+ * Header: Authorization: ApiKey bl_xxx (or Authorization: bl_xxx)
+ */
+router.post('/requests/:id/fulfill-api', requireApiKey, async (req, res, next) => {
+  try {
+    const { Request } = require('../../models/Request');
+    const reqDoc = await Request.findById(req.params.id);
+    if (!reqDoc) {
+      return res.status(404).json({ success: false, message: 'Request not found.' });
+    }
+
+    reqDoc.status = 'fulfilled';
+    reqDoc.fulfilledAt = new Date();
+    reqDoc.fulfilledVia = 'api';
+    await reqDoc.save();
+
+    await Organization.findByIdAndUpdate(req.apiHospitalId, { lastSyncedAt: new Date() });
+
+    res.json({
+      success: true,
+      message: 'Request marked as fulfilled via API.',
+      data: reqDoc,
     });
   } catch (err) {
     next(err);

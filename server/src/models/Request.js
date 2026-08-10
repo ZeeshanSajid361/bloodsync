@@ -136,6 +136,17 @@ const requestSchema = new mongoose.Schema(
       trim:  true,
     },
 
+    assistedByPartner: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref:  'Organization',
+    },
+
+    fulfilledVia: {
+      type: String,
+      enum: ['api', 'manual'],
+      default: 'manual',
+    },
+
     reviewedAt: Date,
     fulfilledAt: Date,
     cancelledAt: Date,
