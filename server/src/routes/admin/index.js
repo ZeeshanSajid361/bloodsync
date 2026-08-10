@@ -105,10 +105,11 @@ router.patch('/hospitals/:id/approve', async (req, res, next) => {
 
     const { rawKey, hash } = await generateApiKey();
 
-    org.status     = 'approved';
-    org.approvedAt = new Date();
-    org.adminNote  = req.body.note || undefined;
-    org.apiKeyHash = hash;
+    org.status       = 'approved';
+    org.approvedAt   = new Date();
+    org.adminNote    = req.body.note || undefined;
+    org.apiKeyHash   = hash;
+    org.apiKeyPrefix = `${rawKey.slice(0, 10)}...${rawKey.slice(-4)}`;
 
     await org.save();
 

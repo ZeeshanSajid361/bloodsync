@@ -618,6 +618,34 @@ function ProfileTab({ profile, hooks }) {
   }
 
   const [showApiDocs, setShowApiDocs] = useState(false);
+  const [generatedKey, setGeneratedKey] = useState('');
+  const [generatingKey, setGeneratingKey] = useState(false);
+  const [copiedKey, setCopiedKey] = useState(false);
+
+  async function handleGenerateApiKey() {
+    if (generatedKey && !window.confirm('Regenerating your API Key will invalidate your current key immediately. Are you sure you want to proceed?')) {
+      return;
+    }
+    try {
+      setGeneratingKey(true);
+      const res = await api.post('/hospitals/me/generate-api-key');
+      if (res.data?.data?.apiKey) {
+        setGeneratedKey(res.data.data.apiKey);
+        setCopiedKey(false);
+        if (hooks.fetchProfile) hooks.fetchProfile();
+      }
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to generate API Key.');
+    } finally {
+      setGeneratingKey(false);
+    }
+  }
+
+  function handleCopyKey(text) {
+    navigator.clipboard.writeText(text);
+    setCopiedKey(true);
+    setTimeout(() => setCopiedKey(false), 2500);
+  }
 
   return (
     <div className="hospital-profile-card">
@@ -650,6 +678,70 @@ function ProfileTab({ profile, hooks }) {
           </div>
         </div>
       </div>
+
+      {/* EMN REST API Key Management Card */}
+      {org.type === 'api_hospital' && (
+        <div className="card" style={{ padding: '20px', marginBottom: 24, background: 'rgba(15, 23, 42, 0.85)', border: '1px solid rgba(59, 130, 246, 0.35)', borderRadius: 14 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginBottom: 14 }}>
+            <div>
+              <h4 style={{ margin: 0, fontSize: '0.98rem', fontWeight: 800, color: '#f8fafc', display: 'flex', alignItems: 'center', gap: 8 }}>
+                🔑 REST API Credentials for EHR / HIS Integration
+              </h4>
+              <p style={{ margin: '4px 0 0', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                Provide this API Key to your hospital's Software Engineering / IT department to connect automated inventory sync.
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button
+                type="button"
+                className="btn btn-sm btn-primary"
+                onClick={handleGenerateApiKey}
+                disabled={generatingKey || org.status !== 'approved'}
+                style={{ background: 'linear-gradient(135deg, #2563eb, #1d4ed8)', fontWeight: 700 }}
+              >
+                {generatingKey ? <Loader2 size={14} className="spin" /> : (generatedKey || org.apiKeyPrefix ? '🔄 Regenerate API Key' : '🔑 Generate API Key')}
+              </button>
+            </div>
+          </div>
+
+          {/* Newly Generated API Key Alert Box */}
+          {generatedKey ? (
+            <div style={{ padding: 14, background: 'rgba(16, 185, 129, 0.12)', border: '1px solid rgba(16, 185, 129, 0.4)', borderRadius: 10, color: '#34d399' }}>
+              <div style={{ fontSize: '0.82rem', fontWeight: 800, marginBottom: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span>✅ NEW API KEY GENERATED:</span>
+                <span style={{ fontSize: '0.75rem', color: '#f59e0b', background: 'rgba(245, 158, 11, 0.15)', padding: '2px 8px', borderRadius: 6 }}>
+                  ⚠️ Save this key now! It will not be shown again in full.
+                </span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                <code style={{ background: '#0f172a', padding: '8px 14px', borderRadius: 8, fontFamily: 'monospace', fontSize: '0.92rem', color: '#60a5fa', wordBreak: 'break-all', flex: 1, border: '1px solid rgba(59, 130, 246, 0.3)' }}>
+                  {generatedKey}
+                </code>
+                <button
+                  type="button"
+                  className="btn btn-sm btn-secondary"
+                  onClick={() => handleCopyKey(generatedKey)}
+                  style={{ background: copiedKey ? '#10b981' : undefined, color: copiedKey ? '#fff' : undefined }}
+                >
+                  {copiedKey ? '✓ Copied!' : '📋 Copy API Key'}
+                </button>
+              </div>
+            </div>
+          ) : org.apiKeyPrefix ? (
+            <div style={{ padding: '10px 14px', background: 'rgba(30, 41, 59, 0.6)', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
+              <div style={{ fontSize: '0.83rem', color: 'var(--text-secondary)' }}>
+                Active Key ID: <code style={{ color: '#60a5fa', fontWeight: 700 }}>{org.apiKeyPrefix}</code>
+              </div>
+              <span className="badge badge-green" style={{ fontSize: '0.74rem' }}>🟢 ACTIVE & CONNECTED</span>
+            </div>
+          ) : (
+            <div style={{ padding: '10px 14px', background: 'rgba(245, 158, 11, 0.1)', border: '1px solid rgba(245, 158, 11, 0.3)', borderRadius: 10, color: '#fbbf24', fontSize: '0.83rem' }}>
+              ⚠️ No API Key generated yet. Click <strong>Generate API Key</strong> above to create your REST API Key for IT integration.
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="profile-form-grid">
         {[

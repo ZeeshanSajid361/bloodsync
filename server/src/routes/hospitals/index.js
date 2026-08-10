@@ -376,6 +376,42 @@ router.put(
   }
 );
 
+/**
+ * POST /api/hospitals/me/generate-api-key
+ *
+ * Generate or regenerate a REST API Key for EMN hospitals.
+ * Returns the unhashed key ONCE for the user to copy.
+ */
+router.post(
+  '/me/generate-api-key',
+  requireAuth,
+  requireRole(['hospital']),
+  requireOrg,
+  async (req, res, next) => {
+    try {
+      if (req.org.status !== 'approved') {
+        return res.status(403).json({ success: false, message: 'Organisation must be approved before issuing an API key.' });
+      }
+
+      const { rawKey, hash } = await generateApiKey();
+      req.org.apiKeyHash   = hash;
+      req.org.apiKeyPrefix = `${rawKey.slice(0, 10)}...${rawKey.slice(-4)}`;
+      await req.org.save();
+
+      res.json({
+        success: true,
+        message: 'New API Key generated successfully.',
+        data: {
+          apiKey: rawKey,
+          apiKeyPrefix: req.org.apiKeyPrefix,
+        },
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
 /* ─── Public directory ──────────────────────────────────────────────────────── */
 
 /**

@@ -90,6 +90,10 @@ const organizationSchema = new mongoose.Schema(
       type: String,
       select: false,
     },
+    apiKeyPrefix: {
+      type: String,
+      trim: true,
+    },
 
     // Admin notes on approval / rejection.
     adminNote: {
