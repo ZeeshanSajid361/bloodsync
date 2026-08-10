@@ -630,12 +630,12 @@ function ProfileTab({ profile, hooks }) {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
           <div>
             <div style={{ fontSize: '0.95rem', fontWeight: 800, color: org.type === 'api_hospital' ? '#60a5fa' : '#f8fafc', display: 'flex', alignItems: 'center', gap: 8 }}>
-              {org.type === 'api_hospital' ? '⚡ Enterprise Medical Network (EMN Automated Sync)' : '🌐 Web Portal Hospital (Manual Management)'}
+              {org.type === 'api_hospital' ? '⚡ Enterprise Medical Network (EMN Automated Sync)' : '🌐 Standard Hospital (Manual App & Counter)'}
             </div>
             <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginTop: 4, maxWidth: 600 }}>
               {org.type === 'api_hospital'
                 ? 'Your hospital is configured for Automated API Integration. Blood stock and check-ins sync directly with your Electronic Health Record (EHR/HIS) system via secure API key.'
-                : 'Your hospital uses manual Web Portal management. Inventory units and donor QR check-ins are managed manually by hospital counter staff.'}
+                : 'Your hospital uses manual App & Web Portal management. Inventory units and donor QR check-ins are managed manually by hospital counter staff.'}
             </div>
           </div>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -645,7 +645,7 @@ function ProfileTab({ profile, hooks }) {
               </button>
             )}
             <div className={`badge ${org.type === 'api_hospital' ? 'badge-blue' : 'badge-amber'}`} style={{ padding: '6px 12px', fontSize: '0.78rem' }}>
-              {org.type === 'api_hospital' ? '🔑 AUTOMATED API SYNC' : '✍️ MANUAL WEB PORTAL'}
+              {org.type === 'api_hospital' ? '🔑 AUTOMATED API SYNC' : '✍️ MANUAL APP & COUNTER'}
             </div>
           </div>
         </div>
@@ -893,7 +893,7 @@ function RegisterOrgForm({ onSave }) {
             <div className="input-group" style={{ gridColumn: '1 / -1' }}>
               <label className="input-label">Organisation Type</label>
               <select className="input" value={form.type} onChange={e => setForm(p => ({ ...p, type: e.target.value }))}>
-                <option value="web_hospital">🏥 Web Portal Hospital / Clinic (Manual Web Dashboard)</option>
+                <option value="web_hospital">🏥 Standard Hospital / Clinic (Manual App & Counter Management)</option>
                 <option value="api_hospital">⚡ Enterprise Medical Network (Automated API Key Integration)</option>
                 <option value="partner">🤝 Partner Organisation (PRCS, Edhi, University Society)</option>
               </select>
@@ -1647,7 +1647,7 @@ export default function HospitalDashboard() {
               <div className="sidebar-user-name">{profile?.org?.name || user?.name}</div>
               <div className="sidebar-user-role">
                 {profile?.org?.type === 'web_hospital'
-                  ? 'Web Portal Hospital'
+                  ? 'Standard Hospital'
                   : profile?.org?.type === 'api_hospital'
                   ? 'Enterprise Medical Network'
                   : profile?.org?.type === 'partner'
