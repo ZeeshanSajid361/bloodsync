@@ -174,10 +174,9 @@ function OverviewTab({ admin }) {
 
 /* ══ HOSPITALS TAB ═══════════════════════════════════════════════════════ */
 function HospitalsTab({ admin }) {
-  const { fetchHospitals, hospitals, approveHospital, rejectHospital, revokeApiKey, regenerateApiKey, loading } = admin;
+  const { fetchHospitals, hospitals, approveHospital, rejectHospital, revokeApiKey, loading } = admin;
   const [filter,    setFilter]    = useState('pending');
   const [modal,     setModal]     = useState(null); // { type, org }
-  const [apiKeyInfo, setApiKeyInfo] = useState(null);
   const [acting,    setActing]    = useState(false);
 
   useEffect(() => { fetchHospitals(filter); }, [fetchHospitals, filter]);
@@ -185,11 +184,8 @@ function HospitalsTab({ admin }) {
   async function handleApprove(note) {
     setActing(true);
     try {
-      const res = await approveHospital(modal.org._id, note);
+      await approveHospital(modal.org._id, note);
       setModal(null);
-      if (res.data?.apiKey) {
-        setApiKeyInfo({ key: res.data.apiKey, name: modal.org.name });
-      }
       fetchHospitals(filter);
     } catch (err) {
       alert(err.response?.data?.message || 'Action failed.');
@@ -215,18 +211,6 @@ function HospitalsTab({ admin }) {
     } catch (err) {
       alert(err.response?.data?.message || 'Failed to revoke key.');
     }
-  }
-
-  async function handleRegenerate(org) {
-    if (!window.confirm(`Generate a new API key for EMN Hospital "${org.name}"? The previous key will stop working immediately.`)) return;
-    setActing(true);
-    try {
-      const res = await regenerateApiKey(org._id);
-      setApiKeyInfo({ key: res.data.apiKey, name: org.name });
-      fetchHospitals(filter);
-    } catch (err) {
-      alert(err.response?.data?.message || 'Failed to generate new key.');
-    } finally { setActing(false); }
   }
 
   const STATUS_FILTERS = ['pending', 'approved', 'rejected', ''];
@@ -284,23 +268,11 @@ function HospitalsTab({ admin }) {
                         <td>
                           {org.type === 'api_hospital' ? (
                             org.apiKeyPrefix ? (
-                              <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-start' }}>
-                                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: '#60a5fa', background: 'rgba(37, 99, 235, 0.12)', padding: '2px 8px', borderRadius: 4, border: '1px solid rgba(59, 130, 246, 0.3)' }} title="Active key prefix">
-                                  🔑 {org.apiKeyPrefix}
-                                </span>
-                                <button className="btn btn-ghost btn-sm" style={{ fontSize: '0.7rem', padding: '1px 6px', color: '#38bdf8' }} onClick={() => handleRegenerate(org)}>
-                                  🔄 Regenerate Key
-                                </button>
-                              </div>
+                              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: '#60a5fa', background: 'rgba(37, 99, 235, 0.12)', padding: '3px 8px', borderRadius: 4, border: '1px solid rgba(59, 130, 246, 0.3)' }} title="Active Key Prefix">
+                                🔑 Active ({org.apiKeyPrefix})
+                              </span>
                             ) : (
-                              <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-start' }}>
-                                <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>No Active Key</span>
-                                {org.status === 'approved' && (
-                                  <button className="btn btn-secondary btn-sm" style={{ fontSize: '0.7rem', padding: '1px 6px' }} onClick={() => handleRegenerate(org)}>
-                                    🔑 Generate Key
-                                  </button>
-                                )}
-                              </div>
+                              <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>Not Generated Yet (Self-service in Profile)</span>
                             )
                           ) : (
                             <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>— (Web Access)</span>
@@ -322,7 +294,7 @@ function HospitalsTab({ admin }) {
                               </button>
                             </>}
                             {org.status === 'approved' && (
-                              org.type === 'api_hospital' ? (
+                              org.type === 'api_hospital' && org.apiKeyPrefix ? (
                                 <button className="btn btn-ghost btn-sm" style={{ padding: '4px 10px', color: 'var(--red-400)' }} onClick={() => handleRevoke(org)}>
                                   <Key size={13} /> Revoke EMN Key
                                 </button>
@@ -345,7 +317,7 @@ function HospitalsTab({ admin }) {
           title={`Approve "${modal.org.name}"`}
           description={
             modal.org.type === 'api_hospital'
-              ? 'This will activate the EMN hospital account and issue a machine-to-machine API key.'
+              ? 'This will approve the EMN hospital account. The hospital will be able to generate their API Key from their Organisation Profile.'
               : 'This will activate the organisation account for web portal access.'
           }
           onConfirm={handleApprove} onClose={() => setModal(null)} loading={acting}
@@ -357,9 +329,6 @@ function HospitalsTab({ admin }) {
           description="The applicant will see your reason. This action can be reversed by approving later."
           onConfirm={handleReject} onClose={() => setModal(null)} loading={acting} isReject
         />
-      )}
-      {apiKeyInfo && (
-        <ApiKeyModal apiKey={apiKeyInfo.key} orgName={apiKeyInfo.name} onClose={() => setApiKeyInfo(null)} />
       )}
     </>
   );

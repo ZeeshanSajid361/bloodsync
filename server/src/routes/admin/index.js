@@ -103,14 +103,6 @@ router.patch('/hospitals/:id/approve', async (req, res, next) => {
       return res.status(409).json({ success: false, message: 'Organisation is already approved.' });
     }
 
-    let rawKey = null;
-    if (org.type === 'api_hospital') {
-      const apiRes = await generateApiKey();
-      rawKey = apiRes.rawKey;
-      org.apiKeyHash = apiRes.hash;
-      org.apiKeyPrefix = `${rawKey.slice(0, 10)}...${rawKey.slice(-4)}`;
-    }
-
     org.status     = 'approved';
     org.approvedAt = new Date();
     org.adminNote  = req.body.note || undefined;
@@ -130,11 +122,8 @@ router.patch('/hospitals/:id/approve', async (req, res, next) => {
 
     res.json({
       success: true,
-      message: rawKey ? 'EMN Organisation approved and API key issued.' : 'Organisation approved successfully.',
-      data: {
-        org,
-        apiKey: rawKey, // shown ONCE for api_hospital, null otherwise
-      },
+      message: 'Organisation approved successfully.',
+      data: { org },
     });
   } catch (err) {
     next(err);
