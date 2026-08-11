@@ -24,7 +24,6 @@ module.exports = async (req, res) => {
       success: false,
       message: 'Internal serverless error',
       error: err.message,
-      stack: err.stack,
     });
   }
 };
