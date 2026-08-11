@@ -1,7 +1,6 @@
 'use strict';
 
 // Handle OPTIONS preflight IMMEDIATELY before loading anything else.
-// This ensures CORS works even if the app fails to boot (e.g. missing env vars).
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
@@ -21,6 +20,10 @@ module.exports = async (req, res) => {
     return app(req, res);
   } catch (err) {
     console.error('[serverless] Fatal error:', err);
-    return res.status(500).json({ success: false, message: 'Internal server error', error: err.message });
+    return res.status(500).json({
+      success: false,
+      message: 'Internal serverless error',
+      error: err.message,
+    });
   }
 };
