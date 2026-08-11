@@ -1724,7 +1724,7 @@ export default function HospitalDashboard() {
   const isApproved = profile?.org?.status === 'approved';
 
   if (profile?.org?.type === 'partner') {
-    return <PartnerDashboard profile={profile} hooks={hooks} onLogout={handleLogout} />;
+    return <PartnerDashboard profile={profile} hooks={hookData} onLogout={handleLogout} />;
   }
 
   return (
