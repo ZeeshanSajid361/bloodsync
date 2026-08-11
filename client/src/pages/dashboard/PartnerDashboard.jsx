@@ -184,14 +184,44 @@ export default function PartnerDashboard({ profile, hooks, onLogout }) {
   };
 
   return (
-    <div className="hospital-dash-layout">
-      {/* Sidebar Navigation */}
+    <div className="hospital-layout">
+      {/* Mobile Top Header */}
+      <header className="hospital-mobile-header">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontSize: '1.2rem' }}>🤝</span>
+          <span style={{ fontWeight: 700, color: '#f8fafc', fontSize: '0.95rem' }}>{org.name}</span>
+        </div>
+        <button className="btn btn-ghost btn-xs" onClick={onLogout} style={{ color: '#f43f5e' }}>
+          <LogOut size={14} /> Exit
+        </button>
+      </header>
+
+      {/* Mobile Tab Strip */}
+      <div className="hospital-mobile-tabs">
+        <button className={`hospital-mobile-tab ${activeTab === 'overview' ? 'active' : ''}`} onClick={() => setActiveTab('overview')}>
+          <Building2 size={14} /> Overview
+        </button>
+        <button className={`hospital-mobile-tab ${activeTab === 'drives' ? 'active' : ''}`} onClick={() => setActiveTab('drives')}>
+          <Calendar size={14} /> Drives
+        </button>
+        <button className={`hospital-mobile-tab ${activeTab === 'assisted' ? 'active' : ''}`} onClick={() => setActiveTab('assisted')}>
+          <HeartHandshake size={14} /> Assisted
+        </button>
+        <button className={`hospital-mobile-tab ${activeTab === 'history' ? 'active' : ''}`} onClick={() => setActiveTab('history')}>
+          <ClipboardList size={14} /> History
+        </button>
+        <button className={`hospital-mobile-tab ${activeTab === 'profile' ? 'active' : ''}`} onClick={() => setActiveTab('profile')}>
+          <ShieldCheck size={14} /> Profile
+        </button>
+      </div>
+
+      {/* Desktop Sidebar Navigation */}
       <aside className="hospital-sidebar">
         <div className="hospital-sidebar-brand">
-          <div className="brand-logo" style={{ background: 'linear-gradient(135deg, #2563eb, #1d4ed8)' }}>🤝</div>
-          <div className="brand-info">
-            <span className="brand-title">BloodSync</span>
-            <span className="brand-badge" style={{ background: 'rgba(37, 99, 235, 0.2)', color: '#60a5fa', border: '1px solid rgba(59, 130, 246, 0.3)' }}>Partner Portal</span>
+          <div className="brand-icon">🤝</div>
+          <div>
+            <div className="brand-name">BloodSync</div>
+            <div className="brand-role">Partner Portal</div>
           </div>
         </div>
 
@@ -205,29 +235,29 @@ export default function PartnerDashboard({ profile, hooks, onLogout }) {
         </div>
 
         <nav className="hospital-nav">
-          <button className={`nav-link ${activeTab === 'overview' ? 'active' : ''}`} onClick={() => setActiveTab('overview')}>
+          <button className={`hospital-nav-item ${activeTab === 'overview' ? 'active' : ''}`} onClick={() => setActiveTab('overview')}>
             <Building2 size={18} /> Overview
           </button>
 
-          <button className={`nav-link ${activeTab === 'drives' ? 'active' : ''}`} onClick={() => setActiveTab('drives')}>
+          <button className={`hospital-nav-item ${activeTab === 'drives' ? 'active' : ''}`} onClick={() => setActiveTab('drives')}>
             <Calendar size={18} /> Drives & Camps
           </button>
 
-          <button className={`nav-link ${activeTab === 'assisted' ? 'active' : ''}`} onClick={() => setActiveTab('assisted')}>
+          <button className={`hospital-nav-item ${activeTab === 'assisted' ? 'active' : ''}`} onClick={() => setActiveTab('assisted')}>
             <HeartHandshake size={18} /> Assisted Requests
           </button>
 
-          <button className={`nav-link ${activeTab === 'history' ? 'active' : ''}`} onClick={() => setActiveTab('history')}>
+          <button className={`hospital-nav-item ${activeTab === 'history' ? 'active' : ''}`} onClick={() => setActiveTab('history')}>
             <ClipboardList size={18} /> History Log
           </button>
 
-          <button className={`nav-link ${activeTab === 'profile' ? 'active' : ''}`} onClick={() => setActiveTab('profile')}>
+          <button className={`hospital-nav-item ${activeTab === 'profile' ? 'active' : ''}`} onClick={() => setActiveTab('profile')}>
             <ShieldCheck size={18} /> Profile & Verification
           </button>
         </nav>
 
         <div className="hospital-sidebar-footer">
-          <button className="nav-link nav-logout" onClick={onLogout}>
+          <button className="hospital-nav-item" style={{ color: '#f43f5e' }} onClick={onLogout}>
             <LogOut size={18} /> Sign Out
           </button>
         </div>
