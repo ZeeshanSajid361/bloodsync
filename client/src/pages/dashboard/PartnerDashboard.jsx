@@ -12,7 +12,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Building2, Calendar, Users, HeartHandshake, ClipboardList, Clock, MapPin, Phone, Mail,
-  Plus, CheckCircle2, AlertCircle, FileText, Upload, LogOut, Loader2, ExternalLink, X, ShieldCheck, ChevronRight
+  Plus, CheckCircle2, AlertCircle, FileText, Upload, LogOut, Loader2, ExternalLink, X, ShieldCheck, ChevronRight, Lock
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import PhoneInput from '../../components/PhoneInput';
@@ -190,6 +190,8 @@ export default function PartnerDashboard({ profile, hooks, onLogout }) {
     .toUpperCase()
     .slice(0, 2) || 'P';
 
+  const isApproved = org?.status === 'approved';
+
   const TABS = [
     { id: 'overview', label: 'Overview', icon: Building2 },
     { id: 'drives', label: 'Drives & Camps', icon: Calendar },
@@ -221,17 +223,36 @@ export default function PartnerDashboard({ profile, hooks, onLogout }) {
 
         <nav className="sidebar-nav">
           <div className="sidebar-nav-label">Navigation</div>
-          {TABS.map(({ id, label, icon: Icon }) => (
-            <button
-              key={id}
-              className={`sidebar-nav-link${activeTab === id ? ' active' : ''}`}
-              style={activeTab === id ? { background: 'rgba(21, 101, 192, 0.15)', color: 'var(--blue-300)' } : {}}
-              onClick={() => setActiveTab(id)}
-            >
-              <Icon size={20} />
-              <span>{label}</span>
-            </button>
-          ))}
+          {TABS.map(({ id, label, icon: Icon }) => {
+            const isLocked = !isApproved && id !== 'overview' && id !== 'profile';
+            return (
+              <button
+                key={id}
+                className={`sidebar-nav-link${activeTab === id ? ' active' : ''}`}
+                style={{
+                  ...(activeTab === id ? { background: 'rgba(21, 101, 192, 0.15)', color: 'var(--blue-300)' } : {}),
+                  ...(isLocked ? { opacity: 0.65 } : {})
+                }}
+                onClick={() => {
+                  if (isLocked) {
+                    toast.error('Feature locked until organization account is verified by Admin.', { id: 'lock-toast' });
+                  }
+                  setActiveTab(id);
+                }}
+              >
+                <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <Icon size={20} />
+                  {isLocked && (
+                    <div style={{ position: 'absolute', top: -3, right: -3, width: 7, height: 7, borderRadius: '50%', background: '#f59e0b', border: '1px solid #0f172a', pointerEvents: 'none' }} />
+                  )}
+                </div>
+                <span>
+                  <span style={{ flex: 1 }}>{label}</span>
+                  {isLocked && <Lock size={13} color="#f59e0b" style={{ marginLeft: 'auto', flexShrink: 0 }} />}
+                </span>
+              </button>
+            );
+          })}
         </nav>
 
         <div className="sidebar-footer">
@@ -283,6 +304,18 @@ export default function PartnerDashboard({ profile, hooks, onLogout }) {
         {/* TAB 1: OVERVIEW */}
         {activeTab === 'overview' && (
           <div>
+            {!isApproved && (
+              <div className="pending-banner" style={{ marginBottom: 24, border: '1px solid rgba(245, 158, 11, 0.3)', background: 'rgba(245, 158, 11, 0.1)', padding: '14px 18px', borderRadius: 12, display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+                <AlertCircle size={22} color="#f59e0b" style={{ flexShrink: 0, marginTop: 2 }} />
+                <div>
+                  <h4 style={{ margin: '0 0 4px 0', color: '#f59e0b', fontSize: '0.95rem', fontWeight: 700 }}>Account Awaiting Admin Verification</h4>
+                  <p style={{ margin: 0, fontSize: '0.85rem', color: '#cbd5e1', lineHeight: 1.5 }}>
+                    Your partner organization registration is currently under review by System Administrators. Campaign creation and assisted patient requests will unlock immediately once approved.
+                  </p>
+                </div>
+              </div>
+            )}
+
             <div className="hospital-stats" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', marginBottom: 24 }}>
               <div className="hospital-stat-card">
                 <div className="stat-label">Active Drives</div>
@@ -315,7 +348,14 @@ export default function PartnerDashboard({ profile, hooks, onLogout }) {
                 <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: 16 }}>
                   Host a blood donation drive at a university, college, community center, or office. Donors can RSVP directly from their mobile app.
                 </p>
-                <button className="btn btn-primary btn-sm" onClick={() => { setActiveTab('drives'); setShowDriveModal(true); }}>
+                <button className="btn btn-primary btn-sm" onClick={() => {
+                  if (!isApproved) {
+                    toast.error('Feature locked until organization account is approved by Admin.');
+                    return;
+                  }
+                  setActiveTab('drives');
+                  setShowDriveModal(true);
+                }}>
                   <Plus size={16} /> Create Donation Camp
                 </button>
               </div>
@@ -327,13 +367,57 @@ export default function PartnerDashboard({ profile, hooks, onLogout }) {
                 <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: 16 }}>
                   Submit an urgent blood request on behalf of an elderly, rural, or non-smartphone user. Admin reviews and dispatches nearby donors.
                 </p>
-                <button className="btn btn-primary btn-sm" style={{ background: '#f43f5e', borderColor: '#f43f5e' }} onClick={() => { setActiveTab('assisted'); setShowRequestModal(true); }}>
+                <button className="btn btn-primary btn-sm" style={{ background: '#f43f5e', borderColor: '#f43f5e' }} onClick={() => {
+                  if (!isApproved) {
+                    toast.error('Feature locked until organization account is approved by Admin.');
+                    return;
+                  }
+                  setActiveTab('assisted');
+                  setShowRequestModal(true);
+                }}>
                   <Plus size={16} /> Submit Assisted Request
                 </button>
               </div>
             </div>
           </div>
         )}
+
+        {!isApproved && activeTab !== 'overview' && activeTab !== 'profile' ? (
+          <div 
+            className="card animate-fade-up" 
+            style={{ 
+              padding: 'clamp(24px, 5vw, 48px) clamp(16px, 4vw, 36px)', 
+              textAlign: 'center', 
+              background: 'linear-gradient(145deg, rgba(15, 23, 42, 0.9), rgba(30, 41, 59, 0.6))', 
+              border: '1px solid rgba(245, 158, 11, 0.3)', 
+              marginTop: 16, 
+              borderRadius: 20,
+              maxWidth: 620,
+              margin: '20px auto 0',
+              boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center'
+            }}
+          >
+            <div style={{ width: 60, height: 60, borderRadius: '50%', background: 'rgba(245, 158, 11, 0.15)', border: '1px solid rgba(245, 158, 11, 0.3)', display: 'grid', placeItems: 'center', marginBottom: 20, boxShadow: '0 0 25px rgba(245, 158, 11, 0.2)' }}>
+              <Lock size={28} color="#f59e0b" />
+            </div>
+            <h3 style={{ fontSize: 'clamp(1.1rem, 3.5vw, 1.35rem)', fontWeight: 800, color: '#f8fafc', marginBottom: 10 }}>
+              Feature Locked — Awaiting Admin Verification
+            </h3>
+            <p style={{ color: 'var(--text-muted)', maxWidth: 480, margin: '0 auto 20px', fontSize: '0.88rem', lineHeight: 1.6 }}>
+              Donation Camp Creation, Assisted Patient Requests, and Activity Logs will automatically unlock once an Administrator verifies and approves your partner organization registration.
+            </p>
+            <div className="badge badge-amber" style={{ fontSize: '0.82rem', padding: '8px 18px', borderRadius: 20, letterSpacing: '0.04em', marginBottom: 20 }}>
+              STATUS: {org?.status === 'pending' ? '⏳ UNDER ADMIN REVIEW' : '❌ REGISTRATION REJECTED'}
+            </div>
+            <button className="btn btn-primary btn-sm" onClick={() => setActiveTab('profile')}>
+              View / Complete Registration Profile
+            </button>
+          </div>
+        ) : (
+          <>
 
         {/* TAB 2: DRIVES & CAMPS */}
         {activeTab === 'drives' && (
@@ -545,6 +629,8 @@ export default function PartnerDashboard({ profile, hooks, onLogout }) {
               </button>
             </form>
           </div>
+        )}
+        </>
         )}
         </main>
       </div>
