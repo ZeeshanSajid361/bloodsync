@@ -898,6 +898,12 @@ function ProfileTab({ profile, hooks }) {
               <div style={{ background: '#1e293b', padding: 12, borderRadius: 8 }}>
                 <div style={{ color: '#60a5fa', fontWeight: 700, fontSize: '0.82rem', marginBottom: 4 }}>2. Fulfill Request via API</div>
                 <code style={{ fontSize: '0.78rem', color: '#f8fafc', display: 'block' }}>POST /api/hospitals/requests/:id/fulfill-api</code>
+                <pre style={{ background: '#0f172a', padding: 8, borderRadius: 6, fontSize: '0.75rem', color: '#cbd5e1', marginTop: 6, margin: 0 }}>
+{`{
+  "unitsDelivered": 1,
+  "notes": "EMN counter check-in"
+}`}
+                </pre>
               </div>
             </div>
 
