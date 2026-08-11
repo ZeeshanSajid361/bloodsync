@@ -83,24 +83,24 @@ app.use((req, res, next) => {
 });
 
 // ── Health check ──────────────────────────────────────────────────────────────
-app.get('/health', (_req, res) => {
+app.get(['/api/health', '/health'], (_req, res) => {
   res.status(200).json({ success: true, message: 'BloodSync API is running.' });
 });
 
 // ── API routes ────────────────────────────────────────────────────────────────
 // Skip auth rate limiter for OPTIONS preflight on auth routes.
-app.use('/api/auth', (req, res, next) => {
+app.use(['/api/auth', '/auth'], (req, res, next) => {
   if (req.method === 'OPTIONS') return next();
   return authLimiter(req, res, next);
 }, authRouter);
-app.use('/api/donors',         donorRouter);
-app.use('/api/seekers',        seekerRouter);
-app.use('/api/hospitals',      hospitalRouter);
-app.use('/api/admin',          adminRouter);
-app.use('/api/notifications',  notificationRouter);
-app.use('/api/qr',             qrRouter);
-app.use('/api/docs',           docsRouter);
-app.use('/api/partners',       partnerRouter);
+app.use(['/api/donors', '/donors'],         donorRouter);
+app.use(['/api/seekers', '/seekers'],        seekerRouter);
+app.use(['/api/hospitals', '/hospitals'],      hospitalRouter);
+app.use(['/api/admin', '/admin'],          adminRouter);
+app.use(['/api/notifications', '/notifications'],  notificationRouter);
+app.use(['/api/qr', '/qr'],             qrRouter);
+app.use(['/api/docs', '/docs'],           docsRouter);
+app.use(['/api/partners', '/partners'],       partnerRouter);
 
 // ── 404 and error handling ────────────────────────────────────────────────────
 // Order matters: notFound must come before errorHandler.
