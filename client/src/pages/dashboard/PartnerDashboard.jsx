@@ -638,9 +638,11 @@ export default function PartnerDashboard({ profile, hooks, onLogout }) {
       {/* CREATE DRIVE MODAL */}
       {showDriveModal && (
         <div className="code-red-overlay" onClick={() => setShowDriveModal(false)}>
-          <div className="code-red-modal" style={{ maxWidth: 520 }} onClick={e => e.stopPropagation()}>
+          <div className="code-red-modal" style={{ maxWidth: 580, width: '100%' }} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-              <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#fff' }}>🎪 Create Blood Donation Camp</h3>
+              <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#fff', display: 'flex', alignItems: 'center', gap: 8 }}>
+                🎪 Create Blood Donation Camp
+              </h3>
               <button className="btn btn-ghost btn-sm" onClick={() => setShowDriveModal(false)}><X size={18} /></button>
             </div>
 
@@ -661,12 +663,46 @@ export default function PartnerDashboard({ profile, hooks, onLogout }) {
                 </div>
               </div>
 
-              <div className="input-group" style={{ marginBottom: 12 }}>
-                <label className="input-label">Camp Location Address</label>
-                <input className="input" placeholder="e.g. Main Auditorium, Sector H-12, Islamabad" value={driveForm.address} onChange={e => setDriveForm(p => ({ ...p, address: e.target.value }))} />
+              <div className="profile-form-grid" style={{ marginBottom: 12 }}>
+                <div className="input-group">
+                  <label className="input-label">Start Time</label>
+                  <input className="input" placeholder="e.g. 09:00 AM" value={driveForm.startTime} onChange={e => setDriveForm(p => ({ ...p, startTime: e.target.value }))} />
+                </div>
+                <div className="input-group">
+                  <label className="input-label">End Time</label>
+                  <input className="input" placeholder="e.g. 05:00 PM" value={driveForm.endTime} onChange={e => setDriveForm(p => ({ ...p, endTime: e.target.value }))} />
+                </div>
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 20 }}>
+              <div className="profile-form-grid" style={{ marginBottom: 12 }}>
+                <div className="input-group">
+                  <label className="input-label">Target Units / Turnout Goal 🎯</label>
+                  <input type="number" min="1" className="input" placeholder="e.g. 50" value={driveForm.expectedTurnout} onChange={e => setDriveForm(p => ({ ...p, expectedTurnout: parseInt(e.target.value) || 0 }))} />
+                </div>
+                <div className="input-group">
+                  <label className="input-label">Exact Map Location Pin</label>
+                  <button type="button" className="btn btn-secondary btn-sm" style={{ width: '100%', height: 42, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, background: driveForm.latitude ? 'rgba(16, 185, 129, 0.15)' : undefined, borderColor: driveForm.latitude ? '#10b981' : undefined, color: driveForm.latitude ? '#34d399' : undefined }} onClick={() => setShowDriveMapPicker(true)}>
+                    <MapPin size={16} /> {driveForm.latitude ? '📍 Map Location Pinned' : '📍 Pin Location on Map'}
+                  </button>
+                </div>
+              </div>
+
+              <div className="input-group" style={{ marginBottom: 12 }}>
+                <label className="input-label">Camp Location Address *</label>
+                <input className="input" placeholder="e.g. Main Auditorium, Sector H-12, Islamabad" value={driveForm.address} onChange={e => setDriveForm(p => ({ ...p, address: e.target.value }))} required />
+              </div>
+
+              <div className="input-group" style={{ marginBottom: 12 }}>
+                <label className="input-label">Google Maps Link / URL (Optional)</label>
+                <input className="input" placeholder="https://maps.google.com/?q=..." value={driveForm.mapsUrl} onChange={e => setDriveForm(p => ({ ...p, mapsUrl: e.target.value }))} />
+              </div>
+
+              <div className="input-group" style={{ marginBottom: 14 }}>
+                <label className="input-label">Camp Description & Special Instructions</label>
+                <textarea className="input" rows={2} placeholder="e.g. Bring CNIC. Refreshments provided for all blood donors." value={driveForm.description} onChange={e => setDriveForm(p => ({ ...p, description: e.target.value }))} />
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 16 }}>
                 <button type="button" className="btn btn-ghost btn-sm" onClick={() => setShowDriveModal(false)}>Cancel</button>
                 <button type="submit" className="btn btn-primary btn-sm" disabled={savingDrive}>
                   {savingDrive ? <Loader2 size={16} className="spin" /> : 'Publish Camp'}
@@ -676,6 +712,29 @@ export default function PartnerDashboard({ profile, hooks, onLogout }) {
           </div>
         </div>
       )}
+
+      {/* DRIVE LOCATION PICKER MODAL */}
+      <LocationPickerModal
+        isOpen={showDriveMapPicker}
+        onClose={() => setShowDriveMapPicker(false)}
+        onSelectLocation={(loc) => {
+          setDriveForm(p => ({
+            ...p,
+            address: loc.address || p.address,
+            city: loc.city || p.city,
+            mapsUrl: loc.mapsUrl || `https://maps.google.com/?q=${loc.latitude},${loc.longitude}`,
+            latitude: loc.latitude,
+            longitude: loc.longitude,
+          }));
+          setShowDriveMapPicker(false);
+        }}
+        initialLocation={{
+          latitude: driveForm.latitude,
+          longitude: driveForm.longitude,
+          address: driveForm.address,
+          city: driveForm.city,
+        }}
+      />
 
       {/* CREATE ASSISTED REQUEST MODAL */}
       {showRequestModal && (
