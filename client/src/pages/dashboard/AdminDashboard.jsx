@@ -187,7 +187,9 @@ function HospitalsTab({ admin }) {
     try {
       const res = await approveHospital(modal.org._id, note);
       setModal(null);
-      setApiKeyInfo({ key: res.data.apiKey, name: modal.org.name });
+      if (res.data?.apiKey) {
+        setApiKeyInfo({ key: res.data.apiKey, name: modal.org.name });
+      }
       fetchHospitals(filter);
     } catch (err) {
       alert(err.response?.data?.message || 'Action failed.');
@@ -206,7 +208,7 @@ function HospitalsTab({ admin }) {
   }
 
   async function handleRevoke(org) {
-    if (!window.confirm(`Revoke API key for ${org.name}?`)) return;
+    if (!window.confirm(`Revoke EMN API key for ${org.name}?`)) return;
     try {
       await revokeApiKey(org._id);
       fetchHospitals(filter);
@@ -234,14 +236,19 @@ function HospitalsTab({ admin }) {
         {loading
           ? <div style={{ padding: 'var(--space-8)', textAlign: 'center' }}><Loader2 size={22} className="spin" /></div>
           : <table className="admin-table">
-              <thead><tr><th>Name</th><th>Type</th><th>City</th><th>Owner</th><th>Document</th><th>Status</th><th>Actions</th></tr></thead>
+              <thead><tr><th>Name</th><th>Type</th><th>City</th><th>Owner</th><th>Document</th><th>API Key (EMN)</th><th>Status</th><th>Actions</th></tr></thead>
               <tbody>
                 {hospitals.orgs.length === 0
-                  ? <tr><td colSpan={7} className="admin-empty">No organisations found.</td></tr>
+                  ? <tr><td colSpan={8} className="admin-empty">No organisations found.</td></tr>
                   : hospitals.orgs.map(org => (
                       <tr key={org._id}>
                         <td style={{ fontWeight: 600 }}>{org.name}</td>
-                        <td><span className="badge badge-blue" style={{ fontSize: '0.7rem' }}>{org.type}</span></td>
+                        <td>
+                          {org.type === 'api_hospital' && <span className="badge badge-blue" style={{ fontSize: '0.7rem' }}>EMN API</span>}
+                          {org.type === 'web_hospital' && <span className="badge badge-gray" style={{ fontSize: '0.7rem' }}>Web Hospital</span>}
+                          {org.type === 'partner' && <span className="badge badge-purple" style={{ fontSize: '0.7rem', background: 'rgba(168, 85, 247, 0.15)', color: '#c084fc', border: '1px solid rgba(168, 85, 247, 0.3)' }}>Partner</span>}
+                          {!['api_hospital', 'web_hospital', 'partner'].includes(org.type) && <span className="badge badge-blue" style={{ fontSize: '0.7rem' }}>{org.type}</span>}
+                        </td>
                         <td style={{ color: 'var(--text-secondary)' }}>{org.address?.city || '—'}</td>
                         <td style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
                           {org.owner?.name}<br /><span style={{ color: 'var(--text-muted)' }}>{org.owner?.email}</span>
@@ -263,6 +270,19 @@ function HospitalsTab({ admin }) {
                           }
                         </td>
                         <td>
+                          {org.type === 'api_hospital' ? (
+                            org.apiKeyPrefix ? (
+                              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: '#60a5fa', background: 'rgba(37, 99, 235, 0.1)', padding: '2px 8px', borderRadius: 4, border: '1px solid rgba(59, 130, 246, 0.2)' }}>
+                                🔑 {org.apiKeyPrefix}
+                              </span>
+                            ) : (
+                              <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>Revoked / Pending</span>
+                            )
+                          ) : (
+                            <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>— (Web Access)</span>
+                          )}
+                        </td>
+                        <td>
                           <span className={`badge badge-${org.status==='approved'?'green':org.status==='rejected'?'red':'amber'}`}>
                             {org.status}
                           </span>
@@ -278,9 +298,13 @@ function HospitalsTab({ admin }) {
                               </button>
                             </>}
                             {org.status === 'approved' && (
-                              <button className="btn btn-ghost btn-sm" style={{ padding: '4px 10px', color: 'var(--red-400)' }} onClick={() => handleRevoke(org)}>
-                                <Key size={13} /> Revoke Key
-                              </button>
+                              org.type === 'api_hospital' ? (
+                                <button className="btn btn-ghost btn-sm" style={{ padding: '4px 10px', color: 'var(--red-400)' }} onClick={() => handleRevoke(org)}>
+                                  <Key size={13} /> Revoke EMN Key
+                                </button>
+                              ) : (
+                                <span style={{ color: '#34d399', fontSize: '0.78rem', fontWeight: 600 }}>✓ Verified</span>
+                              )
                             )}
                           </div>
                         </td>
@@ -295,7 +319,11 @@ function HospitalsTab({ admin }) {
       {modal?.type === 'approve' && (
         <NoteModal
           title={`Approve "${modal.org.name}"`}
-          description="This will activate the account and issue an API key. The key is shown once."
+          description={
+            modal.org.type === 'api_hospital'
+              ? 'This will activate the EMN hospital account and issue a machine-to-machine API key.'
+              : 'This will activate the organisation account for web portal access.'
+          }
           onConfirm={handleApprove} onClose={() => setModal(null)} loading={acting}
         />
       )}

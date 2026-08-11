@@ -103,13 +103,17 @@ router.patch('/hospitals/:id/approve', async (req, res, next) => {
       return res.status(409).json({ success: false, message: 'Organisation is already approved.' });
     }
 
-    const { rawKey, hash } = await generateApiKey();
+    let rawKey = null;
+    if (org.type === 'api_hospital') {
+      const apiRes = await generateApiKey();
+      rawKey = apiRes.rawKey;
+      org.apiKeyHash = apiRes.hash;
+      org.apiKeyPrefix = `${rawKey.slice(0, 10)}...${rawKey.slice(-4)}`;
+    }
 
-    org.status       = 'approved';
-    org.approvedAt   = new Date();
-    org.adminNote    = req.body.note || undefined;
-    org.apiKeyHash   = hash;
-    org.apiKeyPrefix = `${rawKey.slice(0, 10)}...${rawKey.slice(-4)}`;
+    org.status     = 'approved';
+    org.approvedAt = new Date();
+    org.adminNote  = req.body.note || undefined;
 
     await org.save();
 
@@ -118,18 +122,18 @@ router.patch('/hospitals/:id/approve', async (req, res, next) => {
       await notifyUser({
         userId:  org.owner,
         type:    'system',
-        title:   'Hospital Approved 🎉',
-        message: `Hospital "${org.name}" approved.${noteMsg}`,
+        title:   'Organisation Approved 🎉',
+        message: `Organisation "${org.name}" approved.${noteMsg}`,
         link:    '/dashboard/hospital',
       }).catch(e => console.error('[admin] Approval notification error:', e));
     }
 
     res.json({
       success: true,
-      message: 'Organisation approved and API key issued.',
+      message: rawKey ? 'EMN Organisation approved and API key issued.' : 'Organisation approved successfully.',
       data: {
         org,
-        apiKey: rawKey, // shown ONCE — admin must copy this for the hospital
+        apiKey: rawKey, // shown ONCE for api_hospital, null otherwise
       },
     });
   } catch (err) {
