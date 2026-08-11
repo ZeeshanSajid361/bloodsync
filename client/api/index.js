@@ -14,8 +14,8 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const { connectDB } = require('../../server/src/config/db');
-    const app = require('../../server/src/app');
+    const { connectDB } = require('./src/config/db');
+    const app = require('./src/app');
     await connectDB();
     return app(req, res);
   } catch (err) {
