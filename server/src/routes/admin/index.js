@@ -192,9 +192,43 @@ router.post('/hospitals/:id/revoke-key', async (req, res, next) => {
     if (!org.apiKeyHash) return res.status(400).json({ success: false, message: 'No active API key to revoke.' });
 
     org.apiKeyHash = undefined;
+    org.apiKeyPrefix = undefined;
     await org.save();
 
     res.json({ success: true, message: 'API key revoked. The hospital can no longer use /inventory/sync.' });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * POST /api/admin/hospitals/:id/regenerate-key
+ *
+ * Generates a new API key for an approved EMN hospital and returns the raw key.
+ */
+router.post('/hospitals/:id/regenerate-key', async (req, res, next) => {
+  try {
+    if (!validateId(req, res)) return;
+
+    const org = await Organization.findById(req.params.id);
+    if (!org) return res.status(404).json({ success: false, message: 'Organisation not found.' });
+    if (org.type !== 'api_hospital') {
+      return res.status(400).json({ success: false, message: 'Only EMN API Hospitals support API key generation.' });
+    }
+
+    const { rawKey, hash } = await generateApiKey();
+    org.apiKeyHash   = hash;
+    org.apiKeyPrefix = `${rawKey.slice(0, 10)}...${rawKey.slice(-4)}`;
+    await org.save();
+
+    res.json({
+      success: true,
+      message: 'New API key generated successfully.',
+      data: {
+        org,
+        apiKey: rawKey,
+      },
+    });
   } catch (err) {
     next(err);
   }

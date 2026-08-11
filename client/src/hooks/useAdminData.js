@@ -91,6 +91,11 @@ export default function useAdminData() {
     return data;
   }
 
+  async function regenerateApiKey(id) {
+    const { data } = await api.post(`/admin/hospitals/${id}/regenerate-key`);
+    return data;
+  }
+
   /* ── Request mutations ─────────────────────────────────────────────────── */
 
   async function approveRequest(id, note = '') {
@@ -124,7 +129,7 @@ export default function useAdminData() {
     analytics, hospitals, requests, users,
     loading, error,
     fetchAnalytics, fetchHospitals, fetchRequests, fetchUsers,
-    approveHospital, rejectHospital, revokeApiKey,
+    approveHospital, rejectHospital, revokeApiKey, regenerateApiKey,
     approveRequest, rejectRequest, fulfillRequest,
     toggleBlock, deleteUser,
   };

@@ -174,7 +174,7 @@ function OverviewTab({ admin }) {
 
 /* ══ HOSPITALS TAB ═══════════════════════════════════════════════════════ */
 function HospitalsTab({ admin }) {
-  const { fetchHospitals, hospitals, approveHospital, rejectHospital, revokeApiKey, loading } = admin;
+  const { fetchHospitals, hospitals, approveHospital, rejectHospital, revokeApiKey, regenerateApiKey, loading } = admin;
   const [filter,    setFilter]    = useState('pending');
   const [modal,     setModal]     = useState(null); // { type, org }
   const [apiKeyInfo, setApiKeyInfo] = useState(null);
@@ -215,6 +215,18 @@ function HospitalsTab({ admin }) {
     } catch (err) {
       alert(err.response?.data?.message || 'Failed to revoke key.');
     }
+  }
+
+  async function handleRegenerate(org) {
+    if (!window.confirm(`Generate a new API key for EMN Hospital "${org.name}"? The previous key will stop working immediately.`)) return;
+    setActing(true);
+    try {
+      const res = await regenerateApiKey(org._id);
+      setApiKeyInfo({ key: res.data.apiKey, name: org.name });
+      fetchHospitals(filter);
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to generate new key.');
+    } finally { setActing(false); }
   }
 
   const STATUS_FILTERS = ['pending', 'approved', 'rejected', ''];
@@ -272,11 +284,23 @@ function HospitalsTab({ admin }) {
                         <td>
                           {org.type === 'api_hospital' ? (
                             org.apiKeyPrefix ? (
-                              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: '#60a5fa', background: 'rgba(37, 99, 235, 0.1)', padding: '2px 8px', borderRadius: 4, border: '1px solid rgba(59, 130, 246, 0.2)' }}>
-                                🔑 {org.apiKeyPrefix}
-                              </span>
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-start' }}>
+                                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: '#60a5fa', background: 'rgba(37, 99, 235, 0.12)', padding: '2px 8px', borderRadius: 4, border: '1px solid rgba(59, 130, 246, 0.3)' }} title="Active key prefix">
+                                  🔑 {org.apiKeyPrefix}
+                                </span>
+                                <button className="btn btn-ghost btn-sm" style={{ fontSize: '0.7rem', padding: '1px 6px', color: '#38bdf8' }} onClick={() => handleRegenerate(org)}>
+                                  🔄 Regenerate Key
+                                </button>
+                              </div>
                             ) : (
-                              <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>Revoked / Pending</span>
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-start' }}>
+                                <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>No Active Key</span>
+                                {org.status === 'approved' && (
+                                  <button className="btn btn-secondary btn-sm" style={{ fontSize: '0.7rem', padding: '1px 6px' }} onClick={() => handleRegenerate(org)}>
+                                    🔑 Generate Key
+                                  </button>
+                                )}
+                              </div>
                             )
                           ) : (
                             <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>— (Web Access)</span>
