@@ -183,88 +183,88 @@ export default function PartnerDashboard({ profile, hooks, onLogout }) {
     });
   };
 
+  const initials = org?.name
+    ?.split(' ')
+    .map((w) => w[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2) || 'P';
+
+  const TABS = [
+    { id: 'overview', label: 'Overview', icon: Building2 },
+    { id: 'drives', label: 'Drives & Camps', icon: Calendar },
+    { id: 'assisted', label: 'Assisted Requests', icon: HeartHandshake },
+    { id: 'history', label: 'History Log', icon: ClipboardList },
+    { id: 'profile', label: 'Profile & Verification', icon: ShieldCheck },
+  ];
+
   return (
-    <div className="hospital-layout">
-      {/* Mobile Top Header */}
-      <header className="hospital-mobile-header">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontSize: '1.2rem' }}>🤝</span>
-          <span style={{ fontWeight: 700, color: '#f8fafc', fontSize: '0.95rem' }}>{org.name}</span>
-        </div>
-        <button className="btn btn-ghost btn-xs" onClick={onLogout} style={{ color: '#f43f5e' }}>
-          <LogOut size={14} /> Exit
-        </button>
-      </header>
+    <div className="dashboard-shell">
+      {/* ── Desktop Collapsible Sidebar (72px → 250px on hover) ── */}
+      <aside className="sidebar">
+        <a href="/" className="sidebar-logo">
+          <div className="sidebar-logo-icon" style={{ background: 'linear-gradient(135deg, var(--blue-600), var(--blue-800))' }}>
+            <Building2 size={18} color="#fff" />
+          </div>
+          <span className="sidebar-logo-text">Blood<span>Sync</span></span>
+        </a>
 
-      {/* Mobile Tab Strip */}
-      <div className="hospital-mobile-tabs">
-        <button className={`hospital-mobile-tab ${activeTab === 'overview' ? 'active' : ''}`} onClick={() => setActiveTab('overview')}>
-          <Building2 size={14} /> Overview
-        </button>
-        <button className={`hospital-mobile-tab ${activeTab === 'drives' ? 'active' : ''}`} onClick={() => setActiveTab('drives')}>
-          <Calendar size={14} /> Drives
-        </button>
-        <button className={`hospital-mobile-tab ${activeTab === 'assisted' ? 'active' : ''}`} onClick={() => setActiveTab('assisted')}>
-          <HeartHandshake size={14} /> Assisted
-        </button>
-        <button className={`hospital-mobile-tab ${activeTab === 'history' ? 'active' : ''}`} onClick={() => setActiveTab('history')}>
-          <ClipboardList size={14} /> History
-        </button>
-        <button className={`hospital-mobile-tab ${activeTab === 'profile' ? 'active' : ''}`} onClick={() => setActiveTab('profile')}>
-          <ShieldCheck size={14} /> Profile
-        </button>
-      </div>
-
-      {/* Desktop Sidebar Navigation */}
-      <aside className="hospital-sidebar">
-        <div className="hospital-sidebar-brand">
-          <div className="brand-icon">🤝</div>
-          <div>
-            <div className="brand-name">BloodSync</div>
-            <div className="brand-role">Partner Portal</div>
+        <div className="sidebar-user" onClick={() => setActiveTab('profile')} style={{ cursor: 'pointer' }}>
+          <div className="sidebar-user-card">
+            <div className="sidebar-avatar" style={{ background: 'linear-gradient(135deg, var(--blue-600), var(--blue-900))' }}>{initials}</div>
+            <div className="sidebar-user-info">
+              <div className="sidebar-user-name">{org?.name}</div>
+              <div className="sidebar-user-role">Partner Organisation</div>
+            </div>
           </div>
         </div>
 
-        <div style={{ padding: '12px 16px', margin: '0 12px 16px 12px', background: 'rgba(30, 41, 59, 0.6)', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '12px' }}>
-          <div style={{ fontWeight: 700, fontSize: '0.9rem', color: '#f8fafc', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {org.name}
-          </div>
-          <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: 2 }}>
-            🤝 Humanitarian Partner
-          </div>
-        </div>
-
-        <nav className="hospital-nav">
-          <button className={`hospital-nav-item ${activeTab === 'overview' ? 'active' : ''}`} onClick={() => setActiveTab('overview')}>
-            <Building2 size={18} /> Overview
-          </button>
-
-          <button className={`hospital-nav-item ${activeTab === 'drives' ? 'active' : ''}`} onClick={() => setActiveTab('drives')}>
-            <Calendar size={18} /> Drives & Camps
-          </button>
-
-          <button className={`hospital-nav-item ${activeTab === 'assisted' ? 'active' : ''}`} onClick={() => setActiveTab('assisted')}>
-            <HeartHandshake size={18} /> Assisted Requests
-          </button>
-
-          <button className={`hospital-nav-item ${activeTab === 'history' ? 'active' : ''}`} onClick={() => setActiveTab('history')}>
-            <ClipboardList size={18} /> History Log
-          </button>
-
-          <button className={`hospital-nav-item ${activeTab === 'profile' ? 'active' : ''}`} onClick={() => setActiveTab('profile')}>
-            <ShieldCheck size={18} /> Profile & Verification
-          </button>
+        <nav className="sidebar-nav">
+          <div className="sidebar-nav-label">Navigation</div>
+          {TABS.map(({ id, label, icon: Icon }) => (
+            <button
+              key={id}
+              className={`sidebar-nav-link${activeTab === id ? ' active' : ''}`}
+              style={activeTab === id ? { background: 'rgba(21, 101, 192, 0.15)', color: 'var(--blue-300)' } : {}}
+              onClick={() => setActiveTab(id)}
+            >
+              <Icon size={20} />
+              <span>{label}</span>
+            </button>
+          ))}
         </nav>
 
-        <div className="hospital-sidebar-footer">
-          <button className="hospital-nav-item" style={{ color: '#f43f5e' }} onClick={onLogout}>
-            <LogOut size={18} /> Sign Out
+        <div className="sidebar-footer">
+          <button className="sidebar-nav-link" onClick={onLogout} style={{ color: 'var(--red-400)' }}>
+            <LogOut size={20} />
+            <span>Sign out</span>
           </button>
         </div>
       </aside>
 
-      {/* Main Content Area */}
-      <main className="hospital-main">
+      {/* ── Main Content Wrapper (Adjusts layout smoothly on hover expansion) ── */}
+      <div className="dashboard-main-wrapper">
+        {/* Mobile Sticky Top Header */}
+        <header className="mobile-header">
+          <div className="mobile-header-logo">
+            <div className="mobile-header-logo-icon" style={{ background: 'linear-gradient(135deg, var(--blue-600), var(--blue-800))' }}>
+              <Building2 size={16} color="#fff" />
+            </div>
+            <div className="mobile-header-title">{org?.name || 'Partner'}</div>
+          </div>
+
+          <button
+            className="user-avatar-pill"
+            style={{ background: 'linear-gradient(135deg, var(--blue-600), var(--blue-900))' }}
+            onClick={() => setActiveTab('profile')}
+            aria-label="View partner profile"
+          >
+            {initials}
+          </button>
+        </header>
+
+        {/* Main Content Area */}
+        <main className="dashboard-main">
         <header className="hospital-header" style={{ marginBottom: 24 }}>
           <div>
             <h1 className="page-title" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -546,7 +546,8 @@ export default function PartnerDashboard({ profile, hooks, onLogout }) {
             </form>
           </div>
         )}
-      </main>
+        </main>
+      </div>
 
       {/* CREATE DRIVE MODAL */}
       {showDriveModal && (
@@ -665,6 +666,20 @@ export default function PartnerDashboard({ profile, hooks, onLogout }) {
           </div>
         </div>
       )}
+
+      {/* Mobile Bottom Navigation Bar */}
+      <nav className="mobile-bottom-nav">
+        {TABS.map(({ id, label, icon: Icon }) => (
+          <button
+            key={id}
+            className={`mobile-bottom-nav-item${activeTab === id ? ' active' : ''}`}
+            onClick={() => setActiveTab(id)}
+          >
+            <Icon size={20} />
+            <span>{label.split(' ')[0]}</span>
+          </button>
+        ))}
+      </nav>
     </div>
   );
 }
