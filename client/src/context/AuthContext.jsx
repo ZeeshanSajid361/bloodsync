@@ -45,6 +45,9 @@ export function AuthProvider({ children }) {
     localStorage.removeItem('user');
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
+    localStorage.removeItem('bloodsync_donor_profile_cache');
+    localStorage.removeItem('bloodsync_hospital_profile_cache');
+    localStorage.removeItem('bloodsync_seeker_requests_cache');
     setUser(null);
   }, []);
 

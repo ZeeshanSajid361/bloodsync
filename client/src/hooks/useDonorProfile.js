@@ -1,31 +1,48 @@
 /**
- * Custom hook — donor dashboard data.
+ * Custom hook — donor dashboard data with Stale-While-Revalidate (SWR) caching.
  *
- * Fetches GET /api/donors/me on mount and after any mutation that calls
- * the `refetch` function. Exposes loading, error, and the full donor data
- * object (profile + eligibility + level) in one place so the dashboard
- * components stay free of fetch logic.
+ * Loads cached donor data instantly from localStorage (0ms render time)
+ * while fetching fresh profile data from GET /api/donors/me in the background.
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import api from '../lib/api';
 
+const CACHE_KEY = 'bloodsync_donor_profile_cache';
+
 export function useDonorProfile() {
-  const [donor,   setDonor]   = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [donor, setDonor] = useState(() => {
+    try {
+      const cached = localStorage.getItem(CACHE_KEY);
+      return cached ? JSON.parse(cached) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  const donorRef = useRef(donor);
+  donorRef.current = donor;
+
+  const [loading, setLoading] = useState(() => !donor);
   const [error,   setError]   = useState('');
 
   const fetch = useCallback(async (isSilent = false) => {
-    if (!isSilent) setLoading(true);
+    // Only show full loading skeleton if we have no cached data at all
+    if (!isSilent && !donorRef.current) {
+      setLoading(true);
+    }
     try {
       const { data } = await api.get('/donors/me');
       setDonor(data.data);
+      localStorage.setItem(CACHE_KEY, JSON.stringify(data.data));
       setError('');
     } catch (err) {
       console.error('Failed to load donor profile:', err);
-      setError(err.response?.data?.message || 'Failed to load donor profile.');
+      if (!donorRef.current) {
+        setError(err.response?.data?.message || 'Failed to load donor profile.');
+      }
     } finally {
-      if (!isSilent) setLoading(false);
+      setLoading(false);
     }
   }, []);
 
@@ -33,3 +50,4 @@ export function useDonorProfile() {
 
   return { donor, loading, error, refetch: fetch };
 }
+

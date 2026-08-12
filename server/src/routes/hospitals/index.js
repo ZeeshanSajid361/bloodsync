@@ -349,6 +349,13 @@ router.get(
   requireOrg,
   async (req, res, next) => {
     try {
+      const cache = require('../../utils/cache');
+      const cacheKey = `hosp_me_${req.org._id}`;
+      const cached = cache.get(cacheKey);
+      if (cached) {
+        return res.json({ success: true, data: cached });
+      }
+
       const inventory = await Inventory.find({ hospital: req.org._id }).lean();
 
       // Clean up expired Code Red flags on read — no cron needed.
@@ -359,12 +366,12 @@ router.get(
         }
       });
 
+      const responseData = { org: req.org, inventory };
+      cache.set(cacheKey, responseData, 15);
+
       res.json({
         success: true,
-        data: {
-          org: req.org,
-          inventory,
-        },
+        data: responseData,
       });
 
     } catch (err) {
@@ -453,6 +460,13 @@ router.post(
  */
 router.get('/directory', async (req, res, next) => {
   try {
+    const cache = require('../../utils/cache');
+    const cacheKey = `hosp_dir_${req.query.type || ''}_${req.query.city || ''}`;
+    const cached = cache.get(cacheKey);
+    if (cached) {
+      return res.json({ success: true, data: cached });
+    }
+
     const filter = { status: 'approved' };
     if (req.query.type && ['hospital', 'partner'].includes(req.query.type)) {
       filter.type = req.query.type;
@@ -468,7 +482,10 @@ router.get('/directory', async (req, res, next) => {
       .sort({ name: 1 })
       .lean();
 
-    res.json({ success: true, data: { orgs, count: orgs.length } });
+    const responseData = { orgs, count: orgs.length };
+    cache.set(cacheKey, responseData, 30);
+
+    res.json({ success: true, data: responseData });
   } catch (err) {
     next(err);
   }

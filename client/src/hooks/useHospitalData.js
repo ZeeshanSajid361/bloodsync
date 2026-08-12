@@ -11,26 +11,46 @@
  * HospitalDashboard.jsx stays free of direct API calls.
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import api from '../lib/api';
 
+const CACHE_KEY = 'bloodsync_hospital_profile_cache';
+
 export default function useHospitalData() {
-  const [profile,  setProfile]  = useState(null);
-  const [loading,  setLoading]  = useState(true);
-  const [error,    setError]    = useState('');
+  const [profile, setProfile] = useState(() => {
+    try {
+      const cached = localStorage.getItem(CACHE_KEY);
+      return cached ? JSON.parse(cached) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  const profileRef = useRef(profile);
+  profileRef.current = profile;
+
+  const [loading, setLoading] = useState(() => !profile);
+  const [error,   setError]   = useState('');
 
   const fetchProfile = useCallback(async () => {
-    try {
+    if (!profileRef.current) {
       setLoading(true);
-      setError('');
+    }
+    setError('');
+    try {
       const { data } = await api.get('/hospitals/me');
       setProfile(data.data);
+      localStorage.setItem(CACHE_KEY, JSON.stringify(data.data));
     } catch (err) {
       // 404 means the user hasn't registered their org yet — that's normal.
       if (err.response?.status !== 404) {
-        setError(err.response?.data?.message || 'Failed to load hospital data.');
+        if (!profileRef.current) {
+          setError(err.response?.data?.message || 'Failed to load hospital data.');
+        }
+      } else {
+        setProfile(null);
+        localStorage.removeItem(CACHE_KEY);
       }
-      setProfile(null);
     } finally {
       setLoading(false);
     }

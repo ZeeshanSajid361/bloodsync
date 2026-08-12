@@ -98,13 +98,21 @@ function buildDonorResponse(user, profile) {
   };
 }
 
+const cache = require('../../utils/cache');
+
 // ── GET /api/donors/me ────────────────────────────────────────────────────────
 /**
  * Returns the authenticated donor's full profile, eligibility status, and
- * recognition level. This is the primary data source for the donor dashboard.
+ * recognition level. Incorporates in-memory TTL caching for instant warm responses.
  */
 router.get('/me', async (req, res, next) => {
   try {
+    const cacheKey = `donor_me_${req.user.id}`;
+    const cached = cache.get(cacheKey);
+    if (cached) {
+      return res.status(200).json({ success: true, data: cached });
+    }
+
     const [user, profile] = await Promise.all([
       User.findById(req.user.id).lean(),
       DonorProfile.findOne({ user: req.user.id }).lean(),
@@ -117,9 +125,12 @@ router.get('/me', async (req, res, next) => {
       });
     }
 
+    const responseData = buildDonorResponse(user, profile);
+    cache.set(cacheKey, responseData, 15); // 15-second TTL
+
     return res.status(200).json({
       success: true,
-      data: buildDonorResponse(user, profile),
+      data: responseData,
     });
   } catch (err) {
     next(err);
@@ -165,6 +176,7 @@ router.put('/me', async (req, res, next) => {
     if (bio        !== undefined) profile.bio        = bio;
 
     await Promise.all([user.save(), profile.save()]);
+    cache.del(`donor_me_${req.user.id}`);
 
     return res.status(200).json({
       success: true,
@@ -203,6 +215,8 @@ router.patch('/me/availability', async (req, res, next) => {
     if (!profile) {
       return res.status(404).json({ success: false, message: 'Donor profile not found.' });
     }
+
+    cache.del(`donor_me_${req.user.id}`);
 
     return res.status(200).json({
       success: true,

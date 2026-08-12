@@ -8,26 +8,39 @@
 import { useState, useEffect, useCallback } from 'react';
 import api from '../lib/api';
 
+const SEEKER_CACHE_KEY = 'bloodsync_seeker_requests_cache';
+
 // ── useSeekerRequests ──────────────────────────────────────────────────────
 export function useSeekerRequests() {
-  const [requests, setRequests] = useState([]);
-  const [loading,  setLoading]  = useState(true);
-  const [error,    setError]    = useState('');
-  const [total,    setTotal]    = useState(0);
+  const [requests, setRequests] = useState(() => {
+    try {
+      const cached = localStorage.getItem(SEEKER_CACHE_KEY);
+      return cached ? JSON.parse(cached) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const [loading, setLoading] = useState(() => requests.length === 0);
+  const [error,   setError]   = useState('');
+  const [total,   setTotal]   = useState(() => requests.length);
 
   const fetch = useCallback(async () => {
-    setLoading(true);
+    if (requests.length === 0) setLoading(true);
     setError('');
     try {
       const { data } = await api.get('/seekers/requests/mine?limit=50');
       setRequests(data.data.requests);
       setTotal(data.data.total);
+      localStorage.setItem(SEEKER_CACHE_KEY, JSON.stringify(data.data.requests));
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to load your requests.');
+      if (requests.length === 0) {
+        setError(err.response?.data?.message || 'Failed to load your requests.');
+      }
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [requests.length]);
 
   useEffect(() => { fetch(); }, [fetch]);
 
