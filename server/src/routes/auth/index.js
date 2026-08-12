@@ -10,6 +10,7 @@
 const express = require('express');
 const crypto  = require('crypto');
 const mongoose = require('mongoose');
+const bcrypt  = require('bcryptjs');
 
 const { User, ROLES }         = require('../../models/User');
 const { DonorProfile }        = require('../../models/DonorProfile');
