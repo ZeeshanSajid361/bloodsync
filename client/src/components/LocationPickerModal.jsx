@@ -1,12 +1,4 @@
-/**
- * LocationPickerModal.jsx
- *
- * Compact 1-Screen Interactive Location Picker for BloodSync.
- * Rendered using React Portal (createPortal) directly into document.body
- * to guarantee true position: fixed viewport anchoring without parent transform interference.
- */
-
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { MapPin, Navigation, ExternalLink, CheckCircle2, X, Loader2, Search } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -25,7 +17,7 @@ const CITY_COORDS = {
 export default function LocationPickerModal({ isOpen, onClose, onSelectLocation, initialLocation = {} }) {
   const [lat, setLat]                 = useState(initialLocation.latitude || 33.6844);
   const [lng, setLng]                 = useState(initialLocation.longitude || 73.0479);
-  const [addressText, setAddressText] = useState(initialLocation.street || '');
+  const [addressText, setAddressText] = useState(initialLocation.street || initialLocation.address || '');
   const [city, setCity]               = useState(initialLocation.city || 'Islamabad');
   const [province, setProvince]       = useState(initialLocation.province || 'Punjab');
   const [mapsUrl, setMapsUrl]         = useState(initialLocation.mapsUrl || '');
@@ -33,24 +25,25 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
   const [loading, setLoading]         = useState(false);
   const [geocoding, setGeocoding]     = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [mapQuery, setMapQuery]       = useState('');
+
+  const mapContainerRef = useRef(null);
+  const mapInstanceRef  = useRef(null);
+  const markerRef       = useRef(null);
 
   useEffect(() => {
     if (initialLocation.latitude && initialLocation.longitude) {
       setLat(initialLocation.latitude);
       setLng(initialLocation.longitude);
-      setMapQuery('');
     } else if (initialLocation.city) {
       const key = initialLocation.city.toLowerCase().trim();
       if (CITY_COORDS[key]) {
         setLat(CITY_COORDS[key].lat);
         setLng(CITY_COORDS[key].lng);
-        setMapQuery('');
       }
     }
   }, [initialLocation]);
 
-  // Completely freeze body and html scroll when modal is open
+  // Freeze scroll when modal open
   useEffect(() => {
     if (!isOpen) return;
     const prevBody = document.body.style.overflow;
@@ -62,6 +55,125 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
       document.documentElement.style.overflow = prevHtml;
     };
   }, [isOpen]);
+
+  // Initialize Leaflet Map
+  useEffect(() => {
+    if (!isOpen) return;
+    let isMounted = true;
+
+    async function initLeafletMap() {
+      if (!document.getElementById('leaflet-css-pkg')) {
+        const link = document.createElement('link');
+        link.id = 'leaflet-css-pkg';
+        link.rel = 'stylesheet';
+        link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+        document.head.appendChild(link);
+      }
+
+      if (!window.L) {
+        await new Promise((resolve) => {
+          if (document.getElementById('leaflet-js-pkg')) {
+            const timer = setInterval(() => {
+              if (window.L) { clearInterval(timer); resolve(); }
+            }, 50);
+            return;
+          }
+          const script = document.createElement('script');
+          script.id = 'leaflet-js-pkg';
+          script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+          script.onload = resolve;
+          document.head.appendChild(script);
+        });
+      }
+
+      if (!isMounted || !mapContainerRef.current) return;
+      const L = window.L;
+
+      const redIcon = L.divIcon({
+        className: 'custom-leaflet-marker',
+        html: `<div style="
+          background: #ef4444;
+          width: 26px;
+          height: 26px;
+          border-radius: 50% 50% 50% 0;
+          transform: rotate(-45deg);
+          border: 2px solid #ffffff;
+          box-shadow: 0 4px 14px rgba(239,68,68,0.7);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        "><div style="width: 8px; height: 8px; background: #ffffff; border-radius: 50%;"></div></div>`,
+        iconSize: [26, 26],
+        iconAnchor: [13, 26],
+      });
+
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove();
+        mapInstanceRef.current = null;
+      }
+
+      const initialLat = lat || 33.6844;
+      const initialLng = lng || 73.0479;
+
+      const map = L.map(mapContainerRef.current, {
+        center: [initialLat, initialLng],
+        zoom: 14,
+        zoomControl: true,
+      });
+      mapInstanceRef.current = map;
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap',
+        maxZoom: 19,
+      }).addTo(map);
+
+      const marker = L.marker([initialLat, initialLng], { icon: redIcon, draggable: true }).addTo(map);
+      markerRef.current = marker;
+
+      // Map click -> move pin & reverse geocode
+      map.on('click', (e) => {
+        const clickedLat = parseFloat(e.latlng.lat.toFixed(5));
+        const clickedLng = parseFloat(e.latlng.lng.toFixed(5));
+        setLat(clickedLat);
+        setLng(clickedLng);
+        marker.setLatLng([clickedLat, clickedLng]);
+        const genUrl = `https://www.google.com/maps/search/?api=1&query=${clickedLat},${clickedLng}`;
+        setMapsUrl(genUrl);
+        reverseGeocode(clickedLat, clickedLng);
+      });
+
+      // Marker dragend -> update position
+      marker.on('dragend', () => {
+        const pos = marker.getLatLng();
+        const draggedLat = parseFloat(pos.lat.toFixed(5));
+        const draggedLng = parseFloat(pos.lng.toFixed(5));
+        setLat(draggedLat);
+        setLng(draggedLng);
+        const genUrl = `https://www.google.com/maps/search/?api=1&query=${draggedLat},${draggedLng}`;
+        setMapsUrl(genUrl);
+        reverseGeocode(draggedLat, draggedLng);
+      });
+    }
+
+    const timer = setTimeout(initLeafletMap, 100);
+
+    return () => {
+      isMounted = false;
+      clearTimeout(timer);
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove();
+        mapInstanceRef.current = null;
+      }
+    };
+  }, [isOpen]);
+
+  // Sync map center & marker when lat/lng state changes
+  useEffect(() => {
+    if (mapInstanceRef.current && markerRef.current && lat && lng) {
+      mapInstanceRef.current.setView([lat, lng], 15);
+      markerRef.current.setLatLng([lat, lng]);
+    }
+  }, [lat, lng]);
 
   if (!isOpen) return null;
 
@@ -76,7 +188,7 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
     return null;
   }
 
-  // Single-toast deduplicated GPS Auto-Detection
+  // GPS Device Auto-Detect
   function handleDetectGps() {
     if (!navigator.geolocation) {
       toast.error('Geolocation is not supported by your browser.', { id: 'gps-toast' });
@@ -87,23 +199,22 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
 
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
-        const latitude  = pos.coords.latitude;
-        const longitude = pos.coords.longitude;
+        const latitude  = parseFloat(pos.coords.latitude.toFixed(5));
+        const longitude = parseFloat(pos.coords.longitude.toFixed(5));
         setLat(latitude);
         setLng(longitude);
-        setMapQuery('');
-        setSearchQuery(''); // Clears search box so user sees physical device GPS was detected
+        setSearchQuery('');
         const generatedUrl = `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
         setMapsUrl(generatedUrl);
         
         await reverseGeocode(latitude, longitude);
         setLoading(false);
-        toast.success('Your current device GPS position detected!', { id: 'gps-toast' });
+        toast.success('Your current GPS location detected!', { id: 'gps-toast' });
       },
       (err) => {
         setLoading(false);
         const errMsg = err.code === 1 
-          ? 'GPS access denied. Use search or select location manually.' 
+          ? 'GPS access denied. Click map to point location manually.' 
           : 'Could not fetch GPS location.';
         toast.error(errMsg, { id: 'gps-toast' });
       },
@@ -122,7 +233,7 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
       if (data && data.address) {
         const addr = data.address;
         const detectedCity = addr.city || addr.town || addr.county || addr.state_district || city;
-        const detectedStreet = [addr.suburb, addr.neighbourhood, addr.road, addr.amenity].filter(Boolean).join(', ') || addressText;
+        const detectedStreet = [addr.suburb, addr.neighbourhood, addr.road, addr.amenity, addr.hospital, addr.building].filter(Boolean).join(', ');
         const detectedProvince = addr.state || province;
 
         setCity(detectedCity);
@@ -136,25 +247,21 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
     }
   }
 
-  // Multi-tier Robust Location Search
+  // Search Location
   async function handleSearchLocation(e) {
     if (e) e.preventDefault();
     const rawQuery = searchQuery.trim();
     if (!rawQuery) return;
 
     setGeocoding(true);
-    // Strip parenthetical text like "(IMC)" to help geocoding engines
     const cleanQuery = rawQuery.replace(/\s*\([^)]*\)/g, '').trim();
-    setMapQuery(rawQuery); // Immediately update Google Maps embed view
 
     try {
-      // Tier 1: Try clean query + Pakistan
       let res = await fetch(
         `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cleanQuery + ', Pakistan')}&addressdetails=1`
       );
       let results = await res.json();
 
-      // Tier 2: Try clean query without country suffix
       if (!results || results.length === 0) {
         res = await fetch(
           `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cleanQuery)}&addressdetails=1`
@@ -162,18 +269,10 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
         results = await res.json();
       }
 
-      // Tier 3: Try raw query
-      if (!results || results.length === 0) {
-        res = await fetch(
-          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(rawQuery)}&addressdetails=1`
-        );
-        results = await res.json();
-      }
-
       if (results && results.length > 0) {
         const first = results[0];
-        const latitude  = parseFloat(first.lat);
-        const longitude = parseFloat(first.lon);
+        const latitude  = parseFloat(parseFloat(first.lat).toFixed(5));
+        const longitude = parseFloat(parseFloat(first.lon).toFixed(5));
         setLat(latitude);
         setLng(longitude);
 
@@ -190,17 +289,15 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
         setMapsUrl(generatedUrl);
         toast.success(`Map centered on: ${first.display_name.split(',')[0]}`, { id: 'gps-toast' });
       } else {
-        // Fallback: If free API misses exact vector, extract city & set Google Maps search URL
         const detectedCity = extractCityFromQuery(rawQuery) || city;
         setCity(detectedCity);
         setAddressText(rawQuery);
-
         const googleSearchUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(rawQuery)}`;
         setMapsUrl(googleSearchUrl);
         toast.success(`Map updated for "${rawQuery}"`, { id: 'gps-toast' });
       }
     } catch (err) {
-      toast.error('Search complete. Google Maps link updated.', { id: 'gps-toast' });
+      toast.error('Location search complete.', { id: 'gps-toast' });
     } finally {
       setGeocoding(false);
     }
@@ -212,6 +309,7 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
       latitude:  lat,
       longitude: lng,
       street:    addressText,
+      address:   addressText,
       city,
       province,
       mapsUrl:   finalUrl,
@@ -219,11 +317,6 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
     toast.success('Location confirmed!', { id: 'gps-toast' });
     onClose();
   }
-
-  // High reliability Google Maps iframe embed — switches dynamically between coordinates and place search query
-  const mapIframeUrl = mapQuery 
-    ? `https://maps.google.com/maps?q=${encodeURIComponent(mapQuery)}&z=15&output=embed`
-    : `https://maps.google.com/maps?q=${lat},${lng}&z=15&output=embed`;
 
   const modalContent = (
     <div
@@ -237,7 +330,7 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
       }}
     >
       <div className="card" style={{
-        width: '100%', maxWidth: '580px', maxHeight: 'calc(100vh - 24px)',
+        width: '100%', maxWidth: '600px', maxHeight: 'calc(100vh - 24px)',
         display: 'flex', flexDirection: 'column',
         background: '#0f172a', border: '1px solid rgba(255,255,255,0.15)',
         borderRadius: '14px', padding: '16px 20px', overflow: 'hidden', boxShadow: '0 25px 60px rgba(0,0,0,0.8)',
@@ -246,50 +339,47 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
         {/* Top Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
           <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '6px', color: '#f8fafc' }}>
-            <MapPin size={18} color="#ef4444" /> Select Destination Hospital Location
+            <MapPin size={18} color="#ef4444" /> Pin Exact Location on Interactive Map
           </h3>
           <button onClick={onClose} className="btn btn-ghost btn-sm" style={{ padding: '2px 6px' }}>
             <X size={18} />
           </button>
         </div>
 
-        {/* Search Bar (100% Full Width) */}
+        {/* Search Bar & GPS Button */}
         <div style={{ marginBottom: '10px' }}>
           <form onSubmit={handleSearchLocation} style={{ display: 'flex', gap: '6px' }}>
             <input
               className="input"
               style={{ fontSize: '0.82rem', padding: '7px 12px', flex: 1 }}
-              placeholder="Search destination hospital name, clinic or landmark…"
+              placeholder="Search hospital, landmark, or area in Pakistan..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
             />
-            <button type="submit" className="btn btn-primary btn-sm" disabled={geocoding} style={{ padding: '7px 16px', background: '#2563eb', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+            <button type="submit" className="btn btn-primary btn-sm" disabled={geocoding} style={{ padding: '7px 14px', background: '#2563eb', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
               {geocoding ? <Loader2 size={14} className="spin" /> : <Search size={14} />}
-              <span>Search Map</span>
+              <span>Search</span>
+            </button>
+            <button type="button" onClick={handleDetectGps} className="btn btn-secondary btn-sm" disabled={loading} style={{ padding: '7px 12px', display: 'inline-flex', alignItems: 'center', gap: '4px' }} title="Detect Current GPS">
+              {loading ? <Loader2 size={14} className="spin" /> : <Navigation size={14} />}
+              <span>GPS</span>
             </button>
           </form>
         </div>
 
-        {/* Interactive Map Embed (Compact 160px height) */}
+        {/* Interactive Leaflet Map Container */}
         <div style={{
-          position: 'relative', width: '100%', height: '160px', minHeight: '140px', borderRadius: '10px',
-          overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)', marginBottom: '10px', background: '#1e293b'
+          position: 'relative', width: '100%', height: '210px', minHeight: '180px', borderRadius: '10px',
+          overflow: 'hidden', border: '1px solid rgba(255,255,255,0.15)', marginBottom: '10px', background: '#1e293b'
         }}>
-          <iframe
-            title="Location Map Embed"
-            width="100%"
-            height="100%"
-            style={{ border: 0 }}
-            loading="lazy"
-            allowFullScreen
-            src={mapIframeUrl}
-          />
+          <div ref={mapContainerRef} style={{ width: '100%', height: '100%', zIndex: 1 }} />
+          
           <div style={{
-            position: 'absolute', bottom: '6px', left: '6px', background: 'rgba(15, 23, 42, 0.9)',
-            padding: '2px 8px', borderRadius: '12px', fontSize: '0.7rem', color: '#38bdf8', fontWeight: 600,
-            border: '1px solid rgba(56, 189, 248, 0.3)'
+            position: 'absolute', bottom: '8px', left: '8px', zIndex: 1000, background: 'rgba(15, 23, 42, 0.92)',
+            padding: '3px 10px', borderRadius: '14px', fontSize: '0.72rem', color: '#34d399', fontWeight: 600,
+            border: '1px solid rgba(16, 185, 129, 0.4)', backdropFilter: 'blur(4px)'
           }}>
-            📍 Coordinates: {lat.toFixed(4)}, {lng.toFixed(4)}
+            📍 Click map to place red pin marker ({lat.toFixed(4)}, {lng.toFixed(4)})
           </div>
         </div>
 
@@ -324,7 +414,7 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
               style={{ fontSize: '0.8rem', padding: '5px 8px' }}
               value={addressText}
               onChange={e => setAddressText(e.target.value)}
-              placeholder="e.g. Block 3, Near Commercial Market, CMH"
+              placeholder="e.g. Sector H-12, Main Auditorium, NUST"
             />
           </div>
 
@@ -345,7 +435,7 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
                 className="btn btn-ghost btn-sm"
                 style={{ textDecoration: 'none', color: '#60a5fa', fontSize: '0.75rem', padding: '4px 8px', display: 'inline-flex', alignItems: 'center', gap: '3px' }}
               >
-                <ExternalLink size={12} /> Link
+                <ExternalLink size={12} /> View Link
               </a>
             </div>
           </div>
@@ -362,7 +452,7 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
             onClick={handleConfirm}
             style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: '#10b981', color: '#fff', fontSize: '0.8rem', padding: '5px 14px' }}
           >
-            <CheckCircle2 size={14} /> Confirm Location
+            <CheckCircle2 size={14} /> Confirm Location Pin
           </button>
         </div>
       </div>

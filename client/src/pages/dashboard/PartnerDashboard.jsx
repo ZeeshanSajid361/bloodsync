@@ -54,10 +54,12 @@ export default function PartnerDashboard({ profile, hooks, onLogout }) {
 
   // Assisted request modal state
   const [showRequestModal, setShowRequestModal] = useState(false);
+  const [showRequestMapPicker, setShowRequestMapPicker] = useState(false);
   const [requestForm, setRequestForm] = useState({
     bloodGroup: 'O+', unitsRequired: 1, urgency: 'urgent',
     hospitalName: '', hospitalCity: org?.address?.city || '', hospitalAddress: '',
     patientName: '', additionalNotes: '', seekerPhone: '',
+    latitude: null, longitude: null, mapsUrl: '',
   });
   const [requestFiles, setRequestFiles] = useState([]);
   const [savingRequest, setSavingRequest] = useState(false);
@@ -799,8 +801,17 @@ export default function PartnerDashboard({ profile, hooks, onLogout }) {
                   <input className="input" placeholder="e.g. Ward 4, Emergency Dept" value={requestForm.hospitalAddress} onChange={e => setRequestForm(p => ({ ...p, hospitalAddress: e.target.value }))} />
                 </div>
                 <div className="input-group">
-                  <label className="input-label" style={{ fontSize: '0.75rem' }}>Additional Notes</label>
-                  <input className="input" placeholder="e.g. Patient undergoing surgery" value={requestForm.additionalNotes} onChange={e => setRequestForm(p => ({ ...p, additionalNotes: e.target.value }))} />
+                  <label className="input-label" style={{ fontSize: '0.75rem' }}>Exact Hospital Map Pin 📍</label>
+                  <button type="button" className="btn btn-secondary btn-sm" style={{ width: '100%', height: 38, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, background: requestForm.latitude ? 'rgba(16, 185, 129, 0.15)' : undefined, borderColor: requestForm.latitude ? '#10b981' : undefined, color: requestForm.latitude ? '#34d399' : undefined }} onClick={() => setShowRequestMapPicker(true)}>
+                    <MapPin size={15} /> {requestForm.latitude ? '📍 Location Pinned' : '📍 Pin Hospital on Map'}
+                  </button>
+                </div>
+              </div>
+
+              <div className="profile-form-grid" style={{ marginBottom: 10 }}>
+                <div className="input-group" style={{ gridColumn: '1 / -1' }}>
+                  <label className="input-label" style={{ fontSize: '0.75rem' }}>Additional Notes / Patient Condition</label>
+                  <input className="input" placeholder="e.g. Patient undergoing surgery in ICU" value={requestForm.additionalNotes} onChange={e => setRequestForm(p => ({ ...p, additionalNotes: e.target.value }))} />
                 </div>
               </div>
 
@@ -822,6 +833,30 @@ export default function PartnerDashboard({ profile, hooks, onLogout }) {
           </div>
         </div>
       )}
+
+      {/* ASSISTED REQUEST LOCATION PICKER MODAL */}
+      <LocationPickerModal
+        isOpen={showRequestMapPicker}
+        onClose={() => setShowRequestMapPicker(false)}
+        onSelectLocation={(loc) => {
+          setRequestForm(p => ({
+            ...p,
+            hospitalName: loc.street ? (p.hospitalName || loc.street.split(',')[0]) : p.hospitalName,
+            hospitalAddress: loc.street || p.hospitalAddress,
+            hospitalCity: loc.city || p.hospitalCity,
+            mapsUrl: loc.mapsUrl || `https://maps.google.com/?q=${loc.latitude},${loc.longitude}`,
+            latitude: loc.latitude,
+            longitude: loc.longitude,
+          }));
+          setShowRequestMapPicker(false);
+        }}
+        initialLocation={{
+          latitude: requestForm.latitude,
+          longitude: requestForm.longitude,
+          address: requestForm.hospitalAddress,
+          city: requestForm.hospitalCity,
+        }}
+      />
 
       {/* RSVP LIST DRAWER MODAL */}
       {selectedDriveRSVPs && (
