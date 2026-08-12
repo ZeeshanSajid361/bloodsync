@@ -638,71 +638,73 @@ export default function PartnerDashboard({ profile, hooks, onLogout }) {
       {/* CREATE DRIVE MODAL */}
       {showDriveModal && (
         <div className="code-red-overlay" onClick={() => setShowDriveModal(false)}>
-          <div className="code-red-modal" style={{ maxWidth: 580, width: '100%' }} onClick={e => e.stopPropagation()}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-              <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#fff', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div className="code-red-modal" style={{ maxWidth: 620, width: '100%', padding: '18px 24px' }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+              <h3 style={{ margin: 0, fontSize: '1.08rem', color: '#fff', display: 'flex', alignItems: 'center', gap: 8 }}>
                 🎪 Create Blood Donation Camp
               </h3>
               <button className="btn btn-ghost btn-sm" onClick={() => setShowDriveModal(false)}><X size={18} /></button>
             </div>
 
             <form onSubmit={handleCreateDrive}>
-              <div className="input-group" style={{ marginBottom: 12 }}>
-                <label className="input-label">Camp Title *</label>
-                <input className="input" placeholder="e.g. NUST University Annual Blood Drive" value={driveForm.title} onChange={e => setDriveForm(p => ({ ...p, title: e.target.value }))} required />
-              </div>
-
-              <div className="profile-form-grid" style={{ marginBottom: 12 }}>
+              <div className="profile-form-grid" style={{ marginBottom: 10 }}>
                 <div className="input-group">
-                  <label className="input-label">Camp Date *</label>
+                  <label className="input-label" style={{ fontSize: '0.75rem' }}>Camp Title *</label>
+                  <input className="input" placeholder="e.g. NUST Annual Blood Drive" value={driveForm.title} onChange={e => setDriveForm(p => ({ ...p, title: e.target.value }))} required />
+                </div>
+                <div className="input-group">
+                  <label className="input-label" style={{ fontSize: '0.75rem' }}>Camp Date *</label>
                   <input type="date" className="input" value={driveForm.date} onChange={e => setDriveForm(p => ({ ...p, date: e.target.value }))} required />
                 </div>
+              </div>
+
+              <div className="profile-form-grid" style={{ marginBottom: 10 }}>
                 <div className="input-group">
-                  <label className="input-label">City *</label>
+                  <label className="input-label" style={{ fontSize: '0.75rem' }}>City *</label>
                   <input className="input" value={driveForm.city} onChange={e => setDriveForm(p => ({ ...p, city: e.target.value }))} required />
+                </div>
+                <div className="input-group">
+                  <label className="input-label" style={{ fontSize: '0.75rem' }}>Target Units Goal 🎯</label>
+                  <input type="number" min="1" className="input" placeholder="e.g. 50" value={driveForm.expectedTurnout} onChange={e => setDriveForm(p => ({ ...p, expectedTurnout: parseInt(e.target.value) || 0 }))} />
                 </div>
               </div>
 
-              <div className="profile-form-grid" style={{ marginBottom: 12 }}>
+              <div className="profile-form-grid" style={{ marginBottom: 10 }}>
                 <div className="input-group">
-                  <label className="input-label">Start Time</label>
+                  <label className="input-label" style={{ fontSize: '0.75rem' }}>Start Time</label>
                   <input className="input" placeholder="e.g. 09:00 AM" value={driveForm.startTime} onChange={e => setDriveForm(p => ({ ...p, startTime: e.target.value }))} />
                 </div>
                 <div className="input-group">
-                  <label className="input-label">End Time</label>
+                  <label className="input-label" style={{ fontSize: '0.75rem' }}>End Time</label>
                   <input className="input" placeholder="e.g. 05:00 PM" value={driveForm.endTime} onChange={e => setDriveForm(p => ({ ...p, endTime: e.target.value }))} />
                 </div>
               </div>
 
-              <div className="profile-form-grid" style={{ marginBottom: 12 }}>
+              <div className="profile-form-grid" style={{ marginBottom: 10 }}>
                 <div className="input-group">
-                  <label className="input-label">Target Units / Turnout Goal 🎯</label>
-                  <input type="number" min="1" className="input" placeholder="e.g. 50" value={driveForm.expectedTurnout} onChange={e => setDriveForm(p => ({ ...p, expectedTurnout: parseInt(e.target.value) || 0 }))} />
+                  <label className="input-label" style={{ fontSize: '0.75rem' }}>Camp Location Address *</label>
+                  <input className="input" placeholder="e.g. Main Auditorium, Sector H-12" value={driveForm.address} onChange={e => setDriveForm(p => ({ ...p, address: e.target.value }))} required />
                 </div>
                 <div className="input-group">
-                  <label className="input-label">Exact Map Location Pin</label>
-                  <button type="button" className="btn btn-secondary btn-sm" style={{ width: '100%', height: 42, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, background: driveForm.latitude ? 'rgba(16, 185, 129, 0.15)' : undefined, borderColor: driveForm.latitude ? '#10b981' : undefined, color: driveForm.latitude ? '#34d399' : undefined }} onClick={() => setShowDriveMapPicker(true)}>
-                    <MapPin size={16} /> {driveForm.latitude ? '📍 Map Location Pinned' : '📍 Pin Location on Map'}
+                  <label className="input-label" style={{ fontSize: '0.75rem' }}>Exact Map Pin 📍</label>
+                  <button type="button" className="btn btn-secondary btn-sm" style={{ width: '100%', height: 38, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, background: driveForm.latitude ? 'rgba(16, 185, 129, 0.15)' : undefined, borderColor: driveForm.latitude ? '#10b981' : undefined, color: driveForm.latitude ? '#34d399' : undefined }} onClick={() => setShowDriveMapPicker(true)}>
+                    <MapPin size={15} /> {driveForm.latitude ? '📍 Pinned' : '📍 Pin Location'}
                   </button>
                 </div>
               </div>
 
-              <div className="input-group" style={{ marginBottom: 12 }}>
-                <label className="input-label">Camp Location Address *</label>
-                <input className="input" placeholder="e.g. Main Auditorium, Sector H-12, Islamabad" value={driveForm.address} onChange={e => setDriveForm(p => ({ ...p, address: e.target.value }))} required />
+              <div className="profile-form-grid" style={{ marginBottom: 12 }}>
+                <div className="input-group">
+                  <label className="input-label" style={{ fontSize: '0.75rem' }}>Google Maps Link / URL</label>
+                  <input className="input" placeholder="https://maps.google.com/?q=..." value={driveForm.mapsUrl} onChange={e => setDriveForm(p => ({ ...p, mapsUrl: e.target.value }))} />
+                </div>
+                <div className="input-group">
+                  <label className="input-label" style={{ fontSize: '0.75rem' }}>Description / Notes</label>
+                  <input className="input" placeholder="e.g. Refreshments provided" value={driveForm.description} onChange={e => setDriveForm(p => ({ ...p, description: e.target.value }))} />
+                </div>
               </div>
 
-              <div className="input-group" style={{ marginBottom: 12 }}>
-                <label className="input-label">Google Maps Link / URL (Optional)</label>
-                <input className="input" placeholder="https://maps.google.com/?q=..." value={driveForm.mapsUrl} onChange={e => setDriveForm(p => ({ ...p, mapsUrl: e.target.value }))} />
-              </div>
-
-              <div className="input-group" style={{ marginBottom: 14 }}>
-                <label className="input-label">Camp Description & Special Instructions</label>
-                <textarea className="input" rows={2} placeholder="e.g. Bring CNIC. Refreshments provided for all blood donors." value={driveForm.description} onChange={e => setDriveForm(p => ({ ...p, description: e.target.value }))} />
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 16 }}>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 12 }}>
                 <button type="button" className="btn btn-ghost btn-sm" onClick={() => setShowDriveModal(false)}>Cancel</button>
                 <button type="submit" className="btn btn-primary btn-sm" disabled={savingDrive}>
                   {savingDrive ? <Loader2 size={16} className="spin" /> : 'Publish Camp'}
@@ -739,46 +741,78 @@ export default function PartnerDashboard({ profile, hooks, onLogout }) {
       {/* CREATE ASSISTED REQUEST MODAL */}
       {showRequestModal && (
         <div className="code-red-overlay" onClick={() => setShowRequestModal(false)}>
-          <div className="code-red-modal" style={{ maxWidth: 540 }} onClick={e => e.stopPropagation()}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-              <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#fff' }}>🆘 Submit Assisted Patient Request</h3>
+          <div className="code-red-modal" style={{ maxWidth: 620, width: '100%', padding: '18px 24px' }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+              <h3 style={{ margin: 0, fontSize: '1.08rem', color: '#fff', display: 'flex', alignItems: 'center', gap: 8 }}>
+                🆘 Submit Assisted Patient Request
+              </h3>
               <button className="btn btn-ghost btn-sm" onClick={() => setShowRequestModal(false)}><X size={18} /></button>
             </div>
 
             <form onSubmit={handleCreateRequest}>
-              <div className="profile-form-grid" style={{ marginBottom: 12 }}>
+              <div className="profile-form-grid" style={{ marginBottom: 10 }}>
                 <div className="input-group">
-                  <label className="input-label">Patient Name</label>
-                  <input className="input" placeholder="Patient Full Name" value={requestForm.patientName} onChange={e => setRequestForm(p => ({ ...p, patientName: e.target.value }))} />
+                  <label className="input-label" style={{ fontSize: '0.75rem' }}>Patient Full Name *</label>
+                  <input className="input" placeholder="Patient Full Name" value={requestForm.patientName} onChange={e => setRequestForm(p => ({ ...p, patientName: e.target.value }))} required />
                 </div>
                 <div className="input-group">
-                  <label className="input-label">Blood Group *</label>
+                  <label className="input-label" style={{ fontSize: '0.75rem' }}>Patient / Attendant Phone</label>
+                  <input className="input" placeholder="03xx-xxxxxxx" value={requestForm.seekerPhone} onChange={e => setRequestForm(p => ({ ...p, seekerPhone: e.target.value }))} />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginBottom: 10 }}>
+                <div className="input-group">
+                  <label className="input-label" style={{ fontSize: '0.75rem' }}>Blood Group *</label>
                   <select className="input" value={requestForm.bloodGroup} onChange={e => setRequestForm(p => ({ ...p, bloodGroup: e.target.value }))}>
                     {BLOOD_GROUPS.map(g => <option key={g} value={g}>{g}</option>)}
                   </select>
                 </div>
+                <div className="input-group">
+                  <label className="input-label" style={{ fontSize: '0.75rem' }}>Units Needed *</label>
+                  <input type="number" min="1" className="input" value={requestForm.unitsRequired} onChange={e => setRequestForm(p => ({ ...p, unitsRequired: parseInt(e.target.value) || 1 }))} required />
+                </div>
+                <div className="input-group">
+                  <label className="input-label" style={{ fontSize: '0.75rem' }}>Urgency *</label>
+                  <select className="input" value={requestForm.urgency} onChange={e => setRequestForm(p => ({ ...p, urgency: e.target.value }))}>
+                    <option value="urgent">⚡ Urgent</option>
+                    <option value="critical">🚨 Critical (Code Red)</option>
+                    <option value="standard">📅 Standard</option>
+                  </select>
+                </div>
               </div>
 
-              <div className="profile-form-grid" style={{ marginBottom: 12 }}>
+              <div className="profile-form-grid" style={{ marginBottom: 10 }}>
                 <div className="input-group">
-                  <label className="input-label">Hospital Name *</label>
+                  <label className="input-label" style={{ fontSize: '0.75rem' }}>Hospital Name *</label>
                   <input className="input" placeholder="e.g. PIMS Hospital" value={requestForm.hospitalName} onChange={e => setRequestForm(p => ({ ...p, hospitalName: e.target.value }))} required />
                 </div>
                 <div className="input-group">
-                  <label className="input-label">Hospital City *</label>
+                  <label className="input-label" style={{ fontSize: '0.75rem' }}>Hospital City *</label>
                   <input className="input" value={requestForm.hospitalCity} onChange={e => setRequestForm(p => ({ ...p, hospitalCity: e.target.value }))} required />
                 </div>
               </div>
 
-              <div className="input-group" style={{ marginBottom: 14 }}>
-                <label className="input-label">Hospital Blood Requisition Slip * (Image / PDF)</label>
+              <div className="profile-form-grid" style={{ marginBottom: 10 }}>
+                <div className="input-group">
+                  <label className="input-label" style={{ fontSize: '0.75rem' }}>Hospital Address / Ward</label>
+                  <input className="input" placeholder="e.g. Ward 4, Emergency Dept" value={requestForm.hospitalAddress} onChange={e => setRequestForm(p => ({ ...p, hospitalAddress: e.target.value }))} />
+                </div>
+                <div className="input-group">
+                  <label className="input-label" style={{ fontSize: '0.75rem' }}>Additional Notes</label>
+                  <input className="input" placeholder="e.g. Patient undergoing surgery" value={requestForm.additionalNotes} onChange={e => setRequestForm(p => ({ ...p, additionalNotes: e.target.value }))} />
+                </div>
+              </div>
+
+              <div className="input-group" style={{ marginBottom: 12 }}>
+                <label className="input-label" style={{ fontSize: '0.75rem' }}>Hospital Blood Requisition Slip * (Image / PDF)</label>
                 <input type="file" ref={fileRef} accept="image/*,application/pdf" onChange={e => setRequestFiles(Array.from(e.target.files))} style={{ display: 'none' }} />
-                <button type="button" className="btn btn-ghost btn-sm" style={{ width: '100%', border: '1px dashed rgba(59, 130, 246, 0.4)', padding: 12 }} onClick={() => fileRef.current?.click()}>
-                  <Upload size={16} /> {requestFiles.length > 0 ? `${requestFiles.length} file selected` : 'Upload Hospital Slip Photo'}
+                <button type="button" className="btn btn-ghost btn-sm" style={{ width: '100%', height: 38, border: '1px dashed rgba(59, 130, 246, 0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }} onClick={() => fileRef.current?.click()}>
+                  <Upload size={15} /> {requestFiles.length > 0 ? `📄 ${requestFiles.length} file selected` : 'Upload Hospital Slip Photo'}
                 </button>
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 12 }}>
                 <button type="button" className="btn btn-ghost btn-sm" onClick={() => setShowRequestModal(false)}>Cancel</button>
                 <button type="submit" className="btn btn-primary btn-sm" style={{ background: '#f43f5e', borderColor: '#f43f5e' }} disabled={savingRequest}>
                   {savingRequest ? <Loader2 size={16} className="spin" /> : 'Submit Request'}
