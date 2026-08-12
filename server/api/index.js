@@ -19,8 +19,9 @@ module.exports = async (req, res) => {
   }
 
   try {
-    // Skip DB connection for health check routes to return instant 200 OK
+    // Return instant 200 OK for health check while triggering background DB pre-warm
     if (req.url === '/api/health' || req.url === '/health') {
+      connectDB().catch(() => {});
       return app(req, res);
     }
 

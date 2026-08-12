@@ -33,6 +33,11 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
+  useEffect(() => {
+    // Pre-warm backend and Mongo connection while user is on the login page
+    api.get('/health').catch(() => {});
+  }, []);
+
   function handleChange(e) {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));

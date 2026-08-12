@@ -257,12 +257,12 @@ router.post('/login', async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'Email and password are required.' });
     }
 
-    // Include password for comparison (excluded from schema by default).
-    const user = await User.findOne({ email }).select('+password +refreshTokenHash');
+    const cleanEmail = email.toLowerCase().trim();
 
-    // Use a constant-time-equivalent check: always compare even if user is null
-    // to prevent timing-based email enumeration.
-    const passwordMatch = user ? await user.comparePassword(password) : false;
+    // Include password for comparison. Use .lean() for fast query execution without Schema hydration overhead.
+    const user = await User.findOne({ email: cleanEmail }).select('+password +refreshTokenHash').lean();
+
+    const passwordMatch = user ? await bcrypt.compare(password, user.password) : false;
 
     if (!user || !passwordMatch) {
       return res.status(401).json({
@@ -287,11 +287,15 @@ router.post('/login', async (req, res, next) => {
       });
     }
 
-    const accessToken = signAccessToken({ id: user._id.toString(), role: user.role });
-    const refreshToken = signRefreshToken({ id: user._id.toString() });
+    const userIdStr = user._id.toString();
+    const accessToken = signAccessToken({ id: userIdStr, role: user.role });
+    const refreshToken = signRefreshToken({ id: userIdStr });
 
-    user.setRefreshToken(refreshToken);
-    await user.save();
+    // Non-blocking background persistence of the refresh token hash to speed up response latency
+    const refreshTokenHash = crypto.createHash('sha256').update(refreshToken).digest('hex');
+    User.updateOne({ _id: user._id }, { $set: { refreshTokenHash } }).catch((err) => {
+      console.error('[auth] Background refresh token save error:', err.message);
+    });
 
     return res.status(200).json({
       success: true,
@@ -342,9 +346,10 @@ router.post('/refresh', async (req, res, next) => {
       });
     }
 
-    const user = await User.findById(decoded.sub).select('+refreshTokenHash');
+    const user = await User.findById(decoded.sub).select('+refreshTokenHash').lean();
 
-    if (!user || !user.verifyRefreshToken(refreshToken)) {
+    const incomingHash = crypto.createHash('sha256').update(refreshToken).digest('hex');
+    if (!user || user.refreshTokenHash !== incomingHash) {
       return res.status(401).json({
         success: false,
         message: 'Refresh token mismatch. Please log in again.',
@@ -352,11 +357,14 @@ router.post('/refresh', async (req, res, next) => {
     }
 
     // Rotate — generate new pair.
-    const newAccessToken = signAccessToken({ id: user._id.toString(), role: user.role });
-    const newRefreshToken = signRefreshToken({ id: user._id.toString() });
+    const userIdStr = user._id.toString();
+    const newAccessToken = signAccessToken({ id: userIdStr, role: user.role });
+    const newRefreshToken = signRefreshToken({ id: userIdStr });
 
-    user.setRefreshToken(newRefreshToken);
-    await user.save();
+    const newHash = crypto.createHash('sha256').update(newRefreshToken).digest('hex');
+    User.updateOne({ _id: user._id }, { $set: { refreshTokenHash: newHash } }).catch((err) => {
+      console.error('[auth] Background refresh token update error:', err.message);
+    });
 
     return res.status(200).json({
       success: true,

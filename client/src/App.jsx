@@ -59,6 +59,8 @@ function DashboardLoader() {
   );
 }
 
+import api from './lib/api';
+
 function ScrollToTop() {
   const { pathname } = useLocation();
   useEffect(() => {
@@ -67,11 +69,20 @@ function ScrollToTop() {
   return null;
 }
 
+function PrewarmBackend() {
+  useEffect(() => {
+    // Silently pre-warm Vercel serverless container and MongoDB Atlas connection
+    api.get('/health').catch(() => {});
+  }, []);
+  return null;
+}
+
 export default function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
         <ScrollToTop />
+        <PrewarmBackend />
         <Suspense fallback={<DashboardLoader />}>
           <Routes>
             {/* Public routes */}

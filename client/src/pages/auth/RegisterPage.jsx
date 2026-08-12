@@ -41,6 +41,11 @@ export default function RegisterPage() {
   const [resendLoading,  setResendLoading]  = useState(false);
   const [resendMessage,  setResendMessage]  = useState('');
 
+  useEffect(() => {
+    // Pre-warm backend and Mongo connection while user is on the register page
+    api.get('/health').catch(() => {});
+  }, []);
+
   // Restore cooldown state from localStorage
   useEffect(() => {
     const ts = localStorage.getItem('bloodsync_verif_resend_ts');
