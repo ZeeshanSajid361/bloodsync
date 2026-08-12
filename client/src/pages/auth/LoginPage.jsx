@@ -5,7 +5,7 @@
  * were bounced from a protected route) or their role-specific dashboard.
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Mail, Lock, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import api from '../../lib/api';
