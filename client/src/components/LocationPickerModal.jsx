@@ -167,13 +167,13 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
     };
   }, [isOpen]);
 
-  // Sync map center & marker when lat/lng state changes
-  useEffect(() => {
-    if (mapInstanceRef.current && markerRef.current && lat && lng) {
-      mapInstanceRef.current.setView([lat, lng], 15);
-      markerRef.current.setLatLng([lat, lng]);
+  // Direct pan helper — bypasses the async state→render→effect cycle so the map moves instantly
+  function panMapTo(latitude, longitude, zoom = 15) {
+    if (mapInstanceRef.current && markerRef.current) {
+      mapInstanceRef.current.setView([latitude, longitude], zoom);
+      markerRef.current.setLatLng([latitude, longitude]);
     }
-  }, [lat, lng]);
+  }
 
   if (!isOpen) return null;
 
@@ -203,6 +203,7 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
         const longitude = parseFloat(pos.coords.longitude.toFixed(5));
         setLat(latitude);
         setLng(longitude);
+        panMapTo(latitude, longitude);
         setSearchQuery('');
         const generatedUrl = `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
         setMapsUrl(generatedUrl);
@@ -273,6 +274,10 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
         const first = results[0];
         const latitude  = parseFloat(parseFloat(first.lat).toFixed(5));
         const longitude = parseFloat(parseFloat(first.lon).toFixed(5));
+
+        // Immediately pan the Leaflet map — don't wait for React state→render→effect cycle
+        panMapTo(latitude, longitude, 15);
+
         setLat(latitude);
         setLng(longitude);
 
@@ -287,17 +292,24 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
 
         const generatedUrl = `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
         setMapsUrl(generatedUrl);
-        toast.success(`Map centered on: ${first.display_name.split(',')[0]}`, { id: 'gps-toast' });
+        toast.success(`📍 Moved to: ${first.display_name.split(',')[0]}`, { id: 'gps-toast' });
       } else {
+        // No geocode result — at least try to detect city from the typed query and notify user
         const detectedCity = extractCityFromQuery(rawQuery) || city;
+        const cityCoord = CITY_COORDS[detectedCity.toLowerCase()];
+        if (cityCoord) {
+          panMapTo(cityCoord.lat, cityCoord.lng, 13);
+          setLat(cityCoord.lat);
+          setLng(cityCoord.lng);
+        }
         setCity(detectedCity);
         setAddressText(rawQuery);
         const googleSearchUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(rawQuery)}`;
         setMapsUrl(googleSearchUrl);
-        toast.success(`Map updated for "${rawQuery}"`, { id: 'gps-toast' });
+        toast(`📍 "${rawQuery}" — map moved to ${detectedCity} (approximate)`, { id: 'gps-toast' });
       }
     } catch (err) {
-      toast.error('Location search complete.', { id: 'gps-toast' });
+      toast.error('Search failed. Check your connection.', { id: 'gps-toast' });
     } finally {
       setGeocoding(false);
     }
