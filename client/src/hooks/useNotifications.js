@@ -12,7 +12,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import api from '../lib/api';
 
 const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY || '';
-const POLL_INTERVAL_MS = 30_000; // 30 seconds
+const POLL_INTERVAL_MS = 60_000; // 60 seconds (reduces serverless invocation frequency)
 
 /**
  * Convert a base64 VAPID public key to a Uint8Array for the push subscription.

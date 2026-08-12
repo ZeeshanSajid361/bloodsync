@@ -1,14 +1,20 @@
 /**
- * MongoDB connection management.
+ * MongoDB connection management — optimised for Vercel serverless.
  *
- * Uses a module-level cached promise so calling connectDB() multiple times
- * (e.g. in tests, or in the Vercel serverless api/index.js on warm invocations)
- * never opens more than one physical connection.
+ * KEY INSIGHT: In Vercel serverless, each function instance is isolated but
+ * the Node.js process is reused across warm invocations of the SAME instance.
+ * globalThis persists across warm invocations; module-level variables may be
+ * re-evaluated. We therefore cache on globalThis.
  *
- * Pool settings are tuned for a free-tier Atlas M0 cluster running on Render:
- *   maxPoolSize 10  — handle concurrent requests without queuing
- *   minPoolSize 2   — keep 2 warm sockets alive between bursts
- *   socketTimeoutMS — detect dead sockets faster than Atlas's default
+ * Pool settings tuned for serverless (NOT persistent server):
+ *   maxPoolSize  2   — each Vercel instance holds max 2 sockets.
+ *                      Atlas M0 limit = 500 connections total.
+ *                      With many concurrent cold-start invocations, a high
+ *                      pool (e.g. 10) instantly exhausts Atlas limits.
+ *   minPoolSize  0   — don't keep idle sockets open between requests.
+ *   bufferCommands   — false: queries fail immediately if not connected
+ *                      instead of silently queuing and timing out later.
+ *   serverSelectionTimeoutMS 5000 — fail fast on cold start Atlas handshake.
  */
 
 'use strict';
@@ -16,43 +22,62 @@
 const mongoose = require('mongoose');
 const { mongoUri } = require('./env');
 
-let connectionPromise = null;
+// ── Global connection cache ───────────────────────────────────────────────────
+// Using globalThis so it survives module re-evaluations within the same
+// Vercel function instance (warm reuse).
+if (!globalThis._mongoCache) {
+  globalThis._mongoCache = { conn: null, promise: null };
+}
+const cache = globalThis._mongoCache;
 
-const connectionOptions = {
-  serverSelectionTimeoutMS: 10_000,
-  socketTimeoutMS:          45_000,
-  maxPoolSize:              10,
-  minPoolSize:              2,
-  heartbeatFrequencyMS:     10_000,
+const CONNECTION_OPTIONS = {
+  bufferCommands:           false,   // fail-fast — don't queue ops while connecting
+  serverSelectionTimeoutMS: 5_000,   // fail quickly on Atlas cold-connect (was 10s)
+  socketTimeoutMS:          30_000,
+  maxPoolSize:              2,       // ← critical for serverless: keep low
+  minPoolSize:              0,       // don't keep sockets idle between requests
+  maxIdleTimeMS:            60_000,  // close idle sockets after 60s
 };
 
 async function connectDB() {
-  // Already connected — reuse without re-connecting.
-  if (mongoose.connection.readyState === 1) {
-    return mongoose.connection;
+  // Healthy existing connection — reuse immediately (hot path).
+  if (cache.conn && mongoose.connection.readyState === 1) {
+    return cache.conn;
   }
 
-  // In-flight connection promise — don't start a second one.
-  if (connectionPromise) return connectionPromise;
+  // Connection attempt already in-flight — wait for it.
+  if (cache.promise) {
+    cache.conn = await cache.promise;
+    return cache.conn;
+  }
 
-  connectionPromise = mongoose.connect(mongoUri, connectionOptions);
+  // Cold start — open a new connection.
+  console.log('[db] Opening new MongoDB connection…');
+  cache.promise = mongoose.connect(mongoUri, CONNECTION_OPTIONS).then((m) => m.connection);
 
-  mongoose.connection.on('connected', () => {
+  try {
+    cache.conn = await cache.promise;
     console.log('[db] Connected to MongoDB Atlas');
-  });
+  } catch (err) {
+    // Reset so the next invocation can retry.
+    cache.promise = null;
+    cache.conn    = null;
+    throw err;
+  }
 
   mongoose.connection.on('error', (err) => {
     console.error('[db] Connection error:', err.message);
-    // Reset so the next call can attempt a fresh connection.
-    connectionPromise = null;
+    cache.promise = null;
+    cache.conn    = null;
   });
 
   mongoose.connection.on('disconnected', () => {
-    console.warn('[db] Disconnected from MongoDB — will reconnect on next request');
-    connectionPromise = null;
+    console.warn('[db] Disconnected — cache cleared for next request');
+    cache.promise = null;
+    cache.conn    = null;
   });
 
-  return connectionPromise;
+  return cache.conn;
 }
 
 module.exports = { connectDB };

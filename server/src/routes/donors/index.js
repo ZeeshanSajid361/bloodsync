@@ -106,8 +106,8 @@ function buildDonorResponse(user, profile) {
 router.get('/me', async (req, res, next) => {
   try {
     const [user, profile] = await Promise.all([
-      User.findById(req.user.id),
-      DonorProfile.findOne({ user: req.user.id }),
+      User.findById(req.user.id).lean(),
+      DonorProfile.findOne({ user: req.user.id }).lean(),
     ]);
 
     if (!profile) {

@@ -1,8 +1,12 @@
 'use strict';
 
-// Handle OPTIONS preflight IMMEDIATELY before loading anything else.
-// This ensures CORS works even if the app fails to boot (e.g. missing env vars).
+// Hoist imports to top level so Node.js loads them during serverless container init,
+// avoiding per-request module resolution overhead on warm invocations.
+const { connectDB } = require('../src/config/db');
+const app           = require('../src/app');
+
 module.exports = async (req, res) => {
+  // Handle OPTIONS preflight IMMEDIATELY before loading DB or app router.
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
   res.setHeader(
@@ -15,12 +19,20 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const { connectDB } = require('../src/config/db');
-    const app = require('../src/app');
+    // Skip DB connection for health check routes to return instant 200 OK
+    if (req.url === '/api/health' || req.url === '/health') {
+      return app(req, res);
+    }
+
     await connectDB();
     return app(req, res);
   } catch (err) {
     console.error('[serverless] Fatal error:', err);
-    return res.status(500).json({ success: false, message: 'Internal server error', error: err.message });
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+      error: err.message,
+    });
   }
 };
+
