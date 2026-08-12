@@ -1,11 +1,17 @@
 services:
-  # Backend Node.js API
+  # ── Backend Node.js API (persistent Express server — NOT serverless) ──────────
+  # Render keeps the process alive, so MongoDB stays connected between requests.
+  # Free tier sleeps after 15 min idle; ping /api/health every 10 min via
+  # cron-job.org to prevent sleep if needed.
   - type: web
     name: bloodsync-api
     env: node
     region: singapore
+    rootDir: server
     buildCommand: npm install
     startCommand: npm start
+    healthCheckPath: /api/health
+    autoDeploy: true
     envVars:
       - key: NODE_ENV
         value: production
@@ -17,6 +23,10 @@ services:
         generateValue: true
       - key: JWT_REFRESH_SECRET
         generateValue: true
+      - key: JWT_ACCESS_EXPIRES_IN
+        value: 15m
+      - key: JWT_REFRESH_EXPIRES_IN
+        value: 7d
       - key: SMTP_HOST
         sync: false
       - key: SMTP_PORT
@@ -34,19 +44,31 @@ services:
       - key: CLOUDINARY_API_SECRET
         sync: false
       - key: CLIENT_URL
-        # This will be updated to point to the frontend service URL once deployed
+        # Set this to the Vercel frontend URL after first deploy, e.g.:
+        # https://blood-sync-app.vercel.app
+        sync: false
+      - key: VAPID_PUBLIC_KEY
+        sync: false
+      - key: VAPID_PRIVATE_KEY
+        sync: false
+      - key: VAPID_SUBJECT
         sync: false
 
-  # Frontend React SPA
+  # ── Frontend React SPA (stays on Vercel — great for static hosting) ───────────
+  # After deploying backend, set VITE_API_URL in Vercel env vars to:
+  # https://bloodsync-api.onrender.com
   - type: web
     name: bloodsync-client
     env: static
     region: singapore
+    rootDir: client
     buildCommand: npm install && npm run build
     staticPublishPath: ./dist
     envVars:
-      - key: VITE_API_BASE_URL
-        # This will be updated to point to the backend service URL once deployed
+      - key: VITE_API_URL
+        # Set to: https://bloodsync-api.onrender.com
+        sync: false
+      - key: VITE_VAPID_PUBLIC_KEY
         sync: false
     routes:
       - type: rewrite

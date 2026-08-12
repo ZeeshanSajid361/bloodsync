@@ -57,6 +57,21 @@ app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 // aggregators (Render, etc.).
 app.use(morgan(nodeEnv === 'production' ? 'combined' : 'dev'));
 
+// ── Response timing header ────────────────────────────────────────────────────
+// Adds X-Response-Time to every response so Render logs show per-request
+// latency — useful for identifying slow DB queries after migration.
+app.use((req, res, next) => {
+  const start = Date.now();
+  res.on('finish', () => {
+    const ms = Date.now() - start;
+    res.setHeader('X-Response-Time', `${ms}ms`);
+    if (nodeEnv === 'production' && ms > 1000) {
+      console.warn(`[perf] SLOW ${req.method} ${req.path} — ${ms}ms`);
+    }
+  });
+  next();
+});
+
 // ── Global rate limits ────────────────────────────────────────────────────────
 // A permissive global limiter that guards against bulk scraping. Sensitive
 // routes (login, register, resend-verification) get tighter limits below.
