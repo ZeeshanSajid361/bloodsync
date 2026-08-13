@@ -48,6 +48,37 @@ export function useDonorProfile() {
 
   useEffect(() => { fetch(); }, [fetch]);
 
-  return { donor, loading, error, refetch: fetch };
+  const toggleAvailability = useCallback(async (newAvailableStatus) => {
+    const snapshot = donorRef.current;
+    if (!snapshot) return;
+
+    // 1. Optimistic instant UI update (0ms delay)
+    const updated = {
+      ...snapshot,
+      profile: { ...snapshot.profile, isAvailable: newAvailableStatus },
+    };
+    setDonor(updated);
+    try {
+      localStorage.setItem(CACHE_KEY, JSON.stringify(updated));
+    } catch {}
+
+    // 2. Server request with snapshot rollback on error
+    try {
+      const { data } = await api.patch('/donors/me/availability', { isAvailable: newAvailableStatus });
+      if (data?.data) {
+        setDonor(data.data);
+        localStorage.setItem(CACHE_KEY, JSON.stringify(data.data));
+      }
+    } catch (err) {
+      console.error('Optimistic availability toggle failed, rolling back snapshot:', err);
+      setDonor(snapshot);
+      try {
+        localStorage.setItem(CACHE_KEY, JSON.stringify(snapshot));
+      } catch {}
+      throw err;
+    }
+  }, []);
+
+  return { donor, loading, error, refetch: fetch, toggleAvailability };
 }
 

@@ -114,11 +114,9 @@ router.post('/register', async (req, res, next) => {
     });
 
     const user = await User.findById(userId);
-    try {
-      await sendVerificationEmail({ name: user.name, email: user.email, token: rawToken });
-    } catch (err) {
-      console.error('[email] Verification send failed:', err.message);
-    }
+    // Dispatch email asynchronously without blocking HTTP response cycle
+    sendVerificationEmail({ name: user.name, email: user.email, token: rawToken })
+      .catch(err => console.error('[email] Verification send failed:', err.message));
 
     return res.status(201).json({
       success: true,
@@ -175,11 +173,8 @@ router.post('/verify-email', async (req, res, next) => {
     user.emailVerificationExpires = undefined;
     await user.save();
 
-    try {
-      await sendWelcomeEmail({ name: user.name, email: user.email, role: user.role });
-    } catch (err) {
-      console.error('[email] Welcome send failed:', err.message);
-    }
+    sendWelcomeEmail({ name: user.name, email: user.email, role: user.role })
+      .catch(err => console.error('[email] Welcome send failed:', err.message));
 
     return res.status(200).json({
       success: true,
@@ -296,6 +291,19 @@ router.post('/login', async (req, res, next) => {
     const refreshTokenHash = crypto.createHash('sha256').update(refreshToken).digest('hex');
     User.updateOne({ _id: user._id }, { $set: { refreshTokenHash } }).catch((err) => {
       console.error('[auth] Background refresh token save error:', err.message);
+    });
+
+    res.cookie('access_token', accessToken, {
+      httpOnly: true,
+      secure: nodeEnv === 'production',
+      sameSite: nodeEnv === 'production' ? 'none' : 'lax',
+      maxAge: 15 * 60 * 1000,
+    });
+    res.cookie('refresh_token', refreshToken, {
+      httpOnly: true,
+      secure: nodeEnv === 'production',
+      sameSite: nodeEnv === 'production' ? 'none' : 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
     return res.status(200).json({
@@ -493,16 +501,8 @@ router.post('/forgot-password', async (req, res, next) => {
     user.passwordResetExpires = Date.now() + 10 * 60 * 1000; // 10 minutes (industry standard)
     await user.save();
 
-
-    try {
-      await sendPasswordResetEmail({ name: user.name, email: user.email, token: rawToken });
-    } catch (err) {
-      console.error('[email] Password reset send failed:', err);
-      return res.status(500).json({
-        success: false,
-        message: `Failed to dispatch reset email: ${err.message || 'SMTP service error'}. Please try again later.`,
-      });
-    }
+    sendPasswordResetEmail({ name: user.name, email: user.email, token: rawToken })
+      .catch(err => console.error('[email] Password reset send failed:', err.message));
 
     return res.status(200).json({
       success: true,
