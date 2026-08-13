@@ -36,16 +36,17 @@ export function AuthProvider({ children }) {
     const stored = localStorage.getItem('user');
     if (stored) {
       try {
-        setUser(JSON.parse(stored));
+        const parsed = JSON.parse(stored);
+        setUser(parsed);
+        if (parsed?.role) {
+          prefetchDashboardChunk(parsed.role);
+        }
       } catch {
         // Corrupted data — start fresh.
         localStorage.removeItem('user');
       }
     }
     setLoading(false);
-    if (storedUser?.role) {
-      prefetchDashboardChunk(storedUser.role);
-    }
   }, []);
 
   const login = useCallback(({ user: userData, accessToken, refreshToken }) => {
