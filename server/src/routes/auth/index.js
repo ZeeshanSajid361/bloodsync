@@ -293,19 +293,6 @@ router.post('/login', async (req, res, next) => {
       console.error('[auth] Background refresh token save error:', err.message);
     });
 
-    res.cookie('access_token', accessToken, {
-      httpOnly: true,
-      secure: nodeEnv === 'production',
-      sameSite: nodeEnv === 'production' ? 'none' : 'lax',
-      maxAge: 15 * 60 * 1000,
-    });
-    res.cookie('refresh_token', refreshToken, {
-      httpOnly: true,
-      secure: nodeEnv === 'production',
-      sameSite: nodeEnv === 'production' ? 'none' : 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
-
     return res.status(200).json({
       success: true,
       message: 'Login successful.',
