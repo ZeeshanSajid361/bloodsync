@@ -34,11 +34,17 @@ const app = express();
 // This ensures Access-Control-Allow-Origin is present on every response,
 // including preflight OPTIONS requests from the Vercel serverless function.
 const corsOptions = {
-  origin: '*',
-  credentials: false, // must be false when origin is '*'
+  origin: (origin, callback) => {
+    if (!origin || origin.endsWith('.vercel.app') || origin.includes('localhost')) {
+      callback(null, true);
+    } else {
+      callback(null, origin);
+    }
+  },
+  credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  optionsSuccessStatus: 200, // some browsers (IE11) choke on 204
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token', 'X-Requested-With', 'Accept'],
+  optionsSuccessStatus: 200,
 };
 
 // Handle preflight for ALL routes — must be before everything else.
