@@ -125,9 +125,9 @@ const organizationSchema = new mongoose.Schema(
   }
 );
 
-// Geospatial index for proximity queries (Phase 6).
 organizationSchema.index({ location: '2dsphere' }, { sparse: true });
-organizationSchema.index({ status: 1, type: 1 });
+organizationSchema.index({ status: 1, type: 1, 'address.city': 1 });
+organizationSchema.index({ owner: 1 });
 
 const Organization = mongoose.model('Organization', organizationSchema);
 

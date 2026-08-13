@@ -13,6 +13,20 @@ if (!globalThis._apiCache) {
 }
 const cache = globalThis._apiCache;
 
+const MAX_CACHE_SIZE = 1000;
+
+/**
+ * Clean up expired items periodically or when cache grows large.
+ */
+function cleanupExpired() {
+  const now = Date.now();
+  for (const [key, item] of cache.entries()) {
+    if (now > item.expiresAt) {
+      cache.delete(key);
+    }
+  }
+}
+
 /**
  * Get cached item by key. Returns null if missing or expired.
  * @param {string} key
@@ -36,6 +50,10 @@ function get(key) {
  * @param {number} ttlSeconds - Default: 10 seconds
  */
 function set(key, value, ttlSeconds = 10) {
+  if (cache.size > MAX_CACHE_SIZE) {
+    cleanupExpired();
+  }
+
   cache.set(key, {
     value,
     expiresAt: Date.now() + ttlSeconds * 1000,

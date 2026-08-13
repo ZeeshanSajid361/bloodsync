@@ -13,6 +13,7 @@ const helmet = require('helmet');
 const cors = require('cors');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
+const compression = require('compression');
 
 const { clientUrl, nodeEnv } = require('./config/env');
 const { errorHandler, notFound } = require('./middleware/errorHandler');
@@ -43,6 +44,7 @@ const corsOptions = {
 // Handle preflight for ALL routes — must be before everything else.
 app.options('*', cors(corsOptions));
 app.use(cors(corsOptions));
+app.use(compression());
 
 // ── Security headers ──────────────────────────────────────────────────────────
 // Disable crossOriginResourcePolicy so Vercel serverless assets are accessible.

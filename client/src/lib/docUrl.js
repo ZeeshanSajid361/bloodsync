@@ -43,3 +43,17 @@ export function isPdfUrl(url) {
   if (!url) return false;
   return url.toLowerCase().split('?')[0].endsWith('.pdf');
 }
+
+/**
+ * Transforms a Cloudinary image URL to use auto-format, auto-quality, and max width limit.
+ * @param {string} url 
+ * @param {number} width 
+ * @returns {string}
+ */
+export function getOptimizedCloudinaryUrl(url, width = 600) {
+  if (!url || typeof url !== 'string') return '';
+  if (url.includes('res.cloudinary.com') && url.includes('/upload/') && !url.includes('/f_auto')) {
+    return url.replace('/upload/', `/upload/f_auto,q_auto,w_${width},c_limit/`);
+  }
+  return url;
+}

@@ -12,6 +12,21 @@ import api from '../lib/api';
 
 const AuthContext = createContext(null);
 
+function prefetchDashboardChunk(role) {
+  try {
+    switch (role) {
+      case 'donor':    import('../pages/dashboard/DonorDashboard'); break;
+      case 'seeker':   import('../pages/dashboard/SeekerDashboard'); break;
+      case 'hospital': import('../pages/dashboard/HospitalDashboard'); break;
+      case 'admin':    import('../pages/dashboard/AdminDashboard'); break;
+      case 'partner':  import('../pages/dashboard/PartnerDashboard'); break;
+      default: break;
+    }
+  } catch {
+    // Ignore prefetch failures silently
+  }
+}
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true); // true until initial hydration done
@@ -28,6 +43,9 @@ export function AuthProvider({ children }) {
       }
     }
     setLoading(false);
+    if (storedUser?.role) {
+      prefetchDashboardChunk(storedUser.role);
+    }
   }, []);
 
   const login = useCallback(({ user: userData, accessToken, refreshToken }) => {
@@ -35,6 +53,9 @@ export function AuthProvider({ children }) {
     localStorage.setItem('accessToken', accessToken);
     localStorage.setItem('refreshToken', refreshToken);
     setUser(userData);
+    if (userData?.role) {
+      prefetchDashboardChunk(userData.role);
+    }
   }, []);
 
   const logout = useCallback(async () => {

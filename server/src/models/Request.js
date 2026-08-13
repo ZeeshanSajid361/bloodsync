@@ -180,6 +180,7 @@ const requestSchema = new mongoose.Schema(
 requestSchema.index({ status: 1, createdAt: -1 });
 requestSchema.index({ seeker: 1, createdAt: -1 });
 requestSchema.index({ patientBloodGroup: 1, status: 1 });
+requestSchema.index({ status: 1, patientBloodGroup: 1, hospitalCity: 1, urgency: 1 });
 
 const Request = mongoose.model('Request', requestSchema);
 
