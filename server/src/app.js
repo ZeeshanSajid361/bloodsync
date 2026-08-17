@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Express application factory.
  *
  * Wires security middleware, body parsers, request logging, and all route
@@ -64,7 +64,6 @@ app.use((req, res, next) => {
   const start = Date.now();
   res.on('finish', () => {
     const ms = Date.now() - start;
-    res.setHeader('X-Response-Time', `${ms}ms`);
     if (nodeEnv === 'production' && ms > 1000) {
       console.warn(`[perf] SLOW ${req.method} ${req.path} ΓÇö ${ms}ms`);
     }
