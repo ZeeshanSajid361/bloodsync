@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { MapPin, Navigation, ExternalLink, CheckCircle2, X, Loader2, Search } from 'lucide-react';
+import { MapPin, Navigation, ExternalLink, CheckCircle2, X, Loader2, Search, Globe } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const CITY_COORDS = {
@@ -73,13 +73,13 @@ const CITY_PROVINCE_MAP = {
 };
 
 function getProvinceForCity(cityName) {
-  if (!cityName) return 'Islamabad Capital Territory';
+  if (!cityName || typeof cityName !== 'string') return 'Islamabad Capital Territory';
   const key = cityName.toLowerCase().trim();
   return CITY_PROVINCE_MAP[key] || 'Punjab';
 }
 
 function formatSearchAddress(queryText) {
-  if (!queryText) return '';
+  if (!queryText || typeof queryText !== 'string') return '';
   let text = queryText.trim();
   for (const [abbr, full] of Object.entries(MEDICAL_ACRONYMS)) {
     const reg = new RegExp(`\\b${abbr}\\b`, 'gi');
@@ -88,7 +88,6 @@ function formatSearchAddress(queryText) {
     }
   }
 
-  // Capitalize neatly
   text = text.split(' ')
     .map(w => (w.length <= 4 && w === w.toUpperCase()) ? w : w.charAt(0).toUpperCase() + w.slice(1))
     .join(' ');
@@ -97,7 +96,7 @@ function formatSearchAddress(queryText) {
 }
 
 function extractCityFromQuery(q) {
-  if (!q) return null;
+  if (!q || typeof q !== 'string') return null;
   const lower = q.toLowerCase();
   for (const c of Object.keys(CITY_COORDS)) {
     if (lower.includes(c)) {
@@ -108,8 +107,8 @@ function extractCityFromQuery(q) {
 }
 
 export default function LocationPickerModal({ isOpen, onClose, onSelectLocation, initialLocation = {} }) {
-  const safeInit = initialLocation && typeof initialLocation === 'object' ? initialLocation : {};
-  const safeCity = typeof safeInit.city === 'string' && safeInit.city.trim() ? safeInit.city.trim() : 'Islamabad';
+  const safeInit   = initialLocation && typeof initialLocation === 'object' ? initialLocation : {};
+  const safeCity   = typeof safeInit.city === 'string' && safeInit.city.trim() ? safeInit.city.trim() : 'Islamabad';
   const safeStreet = typeof safeInit.street === 'string' ? safeInit.street : (typeof safeInit.address === 'string' ? safeInit.address : '');
 
   const [lat, setLat]                 = useState(typeof safeInit.latitude === 'number' ? safeInit.latitude : 33.6844);
@@ -119,16 +118,16 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
   const [province, setProvince]       = useState(typeof safeInit.province === 'string' ? safeInit.province : getProvinceForCity(safeCity));
   const [mapsUrl, setMapsUrl]         = useState(typeof safeInit.mapsUrl === 'string' ? safeInit.mapsUrl : '');
 
+  const [mapMode, setMapMode]         = useState('leaflet'); // 'leaflet' | 'google'
   const [loading, setLoading]         = useState(false);
   const [geocoding, setGeocoding]     = useState(false);
   const [searchQuery, setSearchQuery] = useState(safeStreet);
+  const [searchResults, setSearchResults] = useState([]);
+  const [showResultsDropdown, setShowResultsDropdown] = useState(false);
 
-  // Auto-sync province whenever city changes
-  useEffect(() => {
-    if (city && typeof city === 'string') {
-      setProvince(getProvinceForCity(city));
-    }
-  }, [city]);
+  const mapContainerRef = useRef(null);
+  const mapInstanceRef  = useRef(null);
+  const markerRef       = useRef(null);
 
   // Sync state safely when modal opens or initialLocation changes
   useEffect(() => {
@@ -137,22 +136,24 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
     const initCity = typeof init.city === 'string' && init.city.trim() ? init.city.trim() : 'Islamabad';
     const initStreet = typeof init.street === 'string' ? init.street : (typeof init.address === 'string' ? init.address : '');
 
-    setLat(typeof init.latitude === 'number' ? init.latitude : 33.6844);
-    setLng(typeof init.longitude === 'number' ? init.longitude : 73.0479);
+    const initialLat = typeof init.latitude === 'number' ? init.latitude : (CITY_COORDS[initCity.toLowerCase()]?.lat || 33.6844);
+    const initialLng = typeof init.longitude === 'number' ? init.longitude : (CITY_COORDS[initCity.toLowerCase()]?.lng || 73.0479);
+
+    setLat(initialLat);
+    setLng(initialLng);
     setAddressText(initStreet);
     setSearchQuery(initStreet);
     setCity(initCity);
     setProvince(typeof init.province === 'string' ? init.province : getProvinceForCity(initCity));
-    setMapsUrl(typeof init.mapsUrl === 'string' ? init.mapsUrl : '');
-
-    if (initCity) {
-      const key = initCity.toLowerCase().trim();
-      if (CITY_COORDS[key]) {
-        setLat(CITY_COORDS[key].lat);
-        setLng(CITY_COORDS[key].lng);
-      }
-    }
+    setMapsUrl(typeof init.mapsUrl === 'string' ? init.mapsUrl : `https://www.google.com/maps/search/?api=1&query=${initialLat},${initialLng}`);
   }, [isOpen, initialLocation]);
+
+  // Auto-sync province whenever city changes
+  useEffect(() => {
+    if (city && typeof city === 'string') {
+      setProvince(getProvinceForCity(city));
+    }
+  }, [city]);
 
   // Freeze body scroll when modal is active
   useEffect(() => {
@@ -166,6 +167,138 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
       document.documentElement.style.overflow = prevHtml;
     };
   }, [isOpen]);
+
+  // Initialize Leaflet Map when mapMode === 'leaflet'
+  useEffect(() => {
+    if (!isOpen || mapMode !== 'leaflet') return;
+    let isMounted = true;
+
+    async function initLeafletMap() {
+      if (!document.getElementById('leaflet-css-pkg')) {
+        const link = document.createElement('link');
+        link.id = 'leaflet-css-pkg';
+        link.rel = 'stylesheet';
+        link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+        document.head.appendChild(link);
+      }
+
+      if (!window.L) {
+        await new Promise((resolve) => {
+          if (document.getElementById('leaflet-js-pkg')) {
+            const timer = setInterval(() => {
+              if (window.L) { clearInterval(timer); resolve(); }
+            }, 50);
+            return;
+          }
+          const script = document.createElement('script');
+          script.id = 'leaflet-js-pkg';
+          script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+          script.onload = resolve;
+          document.head.appendChild(script);
+        });
+      }
+
+      if (!isMounted || !mapContainerRef.current) return;
+      const L = window.L;
+
+      const redIcon = L.divIcon({
+        className: 'custom-leaflet-marker',
+        html: `<div style="
+          background: #ef4444;
+          width: 28px;
+          height: 28px;
+          border-radius: 50% 50% 50% 0;
+          transform: rotate(-45deg);
+          border: 2px solid #ffffff;
+          box-shadow: 0 4px 16px rgba(239,68,68,0.8);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        "><div style="width: 10px; height: 10px; background: #ffffff; border-radius: 50%;"></div></div>`,
+        iconSize: [28, 28],
+        iconAnchor: [14, 28],
+      });
+
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove();
+        mapInstanceRef.current = null;
+      }
+
+      const initialLat = lat || 33.6844;
+      const initialLng = lng || 73.0479;
+
+      const map = L.map(mapContainerRef.current, {
+        center: [initialLat, initialLng],
+        zoom: 16,
+        maxZoom: 20,
+        zoomControl: true,
+        scrollWheelZoom: true,
+        doubleClickZoom: true,
+        touchZoom: true,
+      });
+      mapInstanceRef.current = map;
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors',
+        maxNativeZoom: 19,
+        maxZoom: 20,
+      }).addTo(map);
+
+      const marker = L.marker([initialLat, initialLng], { icon: redIcon, draggable: true }).addTo(map);
+      markerRef.current = marker;
+
+      setTimeout(() => {
+        if (mapInstanceRef.current) {
+          mapInstanceRef.current.invalidateSize();
+        }
+      }, 250);
+
+      // Map click -> move pin & set coordinates & Google Maps URL
+      map.on('click', (e) => {
+        const clickedLat = parseFloat(e.latlng.lat.toFixed(6));
+        const clickedLng = parseFloat(e.latlng.lng.toFixed(6));
+        setLat(clickedLat);
+        setLng(clickedLng);
+        marker.setLatLng([clickedLat, clickedLng]);
+        const genUrl = `https://www.google.com/maps/search/?api=1&query=${clickedLat},${clickedLng}`;
+        setMapsUrl(genUrl);
+        setShowResultsDropdown(false);
+      });
+
+      // Marker dragend -> update position & Google Maps URL
+      marker.on('dragend', () => {
+        const pos = marker.getLatLng();
+        const draggedLat = parseFloat(pos.lat.toFixed(6));
+        const draggedLng = parseFloat(pos.lng.toFixed(6));
+        setLat(draggedLat);
+        setLng(draggedLng);
+        const genUrl = `https://www.google.com/maps/search/?api=1&query=${draggedLat},${draggedLng}`;
+        setMapsUrl(genUrl);
+        setShowResultsDropdown(false);
+      });
+    }
+
+    const timer = setTimeout(initLeafletMap, 100);
+
+    return () => {
+      isMounted = false;
+      clearTimeout(timer);
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove();
+        mapInstanceRef.current = null;
+      }
+    };
+  }, [isOpen, mapMode]);
+
+  // Smoothly pan Leaflet map to target lat/lng
+  function panMapTo(latitude, longitude, zoom = 18) {
+    setLat(latitude);
+    setLng(longitude);
+    if (mapInstanceRef.current && markerRef.current) {
+      mapInstanceRef.current.flyTo([latitude, longitude], zoom, { duration: 1.2 });
+      markerRef.current.setLatLng([latitude, longitude]);
+    }
+  }
 
   if (!isOpen) return null;
 
@@ -182,8 +315,7 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
       (pos) => {
         const latitude  = parseFloat(pos.coords.latitude.toFixed(6));
         const longitude = parseFloat(pos.coords.longitude.toFixed(6));
-        setLat(latitude);
-        setLng(longitude);
+        panMapTo(latitude, longitude, 18);
         const generatedUrl = `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
         setMapsUrl(generatedUrl);
         setAddressText(`GPS Location (${latitude}, ${longitude})`);
@@ -201,22 +333,7 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
     );
   }
 
-  // Live auto-sync form fields while typing search query
-  useEffect(() => {
-    if (!searchQuery || searchQuery.trim().length < 3) return;
-    const timer = setTimeout(() => {
-      const formatted = formatSearchAddress(searchQuery);
-      const detectedCity = extractCityFromQuery(searchQuery);
-      if (detectedCity && detectedCity.toLowerCase() !== city.toLowerCase()) {
-        setCity(detectedCity);
-        setProvince(getProvinceForCity(detectedCity));
-      }
-      if (formatted) setAddressText(formatted);
-    }, 400);
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
-
-  // Handle location search with Real Google Maps sync
+  // Handle location search
   function handleSearchLocation(e) {
     if (e) e.preventDefault();
     const rawQuery = searchQuery.trim();
@@ -224,13 +341,12 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
 
     setGeocoding(true);
 
-    // 1. Direct Lat/Lng or Google Maps URL pattern check (e.g. @33.6492048,73.0170415)
+    // 1. Direct Lat/Lng or Google Maps URL pattern check
     const coordsMatch = rawQuery.match(/@?(-?\d+\.\d+),\s*(-?\d+\.\d+)/);
     if (coordsMatch) {
       const latitude  = parseFloat(parseFloat(coordsMatch[1]).toFixed(6));
       const longitude = parseFloat(parseFloat(coordsMatch[2]).toFixed(6));
-      setLat(latitude);
-      setLng(longitude);
+      panMapTo(latitude, longitude, 18);
       const genUrl = `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
       setMapsUrl(genUrl);
       setAddressText(`Coordinates: ${latitude}, ${longitude}`);
@@ -248,6 +364,12 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
     setProvince(detectedProvince);
     setAddressText(formatted);
     
+    // Pan map to city coords if available
+    const cityCoord = CITY_COORDS[detectedCity.toLowerCase()];
+    if (cityCoord) {
+      panMapTo(cityCoord.lat, cityCoord.lng, 16);
+    }
+
     const googleSearchUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(formatted + ' ' + detectedCity)}`;
     setMapsUrl(googleSearchUrl);
 
@@ -286,7 +408,7 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
         touchAction: 'none'
       }}
     >
-      {/* Outer card — fixed max height, flex column so footer always visible */}
+      {/* Outer card */}
       <div className="card" style={{
         width: '100%', maxWidth: '640px',
         height: 'min(700px, calc(100vh - 24px))',
@@ -300,7 +422,7 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
         {/* ── FIXED TOP: Header ── */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', flexShrink: 0 }}>
           <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px', color: '#f8fafc' }}>
-            <MapPin size={18} color="#ef4444" /> Pin Exact Location on Google Maps
+            <MapPin size={18} color="#ef4444" /> Pin Exact Location on Map
           </h3>
           <button onClick={onClose} className="btn btn-ghost btn-sm" style={{ padding: '4px 8px' }}>
             <X size={18} />
@@ -330,22 +452,66 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
           </form>
         </div>
 
-        {/* ── MAP CONTAINER: 100% Real Google Maps Embed ── */}
+        {/* ── Mode Toggle Bar ── */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', flexShrink: 0 }}>
+          <div style={{ display: 'flex', gap: '6px' }}>
+            <button
+              type="button"
+              className={`btn btn-sm ${mapMode === 'leaflet' ? 'btn-primary' : 'btn-ghost'}`}
+              onClick={() => setMapMode('leaflet')}
+              style={{
+                fontSize: '0.76rem', padding: '4px 10px', display: 'inline-flex', alignItems: 'center', gap: '5px',
+                background: mapMode === 'leaflet' ? '#2563eb' : 'transparent', fontWeight: mapMode === 'leaflet' ? 700 : 500
+              }}
+            >
+              <MapPin size={13} color="#ef4444" /> Interactive Pin Map
+            </button>
+            <button
+              type="button"
+              className={`btn btn-sm ${mapMode === 'google' ? 'btn-primary' : 'btn-ghost'}`}
+              onClick={() => setMapMode('google')}
+              style={{
+                fontSize: '0.76rem', padding: '4px 10px', display: 'inline-flex', alignItems: 'center', gap: '5px',
+                background: mapMode === 'google' ? '#2563eb' : 'transparent', fontWeight: mapMode === 'google' ? 700 : 500
+              }}
+            >
+              <Globe size={13} color="#60a5fa" /> Google Map View
+            </button>
+          </div>
+          <div style={{ fontSize: '0.72rem', color: '#94a3b8' }}>
+            {mapMode === 'leaflet' ? '📍 Click map or drag red marker to pin' : '🗺️ Live Google Maps View'}
+          </div>
+        </div>
+
+        {/* ── MAP CONTAINER: Interactive Leaflet Pin Map OR Google Map Embed ── */}
         <div style={{
-          position: 'relative', width: '100%', height: '270px', flexShrink: 0,
+          position: 'relative', width: '100%', height: '260px', flexShrink: 0,
           borderRadius: '12px', overflow: 'hidden',
           border: '1px solid rgba(255,255,255,0.15)', marginBottom: '10px', background: '#1e293b'
         }}>
-          <iframe
-            title="Real Google Map View"
-            width="100%"
-            height="100%"
-            style={{ border: 0, borderRadius: '12px' }}
-            loading="lazy"
-            allowFullScreen
-            referrerPolicy="no-referrer-when-downgrade"
-            src={`https://maps.google.com/maps?q=${encodeURIComponent(activeEmbedQuery)}&t=&z=17&ie=UTF8&iwloc=&output=embed`}
-          />
+          {mapMode === 'google' ? (
+            <iframe
+              title="Real Google Map View"
+              width="100%"
+              height="100%"
+              style={{ border: 0, borderRadius: '12px' }}
+              loading="lazy"
+              allowFullScreen
+              referrerPolicy="no-referrer-when-downgrade"
+              src={`https://maps.google.com/maps?q=${encodeURIComponent(activeEmbedQuery)}&t=&z=17&ie=UTF8&iwloc=&output=embed`}
+            />
+          ) : (
+            <>
+              <div ref={mapContainerRef} style={{ width: '100%', height: '100%', zIndex: 1 }} />
+              <div style={{
+                position: 'absolute', bottom: '10px', left: '10px', zIndex: 1000, background: 'rgba(15, 23, 42, 0.92)',
+                padding: '4px 12px', borderRadius: '16px', fontSize: '0.74rem', color: '#34d399', fontWeight: 700,
+                border: '1px solid rgba(16, 185, 129, 0.4)', backdropFilter: 'blur(4px)', pointerEvents: 'none'
+              }}>
+                📍 Drag marker or click map ({lat.toFixed(6)}, {lng.toFixed(6)})
+              </div>
+            </>
+          )}
         </div>
 
         {/* ── SCROLLABLE: Form Fields ── */}
