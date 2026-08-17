@@ -581,6 +581,15 @@ router.post('/contact', async (req, res, next) => {
 
     await sendContactSupportEmail({ name, email, message });
 
+    return res.status(200).json({
+      success: true,
+      message: 'Your message has been sent to the BloodSync Support Team.',
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // ─────────────────────────────────────────────────────────────────────────────
 // PUT /api/auth/me
 // ─────────────────────────────────────────────────────────────────────────────
