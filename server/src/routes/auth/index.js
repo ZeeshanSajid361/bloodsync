@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Auth routes ΓÇö register, verify-email, login, refresh, logout.
  *
  * All routes are public (no requireAuth) except /logout, which needs a valid
@@ -14,6 +14,7 @@ const bcrypt  = require('bcryptjs');
 
 const { User, ROLES }         = require('../../models/User');
 const { DonorProfile }        = require('../../models/DonorProfile');
+const { requireAuth }          = require('../../middleware/auth');
 const { signAccessToken, signRefreshToken, verifyRefreshToken } = require('../../utils/token');
 const { sendVerificationEmail, sendWelcomeEmail, sendPasswordResetEmail, sendContactSupportEmail } = require('../../utils/email');
 
@@ -580,9 +581,37 @@ router.post('/contact', async (req, res, next) => {
 
     await sendContactSupportEmail({ name, email, message });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// PUT /api/auth/me
+// ─────────────────────────────────────────────────────────────────────────────
+/**
+ * Updates basic profile fields (name, phone, city) for any authenticated user account.
+ */
+router.put('/me', requireAuth, async (req, res, next) => {
+  try {
+    const { name, phone, city } = req.body;
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found.' });
+    }
+
+    if (name)  user.name  = name.trim();
+    if (phone !== undefined) user.phone = phone.trim();
+    if (city  !== undefined) user.city  = city.trim();
+
+    await user.save();
+
     return res.status(200).json({
       success: true,
-      message: 'Your message has been sent to the BloodSync Support Team.',
+      message: 'Profile updated successfully.',
+      data: {
+        id:    user._id,
+        name:  user.name,
+        email: user.email,
+        role:  user.role,
+        phone: user.phone,
+        city:  user.city,
+      },
     });
   } catch (err) {
     next(err);

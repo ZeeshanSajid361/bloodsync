@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Auth context ΓÇö session state and authentication actions.
  *
  * Persists { user, accessToken, refreshToken } to localStorage so the session
@@ -48,8 +48,16 @@ export function AuthProvider({ children }) {
     setUser(null);
   }, []);
 
+  const updateUser = useCallback((updatedUserData) => {
+    setUser((prev) => {
+      const next = { ...prev, ...updatedUserData };
+      localStorage.setItem('user', JSON.stringify(next));
+      return next;
+    });
+  }, []);
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, isAuthenticated: !!user }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, updateUser, isAuthenticated: !!user }}>
       {children}
     </AuthContext.Provider>
   );

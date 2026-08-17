@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Login page.
  *
  * Authenticates the user and redirects to either the intended page (if they
@@ -147,7 +147,7 @@ export default function LoginPage() {
                     name="password"
                     type={showPassword ? 'text' : 'password'}
                     className={`input has-icon${errors.password ? ' error' : ''}`}
-                    placeholder="ΓÇóΓÇóΓÇóΓÇóΓÇóΓÇóΓÇóΓÇó"
+                    placeholder="••••••••"
                     value={form.password}
                     onChange={handleChange}
                     autoComplete="current-password"

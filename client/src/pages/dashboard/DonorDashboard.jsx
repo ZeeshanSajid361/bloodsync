@@ -16,7 +16,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, User, History, LogOut,
   Droplets, MapPin, Phone, Calendar, AlertCircle,
-  CheckCircle2, Clock, Edit3, Save, X,
+  CheckCircle2, Clock, Edit3, Save, X, FileText, Mail,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -673,8 +673,8 @@ function EditProfileTab({ donor, refetch, onSaved }) {
     <>
       <div className="dashboard-topbar animate-fade-up">
         <div>
-          <h1 className="dashboard-page-title">Edit Profile</h1>
-          <p className="dashboard-page-subtitle">Update your information below.</p>
+          <h1 className="dashboard-page-title">Edit Profile Details</h1>
+          <p className="dashboard-page-subtitle">Update your voluntary donor profile, contact information, and blood group.</p>
         </div>
         <button
           className="btn btn-ghost btn-sm"
@@ -684,49 +684,68 @@ function EditProfileTab({ donor, refetch, onSaved }) {
         </button>
       </div>
 
-      <div className="profile-form-card animate-fade-up">
+      <div className="profile-form-card animate-fade-up" style={{ padding: '24px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
+          <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#f8fafc', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <User size={20} color="#ef4444" /> Personal & Medical Profile
+          </div>
+          <div className="badge badge-green" style={{ padding: '6px 12px', fontSize: '0.78rem' }}>
+            ✓ Verified Donor Account
+          </div>
+        </div>
+
         <form onSubmit={handleSubmit} noValidate>
-          <div className="profile-form-grid">
+          <div className="profile-form-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
 
             {/* Name */}
             <div className="input-group">
               <label className="input-label" htmlFor="edit-name">
-                Full name <span className="required">*</span>
+                Full Name <span className="required">*</span>
               </label>
-              <input
-                id="edit-name"
-                name="name"
-                className="input"
-                value={form.name}
-                onChange={handleChange}
-                required
-              />
+              <div className="input-wrapper">
+                <User className="input-icon" size={17} />
+                <input
+                  id="edit-name"
+                  name="name"
+                  className="input has-icon"
+                  value={form.name}
+                  onChange={handleChange}
+                  placeholder="Your Full Name"
+                  required
+                />
+              </div>
             </div>
 
             {/* Phone */}
             <div className="input-group">
-              <label className="input-label" htmlFor="edit-phone">Phone</label>
-              <input
-                id="edit-phone"
-                name="phone"
-                className="input"
-                placeholder="+92 300 0000000"
-                value={form.phone}
-                onChange={handleChange}
-              />
+              <label className="input-label" htmlFor="edit-phone">Phone Number</label>
+              <div className="input-wrapper">
+                <Phone className="input-icon" size={17} />
+                <input
+                  id="edit-phone"
+                  name="phone"
+                  className="input has-icon"
+                  placeholder="+92 300 0000000"
+                  value={form.phone}
+                  onChange={handleChange}
+                />
+              </div>
             </div>
 
             {/* City */}
             <div className="input-group">
-              <label className="input-label" htmlFor="edit-city">City</label>
-              <input
-                id="edit-city"
-                name="city"
-                className="input"
-                placeholder="Islamabad"
-                value={form.city}
-                onChange={handleChange}
-              />
+              <label className="input-label" htmlFor="edit-city">City / Region</label>
+              <div className="input-wrapper">
+                <MapPin className="input-icon" size={17} />
+                <input
+                  id="edit-city"
+                  name="city"
+                  className="input has-icon"
+                  placeholder="Rawalpindi / Islamabad"
+                  value={form.city}
+                  onChange={handleChange}
+                />
+              </div>
             </div>
 
             {/* Age */}
@@ -734,17 +753,21 @@ function EditProfileTab({ donor, refetch, onSaved }) {
               <label className="input-label" htmlFor="edit-age">
                 Age <span className="required">*</span>
               </label>
-              <input
-                id="edit-age"
-                name="age"
-                type="number"
-                className="input"
-                min={18}
-                max={65}
-                value={form.age}
-                onChange={handleChange}
-                required
-              />
+              <div className="input-wrapper">
+                <Calendar className="input-icon" size={17} />
+                <input
+                  id="edit-age"
+                  name="age"
+                  type="number"
+                  className="input has-icon"
+                  min={18}
+                  max={65}
+                  value={form.age}
+                  onChange={handleChange}
+                  placeholder="18 - 65"
+                  required
+                />
+              </div>
             </div>
 
             {/* Gender */}
@@ -752,53 +775,62 @@ function EditProfileTab({ donor, refetch, onSaved }) {
               <label className="input-label" htmlFor="edit-gender">
                 Gender <span className="required">*</span>
               </label>
-              <select
-                id="edit-gender"
-                name="gender"
-                className="input"
-                value={form.gender}
-                onChange={handleChange}
-              >
-                <option value="male">Male</option>
-                <option value="female">Female</option>
-                <option value="other">Other</option>
-              </select>
+              <div className="input-wrapper">
+                <User className="input-icon" size={17} />
+                <select
+                  id="edit-gender"
+                  name="gender"
+                  className="input has-icon"
+                  value={form.gender}
+                  onChange={handleChange}
+                >
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
             </div>
 
             {/* Blood group */}
             <div className="input-group">
               <label className="input-label" htmlFor="edit-bloodGroup">
-                Blood group <span className="required">*</span>
+                Blood Group <span className="required">*</span>
               </label>
-              <select
-                id="edit-bloodGroup"
-                name="bloodGroup"
-                className="input"
-                value={form.bloodGroup}
-                onChange={handleChange}
-              >
-                {BLOOD_GROUPS.map((bg) => (
-                  <option key={bg} value={bg}>{bg}</option>
-                ))}
-              </select>
+              <div className="input-wrapper">
+                <Droplets className="input-icon" size={17} />
+                <select
+                  id="edit-bloodGroup"
+                  name="bloodGroup"
+                  className="input has-icon"
+                  value={form.bloodGroup}
+                  onChange={handleChange}
+                >
+                  {BLOOD_GROUPS.map((bg) => (
+                    <option key={bg} value={bg}>{bg}</option>
+                  ))}
+                </select>
+              </div>
             </div>
 
             {/* Bio */}
-            <div className="input-group full">
+            <div className="input-group" style={{ gridColumn: '1 / -1' }}>
               <label className="input-label" htmlFor="edit-bio">
-                Bio <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>(optional, max 300 chars)</span>
+                Donor Bio & Message <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>(optional)</span>
               </label>
-              <textarea
-                id="edit-bio"
-                name="bio"
-                className="input"
-                rows={3}
-                maxLength={300}
-                placeholder="A short note about yourself..."
-                value={form.bio}
-                onChange={handleChange}
-                style={{ resize: 'vertical', minHeight: 80 }}
-              />
+              <div className="input-wrapper" style={{ alignItems: 'flex-start' }}>
+                <FileText className="input-icon" size={17} style={{ marginTop: '12px' }} />
+                <textarea
+                  id="edit-bio"
+                  name="bio"
+                  className="input has-icon"
+                  rows={3}
+                  maxLength={300}
+                  placeholder="A short note about your availability or blood donation pledge..."
+                  value={form.bio}
+                  onChange={handleChange}
+                  style={{ resize: 'vertical', minHeight: 80, paddingTop: '10px' }}
+                />
+              </div>
             </div>
           </div>
 
@@ -809,17 +841,22 @@ function EditProfileTab({ donor, refetch, onSaved }) {
             </div>
           )}
 
-          <div className="flex gap-4 mt-6">
+          <div style={{ display: 'flex', gap: '12px', marginTop: '24px', paddingTop: '16px', borderTop: '1px solid rgba(255, 255, 255, 0.08)' }}>
             <button
               id="edit-save"
               type="submit"
               className="btn btn-primary"
               disabled={saving}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 24px', fontWeight: 700 }}
             >
-              {saving ? <span className="spinner" /> : <Save size={16} />}
-              Save changes
+              {saving ? <span className="spinner" /> : <Save size={18} />}
+              Save Changes
             </button>
-            <button type="button" className="btn btn-ghost" onClick={onSaved}>
+            <button
+              type="button"
+              className="btn btn-ghost"
+              onClick={onSaved}
+            >
               Cancel
             </button>
           </div>

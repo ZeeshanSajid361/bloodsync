@@ -13,6 +13,7 @@ import {
   Search, FilePlus, ClipboardList, LogOut,
   MapPin, AlertCircle, CheckCircle2, FileText,
   Loader2, X, ExternalLink, Edit3, Phone, Building2,
+  User, Save,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -33,6 +34,7 @@ const NAV_ITEMS = [
   { id: 'search',   label: 'Find Donors',  icon: Search },
   { id: 'request',  label: 'New Request',  icon: FilePlus },
   { id: 'history',  label: 'My Requests',  icon: ClipboardList },
+  { id: 'edit',     label: 'Edit Profile', icon: Edit3 },
 ];
 
 export default function SeekerDashboard() {
@@ -139,6 +141,9 @@ export default function SeekerDashboard() {
               refetch={refetch}
               onNewRequest={() => setTab('request')}
             />
+          )}
+          {activeTab === 'edit' && (
+            <SeekerEditProfileTab onSaved={() => setTab('search')} />
           )}
         </main>
 
@@ -1186,4 +1191,146 @@ function formatDate(date) {
 
 function capitalise(str) {
   return str ? str.charAt(0).toUpperCase() + str.slice(1) : '';
+}
+
+/* ════════════════════════════════════════════════════════
+   SEEKER EDIT PROFILE TAB
+════════════════════════════════════════════════════════ */
+function SeekerEditProfileTab({ onSaved }) {
+  const { user, updateUser } = useAuth();
+  const [form, setForm] = useState({
+    name:  user?.name  || '',
+    phone: user?.phone || '',
+    city:  user?.city  || '',
+  });
+  const [saving,   setSaving]   = useState(false);
+  const [apiError, setApiError] = useState('');
+
+  function handleChange(e) {
+    const { name, value } = e.target;
+    setForm((p) => ({ ...p, [name]: value }));
+    setApiError('');
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setSaving(true);
+    setApiError('');
+
+    try {
+      const res = await api.put('/auth/me', {
+        name:  form.name.trim(),
+        phone: form.phone.trim(),
+        city:  form.city.trim(),
+      });
+      if (updateUser) {
+        updateUser(res.data?.data || { name: form.name, phone: form.phone, city: form.city });
+      }
+      toast.success('Seeker profile updated successfully.');
+      onSaved();
+    } catch (err) {
+      setApiError(err.response?.data?.message || 'Failed to update profile.');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <>
+      <div className="dashboard-topbar animate-fade-up">
+        <div>
+          <h1 className="dashboard-page-title">Edit Seeker Profile</h1>
+          <p className="dashboard-page-subtitle">Update your personal contact information and city location.</p>
+        </div>
+        <button className="btn btn-ghost btn-sm" onClick={onSaved}>
+          <X size={16} /> Cancel
+        </button>
+      </div>
+
+      <div className="profile-form-card animate-fade-up" style={{ padding: '24px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
+          <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#f8fafc', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <User size={20} color="#38bdf8" /> Seeker Account Details
+          </div>
+          <div className="badge badge-blue" style={{ padding: '6px 12px', fontSize: '0.78rem' }}>
+            🩸 Registered Blood Seeker
+          </div>
+        </div>
+
+        <form onSubmit={handleSubmit} noValidate>
+          <div className="profile-form-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
+            {/* Name */}
+            <div className="input-group">
+              <label className="input-label" htmlFor="seeker-name">Full Name <span className="required">*</span></label>
+              <div className="input-wrapper">
+                <User className="input-icon" size={17} />
+                <input
+                  id="seeker-name"
+                  name="name"
+                  className="input has-icon"
+                  value={form.name}
+                  onChange={handleChange}
+                  placeholder="Your Full Name"
+                  required
+                />
+              </div>
+            </div>
+
+            {/* Phone */}
+            <div className="input-group">
+              <label className="input-label" htmlFor="seeker-phone">Phone Number</label>
+              <div className="input-wrapper">
+                <Phone className="input-icon" size={17} />
+                <input
+                  id="seeker-phone"
+                  name="phone"
+                  className="input has-icon"
+                  placeholder="+92 300 0000000"
+                  value={form.phone}
+                  onChange={handleChange}
+                />
+              </div>
+            </div>
+
+            {/* City */}
+            <div className="input-group" style={{ gridColumn: '1 / -1' }}>
+              <label className="input-label" htmlFor="seeker-city">City / Region</label>
+              <div className="input-wrapper">
+                <MapPin className="input-icon" size={17} />
+                <input
+                  id="seeker-city"
+                  name="city"
+                  className="input has-icon"
+                  placeholder="Rawalpindi / Islamabad"
+                  value={form.city}
+                  onChange={handleChange}
+                />
+              </div>
+            </div>
+          </div>
+
+          {apiError && (
+            <div className="flex items-center gap-2 mt-4" style={{ color: 'var(--red-400)', fontSize: '0.875rem' }}>
+              <AlertCircle size={16} />{apiError}
+            </div>
+          )}
+
+          <div style={{ display: 'flex', gap: '12px', marginTop: '24px', paddingTop: '16px', borderTop: '1px solid rgba(255, 255, 255, 0.08)' }}>
+            <button
+              type="submit"
+              className="btn btn-primary"
+              disabled={saving}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 24px', fontWeight: 700 }}
+            >
+              {saving ? <Loader2 size={16} className="spin" /> : <Save size={18} />}
+              Save Changes
+            </button>
+            <button type="button" className="btn btn-ghost" onClick={onSaved}>
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+    </>
+  );
 }
