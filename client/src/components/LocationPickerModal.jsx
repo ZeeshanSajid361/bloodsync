@@ -108,36 +108,51 @@ function extractCityFromQuery(q) {
 }
 
 export default function LocationPickerModal({ isOpen, onClose, onSelectLocation, initialLocation = {} }) {
-  const [lat, setLat]                 = useState(initialLocation.latitude || 33.6844);
-  const [lng, setLng]                 = useState(initialLocation.longitude || 73.0479);
-  const [addressText, setAddressText] = useState(initialLocation.street || initialLocation.address || '');
-  const [city, setCity]               = useState(initialLocation.city || 'Islamabad');
-  const [province, setProvince]       = useState(initialLocation.province || getProvinceForCity(initialLocation.city || 'Islamabad'));
-  const [mapsUrl, setMapsUrl]         = useState(initialLocation.mapsUrl || '');
+  const safeInit = initialLocation && typeof initialLocation === 'object' ? initialLocation : {};
+  const safeCity = typeof safeInit.city === 'string' && safeInit.city.trim() ? safeInit.city.trim() : 'Islamabad';
+  const safeStreet = typeof safeInit.street === 'string' ? safeInit.street : (typeof safeInit.address === 'string' ? safeInit.address : '');
+
+  const [lat, setLat]                 = useState(typeof safeInit.latitude === 'number' ? safeInit.latitude : 33.6844);
+  const [lng, setLng]                 = useState(typeof safeInit.longitude === 'number' ? safeInit.longitude : 73.0479);
+  const [addressText, setAddressText] = useState(safeStreet);
+  const [city, setCity]               = useState(safeCity);
+  const [province, setProvince]       = useState(typeof safeInit.province === 'string' ? safeInit.province : getProvinceForCity(safeCity));
+  const [mapsUrl, setMapsUrl]         = useState(typeof safeInit.mapsUrl === 'string' ? safeInit.mapsUrl : '');
 
   const [loading, setLoading]         = useState(false);
   const [geocoding, setGeocoding]     = useState(false);
-  const [searchQuery, setSearchQuery] = useState(initialLocation.street || initialLocation.address || '');
+  const [searchQuery, setSearchQuery] = useState(safeStreet);
 
   // Auto-sync province whenever city changes
   useEffect(() => {
-    if (city) {
+    if (city && typeof city === 'string') {
       setProvince(getProvinceForCity(city));
     }
   }, [city]);
 
+  // Sync state safely when modal opens or initialLocation changes
   useEffect(() => {
-    if (initialLocation.latitude && initialLocation.longitude) {
-      setLat(initialLocation.latitude);
-      setLng(initialLocation.longitude);
-    } else if (initialLocation.city) {
-      const key = initialLocation.city.toLowerCase().trim();
+    if (!isOpen) return;
+    const init = initialLocation && typeof initialLocation === 'object' ? initialLocation : {};
+    const initCity = typeof init.city === 'string' && init.city.trim() ? init.city.trim() : 'Islamabad';
+    const initStreet = typeof init.street === 'string' ? init.street : (typeof init.address === 'string' ? init.address : '');
+
+    setLat(typeof init.latitude === 'number' ? init.latitude : 33.6844);
+    setLng(typeof init.longitude === 'number' ? init.longitude : 73.0479);
+    setAddressText(initStreet);
+    setSearchQuery(initStreet);
+    setCity(initCity);
+    setProvince(typeof init.province === 'string' ? init.province : getProvinceForCity(initCity));
+    setMapsUrl(typeof init.mapsUrl === 'string' ? init.mapsUrl : '');
+
+    if (initCity) {
+      const key = initCity.toLowerCase().trim();
       if (CITY_COORDS[key]) {
         setLat(CITY_COORDS[key].lat);
         setLng(CITY_COORDS[key].lng);
       }
     }
-  }, [initialLocation]);
+  }, [isOpen, initialLocation]);
 
   // Freeze body scroll when modal is active
   useEffect(() => {
