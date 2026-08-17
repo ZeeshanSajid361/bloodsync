@@ -239,12 +239,51 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
     );
   }
 
+const MEDICAL_ACRONYMS = {
+  imc: 'Islamabad Medical Complex',
+  pims: 'Pakistan Institute of Medical Sciences',
+  cmh: 'Combined Military Hospital',
+  mh: 'Military Hospital',
+  bbh: 'Benazir Bhutto Hospital',
+  ric: 'Rawalpindi Institute of Cardiology',
+  rgh: 'Rawalpindi General Hospital',
+  skmch: 'Shaukat Khanum Memorial Cancer Hospital',
+  siut: 'Sindh Institute of Urology and Transplantation',
+  nicvd: 'National Institute of Cardiovascular Diseases',
+  jpmc: 'Jinnah Postgraduate Medical Centre',
+  akuh: 'Aga Khan University Hospital',
+  lrh: 'Lady Reading Hospital',
+  kth: 'Khyber Teaching Hospital',
+  hmc: 'Hayatabad Medical Complex',
+  fuih: 'Fauji Foundation Hospital',
+  ffh: 'Fauji Foundation Hospital',
+  krl: 'KRL Hospital',
+  nescom: 'Nescom Hospital',
+  nori: 'NORI Hospital Islamabad',
+  shifa: 'Shifa International Hospital',
+  maroof: 'Maroof International Hospital',
+  qih: 'Quaid-e-Azam International Hospital',
+};
+
+function expandSearchQuery(queryText) {
+  if (!queryText) return '';
+  let text = queryText.trim();
+  for (const [abbr, full] of Object.entries(MEDICAL_ACRONYMS)) {
+    const reg = new RegExp(`\\b${abbr}\\b`, 'gi');
+    if (reg.test(text)) {
+      text = text.replace(reg, full);
+    }
+  }
+  return text.replace(/hospital\s+hospital/gi, 'Hospital').trim();
+}
+
   // Reverse geocode via OpenStreetMap Nominatim
   async function reverseGeocode(latitude, longitude) {
     setGeocoding(true);
     try {
       const res = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`
+        `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`,
+        { headers: { 'User-Agent': 'BloodSync-App/1.0 (contact@bloodsync.app)' } }
       );
       const data = await res.json();
       if (data && data.address) {
@@ -291,7 +330,7 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
     toast.success(`📍 Pinned: ${item.display_name.split(',')[0]}`, { id: 'gps-toast' });
   }
 
-  // Multi-tier Nominatim search
+  // Smart Location Search Engine (Coordinates, Acronym Expansion, Nominatim + Photon Fallback)
   async function handleSearchLocation(e) {
     if (e) e.preventDefault();
     const rawQuery = searchQuery.trim();
@@ -301,35 +340,69 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
     setSearchResults([]);
     setShowResultsDropdown(false);
 
-    const cleanQuery = rawQuery.replace(/\s*\([^)]*\)/g, '').trim();
+    // 1. Direct Lat/Lng or Google Maps URL pattern check (e.g. @33.6492048,73.0170415)
+    const coordsMatch = rawQuery.match(/@?(-?\d+\.\d+),\s*(-?\d+\.\d+)/);
+    if (coordsMatch) {
+      const latitude  = parseFloat(parseFloat(coordsMatch[1]).toFixed(6));
+      const longitude = parseFloat(parseFloat(coordsMatch[2]).toFixed(6));
+      panMapTo(latitude, longitude, 18);
+      setLat(latitude);
+      setLng(longitude);
+      const genUrl = `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
+      setMapsUrl(genUrl);
+      await reverseGeocode(latitude, longitude);
+      toast.success(`📍 Pinned Google Maps coordinates (${latitude}, ${longitude})`, { id: 'gps-toast' });
+      setGeocoding(false);
+      return;
+    }
+
+    // 2. Acronym expansion (e.g., 'imc' => 'Islamabad Medical Complex')
+    const expandedQuery = expandSearchQuery(rawQuery);
+    const cleanQuery = expandedQuery.replace(/\s*\([^)]*\)/g, '').trim();
+
+    const headers = { 'User-Agent': 'BloodSync-App/1.0 (contact@bloodsync.app)' };
+    let results = [];
 
     try {
-      // Tier 1: Query restricted to Pakistan
+      // Tier A: Nominatim expanded query restricted to Pakistan
       let res = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cleanQuery)}&addressdetails=1&limit=8&countrycodes=pk`
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cleanQuery)}&addressdetails=1&limit=8&countrycodes=pk`,
+        { headers }
       );
-      let results = await res.json();
+      results = await res.json();
 
-      // Tier 2: Append ", Pakistan" explicitly
+      // Tier B: Nominatim raw query restricted to Pakistan
       if (!results || results.length === 0) {
         res = await fetch(
-          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cleanQuery + ', Pakistan')}&addressdetails=1&limit=8`
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(rawQuery)}&addressdetails=1&limit=8&countrycodes=pk`,
+          { headers }
         );
         results = await res.json();
       }
 
-      // Tier 3: Global query without country filter
+      // Tier C: Photon API fallback with current Lat/Lng proximity bias
       if (!results || results.length === 0) {
-        res = await fetch(
-          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(rawQuery)}&addressdetails=1&limit=8`
-        );
-        results = await res.json();
+        const photonUrl = `https://photon.komoot.io/api/?q=${encodeURIComponent(cleanQuery)}&lat=${lat}&lon=${lng}&limit=8`;
+        res = await fetch(photonUrl);
+        const data = await res.json();
+        if (data && data.features) {
+          results = data.features.map(f => ({
+            display_name: [f.properties.name, f.properties.street, f.properties.city, f.properties.state, f.properties.country].filter(Boolean).join(', '),
+            lat: String(f.geometry.coordinates[1]),
+            lon: String(f.geometry.coordinates[0]),
+            address: {
+              city: f.properties.city,
+              road: f.properties.street,
+              hospital: f.properties.name,
+              state: f.properties.state,
+            }
+          }));
+        }
       }
 
       if (results && results.length > 0) {
         setSearchResults(results);
         setShowResultsDropdown(true);
-        // Automatically select top result
         handleSelectSearchResult(results[0]);
       } else {
         // Fallback — move to city center if available
