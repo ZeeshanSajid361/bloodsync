@@ -40,6 +40,44 @@ const MEDICAL_ACRONYMS = {
   qih: 'Quaid-e-Azam International Hospital',
 };
 
+const CITY_PROVINCE_MAP = {
+  islamabad: 'Islamabad Capital Territory',
+  rawalpindi: 'Punjab',
+  lahore: 'Punjab',
+  faisalabad: 'Punjab',
+  multan: 'Punjab',
+  sialkot: 'Punjab',
+  gujranwala: 'Punjab',
+  sargodha: 'Punjab',
+  bahawalpur: 'Punjab',
+  gujrat: 'Punjab',
+  jhelum: 'Punjab',
+  attock: 'Punjab',
+  chakwal: 'Punjab',
+  'rahim yar khan': 'Punjab',
+  karachi: 'Sindh',
+  hyderabad: 'Sindh',
+  sukkur: 'Sindh',
+  larkana: 'Sindh',
+  peshawar: 'Khyber Pakhtunkhwa',
+  abbottabad: 'Khyber Pakhtunkhwa',
+  mardan: 'Khyber Pakhtunkhwa',
+  swat: 'Khyber Pakhtunkhwa',
+  kohat: 'Khyber Pakhtunkhwa',
+  haripur: 'Khyber Pakhtunkhwa',
+  quetta: 'Balochistan',
+  gwadar: 'Balochistan',
+  gilgit: 'Gilgit-Baltistan',
+  skardu: 'Gilgit-Baltistan',
+  muzaffarabad: 'Azad Jammu & Kashmir',
+};
+
+function getProvinceForCity(cityName) {
+  if (!cityName) return 'Islamabad Capital Territory';
+  const key = cityName.toLowerCase().trim();
+  return CITY_PROVINCE_MAP[key] || 'Punjab';
+}
+
 function formatSearchAddress(queryText) {
   if (!queryText) return '';
   let text = queryText.trim();
@@ -49,7 +87,13 @@ function formatSearchAddress(queryText) {
       text = text.replace(reg, full);
     }
   }
-  return text.replace(/hospital\s+hospital/gi, 'Hospital').trim();
+
+  // Capitalize neatly
+  text = text.split(' ')
+    .map(w => (w.length <= 4 && w === w.toUpperCase()) ? w : w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ');
+
+  return text.replace(/Hospital\s+Hospital/gi, 'Hospital').trim();
 }
 
 function extractCityFromQuery(q) {
@@ -68,12 +112,19 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
   const [lng, setLng]                 = useState(initialLocation.longitude || 73.0479);
   const [addressText, setAddressText] = useState(initialLocation.street || initialLocation.address || '');
   const [city, setCity]               = useState(initialLocation.city || 'Islamabad');
-  const [province, setProvince]       = useState(initialLocation.province || 'Punjab');
+  const [province, setProvince]       = useState(initialLocation.province || getProvinceForCity(initialLocation.city || 'Islamabad'));
   const [mapsUrl, setMapsUrl]         = useState(initialLocation.mapsUrl || '');
 
   const [loading, setLoading]         = useState(false);
   const [geocoding, setGeocoding]     = useState(false);
   const [searchQuery, setSearchQuery] = useState(initialLocation.street || initialLocation.address || '');
+
+  // Auto-sync province whenever city changes
+  useEffect(() => {
+    if (city) {
+      setProvince(getProvinceForCity(city));
+    }
+  }, [city]);
 
   useEffect(() => {
     if (initialLocation.latitude && initialLocation.longitude) {
@@ -135,6 +186,21 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
     );
   }
 
+  // Live auto-sync form fields while typing search query
+  useEffect(() => {
+    if (!searchQuery || searchQuery.trim().length < 3) return;
+    const timer = setTimeout(() => {
+      const formatted = formatSearchAddress(searchQuery);
+      const detectedCity = extractCityFromQuery(searchQuery);
+      if (detectedCity && detectedCity.toLowerCase() !== city.toLowerCase()) {
+        setCity(detectedCity);
+        setProvince(getProvinceForCity(detectedCity));
+      }
+      if (formatted) setAddressText(formatted);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
   // Handle location search with Real Google Maps sync
   function handleSearchLocation(e) {
     if (e) e.preventDefault();
@@ -158,14 +224,16 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
       return;
     }
 
-    // 2. Acronym expansion & City detection
+    // 2. Acronym expansion & City + Province detection
     const formatted = formatSearchAddress(rawQuery);
     const detectedCity = extractCityFromQuery(rawQuery) || city || 'Islamabad';
+    const detectedProvince = getProvinceForCity(detectedCity);
 
     setCity(detectedCity);
+    setProvince(detectedProvince);
     setAddressText(formatted);
     
-    const googleSearchUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(formatted)}`;
+    const googleSearchUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(formatted + ' ' + detectedCity)}`;
     setMapsUrl(googleSearchUrl);
 
     toast.success(`📍 Location set: ${formatted}`, { id: 'gps-toast' });
