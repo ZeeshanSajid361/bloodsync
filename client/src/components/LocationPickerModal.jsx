@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { MapPin, Navigation, ExternalLink, CheckCircle2, X, Loader2, Search, ZoomIn, ZoomOut } from 'lucide-react';
+import { MapPin, Navigation, ExternalLink, CheckCircle2, X, Loader2, Search, Globe } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const CITY_COORDS = {
@@ -22,9 +22,10 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
   const [province, setProvince]       = useState(initialLocation.province || 'Punjab');
   const [mapsUrl, setMapsUrl]         = useState(initialLocation.mapsUrl || '');
 
+  const [mapMode, setMapMode]         = useState('google'); // 'google' | 'leaflet'
   const [loading, setLoading]         = useState(false);
   const [geocoding, setGeocoding]     = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(initialLocation.street || initialLocation.address || '');
   const [searchResults, setSearchResults] = useState([]);
   const [showResultsDropdown, setShowResultsDropdown] = useState(false);
 
@@ -529,20 +530,68 @@ function expandSearchQuery(queryText) {
           )}
         </div>
 
-        {/* ── FIXED: Interactive Leaflet Map with Zoom level 20 ── */}
+        {/* ── Mode Toggle Bar ── */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', flexShrink: 0 }}>
+          <div style={{ display: 'flex', gap: '6px' }}>
+            <button
+              type="button"
+              className={`btn btn-sm ${mapMode === 'google' ? 'btn-primary' : 'btn-ghost'}`}
+              onClick={() => setMapMode('google')}
+              style={{
+                fontSize: '0.76rem', padding: '4px 10px', display: 'inline-flex', alignItems: 'center', gap: '5px',
+                background: mapMode === 'google' ? '#2563eb' : 'transparent', fontWeight: mapMode === 'google' ? 700 : 500
+              }}
+            >
+              <Globe size={13} color="#60a5fa" /> Google Map View
+            </button>
+            <button
+              type="button"
+              className={`btn btn-sm ${mapMode === 'leaflet' ? 'btn-primary' : 'btn-ghost'}`}
+              onClick={() => setMapMode('leaflet')}
+              style={{
+                fontSize: '0.76rem', padding: '4px 10px', display: 'inline-flex', alignItems: 'center', gap: '5px',
+                background: mapMode === 'leaflet' ? '#2563eb' : 'transparent', fontWeight: mapMode === 'leaflet' ? 700 : 500
+              }}
+            >
+              <MapPin size={13} color="#ef4444" /> Drag Marker Pin
+            </button>
+          </div>
+          <div style={{ fontSize: '0.72rem', color: '#94a3b8' }}>
+            {mapMode === 'google' ? '🗺️ Live Google Maps Search' : '📍 Leaflet GPS Pinning'}
+          </div>
+        </div>
+
+        {/* ── MAP CONTAINER: Google Map Embed OR Draggable Pin Map ── */}
         <div style={{
-          position: 'relative', width: '100%', height: '240px', flexShrink: 0,
+          position: 'relative', width: '100%', height: '250px', flexShrink: 0,
           borderRadius: '12px', overflow: 'hidden',
           border: '1px solid rgba(255,255,255,0.15)', marginBottom: '10px', background: '#1e293b'
         }}>
-          <div ref={mapContainerRef} style={{ width: '100%', height: '100%', zIndex: 1 }} />
-          <div style={{
-            position: 'absolute', bottom: '10px', left: '10px', zIndex: 1000, background: 'rgba(15, 23, 42, 0.92)',
-            padding: '4px 12px', borderRadius: '16px', fontSize: '0.74rem', color: '#34d399', fontWeight: 700,
-            border: '1px solid rgba(16, 185, 129, 0.4)', backdropFilter: 'blur(4px)', pointerEvents: 'none'
-          }}>
-            📍 Click map or drag red marker ({lat.toFixed(6)}, {lng.toFixed(6)})
-          </div>
+          {mapMode === 'google' ? (
+            <iframe
+              title="Real Google Map View"
+              width="100%"
+              height="100%"
+              style={{ border: 0, borderRadius: '12px' }}
+              loading="lazy"
+              allowFullScreen
+              referrerPolicy="no-referrer-when-downgrade"
+              src={`https://maps.google.com/maps?q=${encodeURIComponent(
+                searchQuery || addressText || (lat && lng ? `${lat},${lng}` : `${city}, Pakistan`)
+              )}&t=&z=17&ie=UTF8&iwloc=&output=embed`}
+            />
+          ) : (
+            <>
+              <div ref={mapContainerRef} style={{ width: '100%', height: '100%', zIndex: 1 }} />
+              <div style={{
+                position: 'absolute', bottom: '10px', left: '10px', zIndex: 1000, background: 'rgba(15, 23, 42, 0.92)',
+                padding: '4px 12px', borderRadius: '16px', fontSize: '0.74rem', color: '#34d399', fontWeight: 700,
+                border: '1px solid rgba(16, 185, 129, 0.4)', backdropFilter: 'blur(4px)', pointerEvents: 'none'
+              }}>
+                📍 Click map or drag red marker ({lat.toFixed(6)}, {lng.toFixed(6)})
+              </div>
+            </>
+          )}
         </div>
 
         {/* ── SCROLLABLE: Form Fields ── */}
