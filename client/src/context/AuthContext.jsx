@@ -1,5 +1,5 @@
-/**
- * Auth context — session state and authentication actions.
+﻿/**
+ * Auth context ΓÇö session state and authentication actions.
  *
  * Persists { user, accessToken, refreshToken } to localStorage so the session
  * survives page refreshes. The context provides login, logout, and a flag
@@ -12,37 +12,18 @@ import api from '../lib/api';
 
 const AuthContext = createContext(null);
 
-function prefetchDashboardChunk(role) {
-  try {
-    switch (role) {
-      case 'donor':    import('../pages/dashboard/DonorDashboard'); break;
-      case 'seeker':   import('../pages/dashboard/SeekerDashboard'); break;
-      case 'hospital': import('../pages/dashboard/HospitalDashboard'); break;
-      case 'admin':    import('../pages/dashboard/AdminDashboard'); break;
-      case 'partner':  import('../pages/dashboard/PartnerDashboard'); break;
-      default: break;
-    }
-  } catch {
-    // Ignore prefetch failures silently
-  }
-}
-
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true); // true until initial hydration done
 
-  // ── Hydrate from localStorage on first render ─────────────────────────────
+  // ΓöÇΓöÇ Hydrate from localStorage on first render ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
   useEffect(() => {
     const stored = localStorage.getItem('user');
     if (stored) {
       try {
-        const parsed = JSON.parse(stored);
-        setUser(parsed);
-        if (parsed?.role) {
-          prefetchDashboardChunk(parsed.role);
-        }
+        setUser(JSON.parse(stored));
       } catch {
-        // Corrupted data — start fresh.
+        // Corrupted data ΓÇö start fresh.
         localStorage.removeItem('user');
       }
     }
@@ -54,22 +35,16 @@ export function AuthProvider({ children }) {
     localStorage.setItem('accessToken', accessToken);
     localStorage.setItem('refreshToken', refreshToken);
     setUser(userData);
-    if (userData?.role) {
-      prefetchDashboardChunk(userData.role);
-    }
   }, []);
 
   const logout = useCallback(async () => {
     const refreshToken = localStorage.getItem('refreshToken');
-    // Best-effort server-side invalidation — don't block on failure.
+    // Best-effort server-side invalidation ΓÇö don't block on failure.
     api.post('/auth/logout', { refreshToken }).catch(() => {});
 
     localStorage.removeItem('user');
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
-    localStorage.removeItem('bloodsync_donor_profile_cache');
-    localStorage.removeItem('bloodsync_hospital_profile_cache');
-    localStorage.removeItem('bloodsync_seeker_requests_cache');
     setUser(null);
   }, []);
 
@@ -81,7 +56,7 @@ export function AuthProvider({ children }) {
 }
 
 /**
- * Convenience hook — throws if used outside AuthProvider.
+ * Convenience hook ΓÇö throws if used outside AuthProvider.
  */
 export function useAuth() {
   const ctx = useContext(AuthContext);

@@ -1,5 +1,5 @@
-/**
- * Axios instance — base URL and request/response interceptors.
+﻿/**
+ * Axios instance ΓÇö base URL and request/response interceptors.
  *
  * The request interceptor attaches the access token from localStorage.
  * The response interceptor handles 401 responses by attempting a single
@@ -8,16 +8,15 @@
 
 import axios from 'axios';
 
-const rawUrl = (import.meta.env.VITE_API_URL || 'http://localhost:5000').replace(/\/+$/, '');
-const BASE_URL = rawUrl.endsWith('/api') ? rawUrl : `${rawUrl}/api`;
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 const api = axios.create({
-  baseURL: BASE_URL,
+  baseURL: `${BASE_URL}/api`,
   headers: { 'Content-Type': 'application/json' },
   timeout: 15_000,
 });
 
-// ── Request interceptor — attach access token ─────────────────────────────
+// ΓöÇΓöÇ Request interceptor ΓÇö attach access token ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('accessToken');
@@ -29,7 +28,7 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// ── Response interceptor — refresh on 401 ────────────────────────────────
+// ΓöÇΓöÇ Response interceptor ΓÇö refresh on 401 ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 let isRefreshing = false;
 let pendingRequests = [];
 
@@ -73,7 +72,7 @@ api.interceptors.response.use(
         pendingRequests = [];
         isRefreshing = false;
 
-        // Refresh failed — clear tokens and redirect to login.
+        // Refresh failed ΓÇö clear tokens and redirect to login.
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
         localStorage.removeItem('user');
