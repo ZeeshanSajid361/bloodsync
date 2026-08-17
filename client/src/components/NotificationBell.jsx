@@ -29,6 +29,32 @@ function timeAgo(dateStr) {
   return `${Math.floor(diff / 86400)}d ago`;
 }
 
+function getGoogleMapsUrl(notif) {
+  if (!notif) return 'https://www.google.com/maps';
+
+  // 1. Direct saved mapsUrl
+  if (notif.mapsUrl) return notif.mapsUrl;
+
+  // 2. Direct maps link stored in link property
+  if (notif.link && (notif.link.includes('google.com/maps') || notif.link.includes('maps.app.goo.gl'))) {
+    return notif.link;
+  }
+
+  // 3. Extract exact hospital name from message (e.g., 'at Pims hospital')
+  const msg = notif.message || '';
+  const atMatch = msg.match(/\bat\s+([A-Za-z0-9\s,&'-]+?)(?=\s*\(|\s*\.|\s*$)/i);
+  if (atMatch && atMatch[1]) {
+    const cleanHospitalName = atMatch[1].trim();
+    if (cleanHospitalName.length > 2 && cleanHospitalName.length < 60) {
+      return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(cleanHospitalName)}`;
+    }
+  }
+
+  // 4. Fallback search
+  const fallbackQuery = notif.hospital || 'Hospital';
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(fallbackQuery)}`;
+}
+
 export default function NotificationBell({
   unreadCount, notifications, loading,
   panelOpen, togglePanel,
@@ -171,7 +197,7 @@ export default function NotificationBell({
               {/* Direct Google Maps Navigation Link */}
               <div style={{ marginTop: '8px' }}>
                 <a
-                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selectedNotif.message || 'Hospital')}`}
+                  href={getGoogleMapsUrl(selectedNotif)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="btn btn-secondary btn-sm"

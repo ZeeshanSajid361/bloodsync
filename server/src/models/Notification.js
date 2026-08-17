@@ -46,6 +46,9 @@ const notificationSchema = new mongoose.Schema(
     // Optional deep-link so the bell item is clickable.
     link: { type: String, trim: true },
 
+    // Optional direct Google Maps link for medical facility location
+    mapsUrl: { type: String, trim: true },
+
     isRead: { type: Boolean, default: false },
 
     // TTL — MongoDB removes the document 30 days after creation.

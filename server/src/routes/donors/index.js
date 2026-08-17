@@ -442,12 +442,14 @@ router.post('/requests/:id/commit', async (req, res, next) => {
     // Create Notification for the Seeker
     if (request.seeker) {
       const { Notification } = require('../../models/Notification');
+      const hospitalMapsUrl = request.location?.mapsUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(request.hospitalName + ' ' + (request.hospitalCity || ''))}`;
       await Notification.create({
         recipient: request.seeker,
         type:      'donor_en_route',
         title:     '🚗 Donor En Route!',
         message:   `A matching donor has pledged "I'm On My Way" to donate ${request.patientBloodGroup} blood at ${request.hospitalName} (Estimated Travel Time: ~${etaMinutes} mins).`,
         link:      '/dashboard/seeker',
+        mapsUrl:   hospitalMapsUrl,
       }).catch(err => console.error('[commit] Notification create failed:', err.message));
     }
 
