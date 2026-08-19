@@ -16,7 +16,8 @@ import { useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, User, History, LogOut,
   Droplets, MapPin, Phone, Calendar, AlertCircle,
-  CheckCircle2, Clock, Edit3, Save, X, FileText, Mail, HelpCircle
+  CheckCircle2, Clock, Edit3, Save, X, FileText, Mail, HelpCircle,
+  Bell, QrCode
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -45,21 +46,28 @@ const DONOR_TOUR_STEPS = [
     title: 'Active Availability Status',
     description: 'Your profile is automatically set to Active so emergency blood seekers near you can find you. Toggle your status anytime right here!',
     icon: CheckCircle2,
-    preferredPos: 'bottom',
+    preferredPos: 'top',
   },
   {
     targetSelector: '#nav-requests',
     title: 'Live Blood Requests',
-    description: 'Click here to view real-time patient blood requests matching your blood type. You can pledge to donate and open exact hospital directions!',
+    description: 'Click here to view real-time patient blood requests matching your blood group. You can pledge to donate and open exact hospital directions!',
     icon: Droplets,
     preferredPos: 'right',
   },
   {
     targetSelector: '#notification-bell',
-    title: 'Instant Alerts & QR Check-In',
-    description: 'Receive real-time alerts when blood is needed near you. Present your QR check-in code at the hospital for instant verification!',
-    icon: HelpCircle,
+    title: 'Instant Emergency Alerts',
+    description: 'Receive real-time push alerts whenever emergency blood matching your group is requested nearby so you can respond quickly!',
+    icon: Bell,
     preferredPos: 'left',
+  },
+  {
+    targetSelector: '#donor-profile-card',
+    title: 'Hospital QR Check-In & Token',
+    description: 'When you pledge to donate, a unique 8-digit verification token & QR code is generated for seamless check-in at the hospital counter!',
+    icon: QrCode,
+    preferredPos: 'right',
   },
 ];
 
@@ -117,7 +125,7 @@ export default function DonorDashboard() {
           <span className="sidebar-logo-text">Blood<span>Sync</span></span>
         </a>
 
-        <div className="sidebar-user" onClick={() => setShowProfileModal(true)} style={{ cursor: 'pointer' }}>
+        <div className="sidebar-user" id="donor-profile-card" onClick={() => setShowProfileModal(true)} style={{ cursor: 'pointer' }}>
           <div className="sidebar-user-card">
             <div className="sidebar-avatar">{initials}</div>
             <div className="sidebar-user-info">

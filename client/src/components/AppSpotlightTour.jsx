@@ -25,7 +25,8 @@ export default function AppSpotlightTour({ isOpen, onClose, steps = [], tourKey 
 
     const el = document.querySelector(step.targetSelector);
     if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+      // Scroll target element directly to the vertical center of the window
+      el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
       const rect = el.getBoundingClientRect();
       setTargetRect({
         top: rect.top,
@@ -47,7 +48,7 @@ export default function AppSpotlightTour({ isOpen, onClose, steps = [], tourKey 
 
     const timer = setTimeout(() => {
       updateTargetPosition();
-    }, 100);
+    }, 120);
 
     const handleResizeOrScroll = () => {
       updateTargetPosition();
@@ -86,7 +87,7 @@ export default function AppSpotlightTour({ isOpen, onClose, steps = [], tourKey 
     }
   };
 
-  // Calculate position of tooltip relative to target rect
+  // Calculate position of tooltip relative to target rect with strict viewport clamping
   const getTooltipStyle = () => {
     if (!targetRect) {
       return {
@@ -102,6 +103,7 @@ export default function AppSpotlightTour({ isOpen, onClose, steps = [], tourKey 
     const preferredPos = step.preferredPos || 'bottom';
     const padding = 16;
     const tooltipWidth = Math.min(340, window.innerWidth - 32);
+    const estimatedHeight = 220; // Estimated height of tooltip card
 
     let top = 0;
     let left = 0;
@@ -111,29 +113,50 @@ export default function AppSpotlightTour({ isOpen, onClose, steps = [], tourKey 
       top = targetRect.top + targetRect.height + padding;
       left = Math.max(16, Math.min(targetRect.left, window.innerWidth - tooltipWidth - 16));
       arrow = 'top';
+
+      // Check if placing at bottom overflows screen height
+      if (top + estimatedHeight > window.innerHeight - 16) {
+        if (targetRect.top - estimatedHeight - padding > 16) {
+          top = targetRect.top - estimatedHeight - padding;
+          arrow = 'bottom';
+        } else {
+          top = Math.max(16, window.innerHeight - estimatedHeight - 16);
+        }
+      }
     } else if (preferredPos === 'top') {
-      top = Math.max(16, targetRect.top - 220 - padding);
+      top = targetRect.top - estimatedHeight - padding;
       left = Math.max(16, Math.min(targetRect.left, window.innerWidth - tooltipWidth - 16));
       arrow = 'bottom';
+
+      if (top < 16) {
+        top = targetRect.top + targetRect.height + padding;
+        arrow = 'top';
+      }
     } else if (preferredPos === 'right') {
-      top = Math.max(16, Math.min(targetRect.top, window.innerHeight - 240));
+      top = Math.max(16, Math.min(targetRect.top, window.innerHeight - estimatedHeight - 16));
       left = targetRect.left + targetRect.width + padding;
       arrow = 'left';
+
       if (left + tooltipWidth > window.innerWidth - 16) {
         left = Math.max(16, targetRect.left);
         top = targetRect.top + targetRect.height + padding;
         arrow = 'top';
       }
     } else if (preferredPos === 'left') {
-      top = Math.max(16, Math.min(targetRect.top, window.innerHeight - 240));
+      top = Math.max(16, Math.min(targetRect.top, window.innerHeight - estimatedHeight - 16));
       left = targetRect.left - tooltipWidth - padding;
       arrow = 'right';
+
       if (left < 16) {
         left = Math.max(16, targetRect.left);
         top = targetRect.top + targetRect.height + padding;
         arrow = 'top';
       }
     }
+
+    // Final safety boundary clamp for top & left so tooltip is ALWAYS 100% visible
+    top = Math.max(16, Math.min(top, window.innerHeight - estimatedHeight - 16));
+    left = Math.max(16, Math.min(left, window.innerWidth - tooltipWidth - 16));
 
     return {
       style: { top: `${top}px`, left: `${left}px` },
