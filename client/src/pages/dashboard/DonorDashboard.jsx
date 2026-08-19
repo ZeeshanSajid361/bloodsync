@@ -19,6 +19,7 @@ import {
   CheckCircle2, Clock, Edit3, Save, X, FileText, Mail, HelpCircle,
   Bell, QrCode
 } from 'lucide-react';
+import { QRCodeCanvas }     from 'qrcode.react';
 import toast from 'react-hot-toast';
 
 import { useAuth }          from '../../context/AuthContext';
@@ -63,11 +64,11 @@ const DONOR_TOUR_STEPS = [
     preferredPos: 'left',
   },
   {
-    targetSelector: '#donor-profile-card',
+    targetSelector: '#tour-demo-qr-card',
     title: 'Hospital QR Check-In & Token',
     description: 'When you pledge to donate, a unique 8-digit verification token & QR code is generated for seamless check-in at the hospital counter!',
     icon: QrCode,
-    preferredPos: 'right',
+    preferredPos: 'top',
   },
 ];
 
@@ -78,6 +79,7 @@ export default function DonorDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showDemoQR, setShowDemoQR]         = useState(false);
   const notifs = useNotifications();
 
   // Trigger onboarding modal on first login
@@ -289,18 +291,85 @@ export default function DonorDashboard() {
         </div>
       )}
 
+      {/* Floating Sample QR Check-In Demo Card for Spotlight Tour */}
+      {showDemoQR && (
+        <div
+          id="tour-demo-qr-card"
+          style={{
+            position: 'fixed',
+            top: '45%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            zIndex: 9999,
+            background: 'linear-gradient(145deg, #151926, #0f172a)',
+            border: '2px solid rgba(59, 130, 246, 0.6)',
+            borderRadius: '20px',
+            padding: '20px 24px',
+            maxWidth: '360px',
+            width: '90%',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.85), 0 0 35px rgba(59, 130, 246, 0.3)',
+            color: '#f8fafc',
+            textAlign: 'center',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '12px' }}>
+            <QrCode size={22} color="#60a5fa" />
+            <span style={{ fontSize: '1.05rem', fontWeight: 700, color: '#60a5fa' }}>
+              Sample Hospital QR Check-In
+            </span>
+          </div>
+
+          <div style={{ background: '#ffffff', padding: '14px', borderRadius: '14px', display: 'inline-block', marginBottom: '12px' }}>
+            <QRCodeCanvas
+              value="https://bloodsync.app/verify/DEMO-88291034"
+              size={170}
+              level="H"
+              fgColor="#1a1a2e"
+              bgColor="#ffffff"
+            />
+          </div>
+
+          <div style={{
+            background: 'rgba(59, 130, 246, 0.12)',
+            border: '1px solid rgba(59, 130, 246, 0.35)',
+            borderRadius: '10px',
+            padding: '8px 14px',
+            marginBottom: '10px'
+          }}>
+            <div style={{ fontSize: '0.68rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 700 }}>
+              8-DIGIT VERIFICATION TOKEN
+            </div>
+            <div style={{ fontSize: '1.3rem', fontWeight: 800, color: '#60a5fa', letterSpacing: '4px', fontFamily: 'monospace' }}>
+              DEMO-88291034
+            </div>
+          </div>
+
+          <p style={{ fontSize: '0.78rem', color: '#cbd5e1', margin: 0, lineHeight: 1.35 }}>
+            💡 Present this QR code or 8-digit token at the hospital counter to confirm your donation instantly!
+          </p>
+          <span style={{ fontSize: '0.725rem', color: '#38bdf8', fontWeight: 600, display: 'block', marginTop: '6px' }}>
+            ✨ (Tour Demo Preview — Auto-disappears when tour finishes)
+          </span>
+        </div>
+      )}
+
       {/* Floating Notification Bell */}
       <NotificationBell {...notifs} />
 
       {/* Interactive Element-Targeted Spotlight Guided Tour */}
       <AppSpotlightTour
         isOpen={showOnboarding}
-        onClose={() => setShowOnboarding(false)}
+        onClose={() => {
+          setShowOnboarding(false);
+          setShowDemoQR(false);
+        }}
         steps={DONOR_TOUR_STEPS}
         tourKey="donor"
         onStepChange={(stepIndex) => {
-          if (stepIndex === 0) setActiveTab('overview');
-          if (stepIndex === 1) setActiveTab('requests');
+          if (stepIndex === 0) { setActiveTab('overview'); setShowDemoQR(false); }
+          if (stepIndex === 1) { setActiveTab('requests'); setShowDemoQR(false); }
+          if (stepIndex === 2) { setShowDemoQR(false); }
+          if (stepIndex === 3) { setShowDemoQR(true); }
         }}
       />
     </div>
