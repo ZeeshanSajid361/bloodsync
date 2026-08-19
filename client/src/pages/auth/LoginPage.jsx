@@ -15,7 +15,7 @@ import '../../styles/auth.css';
 
 const ROLE_DASHBOARD = {
   donor:    '/dashboard/donor',
-  seeker:   '/dashboard/seeker',
+  seeker:   '/dashboard/seeker?tab=search',
   hospital: '/dashboard/hospital',
   admin:    '/dashboard/admin',
 };

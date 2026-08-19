@@ -73,9 +73,16 @@ export default function SeekerDashboard() {
   const navigate                      = useNavigate();
   const notifs                        = useNotifications();
 
+  // Ensure default URL tab parameter is 'search' on login
+  useEffect(() => {
+    if (!searchParams.get('tab')) {
+      setSearchParams({ tab: 'search' }, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
+
   // Trigger onboarding modal on first login
   useEffect(() => {
-    const hasSeen = localStorage.getItem('bloodsync_onboarding_seeker');
+    const hasSeen = localStorage.getItem('bloodsync_spotlight_tour_seeker');
     if (!hasSeen) {
       const timer = setTimeout(() => setShowOnboarding(true), 600);
       return () => clearTimeout(timer);
@@ -277,6 +284,10 @@ export default function SeekerDashboard() {
         onClose={() => setShowOnboarding(false)}
         steps={SEEKER_TOUR_STEPS}
         tourKey="seeker"
+        onStepChange={(stepIndex) => {
+          if (stepIndex === 0) setTab('search');
+          if (stepIndex === 1) setTab('request');
+        }}
       />
     </div>
   );

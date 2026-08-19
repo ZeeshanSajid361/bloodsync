@@ -74,7 +74,7 @@ export default function DonorDashboard() {
 
   // Trigger onboarding modal on first login
   useEffect(() => {
-    const hasSeen = localStorage.getItem('bloodsync_onboarding_donor');
+    const hasSeen = localStorage.getItem('bloodsync_spotlight_tour_donor');
     if (!hasSeen) {
       const timer = setTimeout(() => setShowOnboarding(true), 600);
       return () => clearTimeout(timer);
@@ -290,6 +290,10 @@ export default function DonorDashboard() {
         onClose={() => setShowOnboarding(false)}
         steps={DONOR_TOUR_STEPS}
         tourKey="donor"
+        onStepChange={(stepIndex) => {
+          if (stepIndex === 0) setActiveTab('overview');
+          if (stepIndex === 1) setActiveTab('requests');
+        }}
       />
     </div>
   );

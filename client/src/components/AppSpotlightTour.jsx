@@ -3,10 +3,16 @@ import { createPortal } from 'react-dom';
 import { X, ChevronRight, ChevronLeft, CheckCircle2, Sparkles } from 'lucide-react';
 import './AppSpotlightTour.css';
 
-export default function AppSpotlightTour({ isOpen, onClose, steps = [], tourKey = 'default' }) {
+export default function AppSpotlightTour({ isOpen, onClose, steps = [], tourKey = 'default', onStepChange }) {
   const [currentStep, setCurrentStep] = useState(0);
   const [targetRect, setTargetRect]   = useState(null);
-  const [arrowPos, setArrowPos]     = useState('top');
+
+  // Reset to step 0 ONLY when the tour is opened
+  useEffect(() => {
+    if (isOpen) {
+      setCurrentStep(0);
+    }
+  }, [isOpen]);
 
   const updateTargetPosition = useCallback(() => {
     if (!isOpen || steps.length === 0) return;
@@ -19,7 +25,6 @@ export default function AppSpotlightTour({ isOpen, onClose, steps = [], tourKey 
 
     const el = document.querySelector(step.targetSelector);
     if (el) {
-      // Scroll element smoothly into view if needed
       el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
       const rect = el.getBoundingClientRect();
       setTargetRect({
@@ -34,16 +39,15 @@ export default function AppSpotlightTour({ isOpen, onClose, steps = [], tourKey 
   }, [isOpen, steps, currentStep]);
 
   useEffect(() => {
-    if (isOpen) {
-      setCurrentStep(0);
-      updateTargetPosition();
-    }
-  }, [isOpen, updateTargetPosition]);
-
-  useEffect(() => {
     if (!isOpen) return;
 
-    updateTargetPosition();
+    if (onStepChange) {
+      onStepChange(currentStep);
+    }
+
+    const timer = setTimeout(() => {
+      updateTargetPosition();
+    }, 100);
 
     const handleResizeOrScroll = () => {
       updateTargetPosition();
@@ -52,10 +56,11 @@ export default function AppSpotlightTour({ isOpen, onClose, steps = [], tourKey 
     window.addEventListener('resize', handleResizeOrScroll);
     window.addEventListener('scroll', handleResizeOrScroll, true);
     return () => {
+      clearTimeout(timer);
       window.removeEventListener('resize', handleResizeOrScroll);
       window.removeEventListener('scroll', handleResizeOrScroll, true);
     };
-  }, [isOpen, currentStep, updateTargetPosition]);
+  }, [isOpen, currentStep, updateTargetPosition, onStepChange]);
 
   if (!isOpen || steps.length === 0) return null;
 
@@ -84,7 +89,6 @@ export default function AppSpotlightTour({ isOpen, onClose, steps = [], tourKey 
   // Calculate position of tooltip relative to target rect
   const getTooltipStyle = () => {
     if (!targetRect) {
-      // Fallback center of screen
       return {
         style: {
           top: '50%',
@@ -108,25 +112,23 @@ export default function AppSpotlightTour({ isOpen, onClose, steps = [], tourKey 
       left = Math.max(16, Math.min(targetRect.left, window.innerWidth - tooltipWidth - 16));
       arrow = 'top';
     } else if (preferredPos === 'top') {
-      top = Math.max(16, targetRect.top - 200 - padding);
+      top = Math.max(16, targetRect.top - 220 - padding);
       left = Math.max(16, Math.min(targetRect.left, window.innerWidth - tooltipWidth - 16));
       arrow = 'bottom';
     } else if (preferredPos === 'right') {
-      top = Math.max(16, Math.min(targetRect.top, window.innerHeight - 220));
+      top = Math.max(16, Math.min(targetRect.top, window.innerHeight - 240));
       left = targetRect.left + targetRect.width + padding;
       arrow = 'left';
       if (left + tooltipWidth > window.innerWidth - 16) {
-        // Switch to bottom if offscreen
         left = Math.max(16, targetRect.left);
         top = targetRect.top + targetRect.height + padding;
         arrow = 'top';
       }
     } else if (preferredPos === 'left') {
-      top = Math.max(16, Math.min(targetRect.top, window.innerHeight - 220));
+      top = Math.max(16, Math.min(targetRect.top, window.innerHeight - 240));
       left = targetRect.left - tooltipWidth - padding;
       arrow = 'right';
       if (left < 16) {
-        // Switch to bottom if offscreen
         left = Math.max(16, targetRect.left);
         top = targetRect.top + targetRect.height + padding;
         arrow = 'top';
@@ -143,10 +145,8 @@ export default function AppSpotlightTour({ isOpen, onClose, steps = [], tourKey 
 
   const tourPortal = (
     <>
-      {/* Translucent overlay */}
       <div className="spotlight-tour-overlay" onClick={handleFinish} />
 
-      {/* Target element spotlight window & pulsing ripple rings */}
       {targetRect && (
         <div
           className="spotlight-target-box"
@@ -157,15 +157,12 @@ export default function AppSpotlightTour({ isOpen, onClose, steps = [], tourKey 
             height: `${targetRect.height + 12}px`,
           }}
         >
-          {/* Animated concentric ripple glow rings */}
           <div className="spotlight-ripple-ring" />
           <div className="spotlight-ripple-ring-delayed" />
         </div>
       )}
 
-      {/* Tooltip speech bubble callout card */}
       <div className="spotlight-tooltip-card" style={tooltipStyle}>
-        {/* Pink/Red Close Circle Button */}
         <button
           className="spotlight-close-btn"
           onClick={handleFinish}
@@ -175,10 +172,8 @@ export default function AppSpotlightTour({ isOpen, onClose, steps = [], tourKey 
           <X size={15} />
         </button>
 
-        {/* Pointer Arrow */}
         {arrowClass && <div className={`spotlight-arrow ${arrowClass}`} />}
 
-        {/* Header */}
         <div className="spotlight-tooltip-header">
           <div className="spotlight-tooltip-icon">
             <IconComponent size={20} />
@@ -191,14 +186,11 @@ export default function AppSpotlightTour({ isOpen, onClose, steps = [], tourKey 
           </div>
         </div>
 
-        {/* Body Text */}
         <div className="spotlight-tooltip-body">
           {step.description}
         </div>
 
-        {/* Footer controls */}
         <div className="spotlight-tooltip-footer">
-          {/* Step dots */}
           <div className="spotlight-dots">
             {steps.map((_, idx) => (
               <div
@@ -208,7 +200,6 @@ export default function AppSpotlightTour({ isOpen, onClose, steps = [], tourKey 
             ))}
           </div>
 
-          {/* Navigation Buttons */}
           <div style={{ display: 'flex', gap: '8px' }}>
             {currentStep > 0 && (
               <button
