@@ -16,19 +16,58 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import PhoneInput from '../../components/PhoneInput';
-import LocationPickerModal from '../../components/LocationPickerModal';
-import api from '../../lib/api';
+import AppSpotlightTour from '../../components/AppSpotlightTour';
 import '../../styles/dashboard.css';
 import '../../styles/hospital.css';
 
 const BLOOD_GROUPS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
 const URGENCY_LEVELS = ['routine', 'urgent', 'critical'];
 
+const PARTNER_TOUR_STEPS = [
+  {
+    targetSelector: '#nav-overview',
+    title: 'Partner Impact & Statistics',
+    description: 'Track active blood camps, total mobilized donors, and facilitated emergency patient requests across Pakistan!',
+    icon: Building2,
+    preferredPos: 'right',
+  },
+  {
+    targetSelector: '#nav-drives',
+    title: 'Donation Camps & Drives',
+    description: 'Schedule blood donation camps at universities, offices, and community centers. Donors can RSVP directly from their mobile app!',
+    icon: Calendar,
+    preferredPos: 'right',
+  },
+  {
+    targetSelector: '#nav-assisted',
+    title: 'Assisted Patient Requests',
+    description: 'Submit urgent blood requests on behalf of elderly or rural patients without smartphones. Admin reviews and dispatches nearby donors!',
+    icon: HeartHandshake,
+    preferredPos: 'right',
+  },
+  {
+    targetSelector: '#nav-profile',
+    title: 'Profile & Verification Proof',
+    description: 'Submit your SECP registration or Charity Commission license number to enable swift official partner verification!',
+    icon: ShieldCheck,
+    preferredPos: 'right',
+  },
+];
+
 export default function PartnerDashboard({ profile, hooks, onLogout }) {
   const { org } = profile;
   const { saveProfile } = hooks;
 
   const [activeTab, setActiveTab] = useState('overview');
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  useEffect(() => {
+    const hasSeen = localStorage.getItem('bloodsync_spotlight_tour_partner');
+    if (!hasSeen) {
+      const timer = setTimeout(() => setShowOnboarding(true), 600);
+      return () => clearTimeout(timer);
+    }
+  }, []);
 
   // Partner data state
   const [stats, setStats] = useState({
@@ -213,7 +252,7 @@ export default function PartnerDashboard({ profile, hooks, onLogout }) {
           <span className="sidebar-logo-text">Blood<span>Sync</span></span>
         </a>
 
-        <div className="sidebar-user" onClick={() => setActiveTab('profile')} style={{ cursor: 'pointer' }}>
+        <div className="sidebar-user" id="partner-profile-card" onClick={() => setActiveTab('profile')} style={{ cursor: 'pointer' }}>
           <div className="sidebar-user-card">
             <div className="sidebar-avatar" style={{ background: 'linear-gradient(135deg, var(--blue-600), var(--blue-900))' }}>{initials}</div>
             <div className="sidebar-user-info">
@@ -230,6 +269,7 @@ export default function PartnerDashboard({ profile, hooks, onLogout }) {
             return (
               <button
                 key={id}
+                id={`nav-${id}`}
                 className={`sidebar-nav-link${activeTab === id ? ' active' : ''}`}
                 style={{
                   ...(activeTab === id ? { background: 'rgba(21, 101, 192, 0.15)', color: 'var(--blue-300)' } : {}),
@@ -894,6 +934,20 @@ export default function PartnerDashboard({ profile, hooks, onLogout }) {
           </button>
         ))}
       </nav>
+
+      {/* Interactive Element-Targeted Spotlight Guided Tour */}
+      <AppSpotlightTour
+        isOpen={showOnboarding}
+        onClose={() => setShowOnboarding(false)}
+        steps={PARTNER_TOUR_STEPS}
+        tourKey="partner"
+        onStepChange={(stepIndex) => {
+          if (stepIndex === 0) setActiveTab('overview');
+          if (stepIndex === 1) setActiveTab('drives');
+          if (stepIndex === 2) setActiveTab('assisted');
+          if (stepIndex === 3) setActiveTab('profile');
+        }}
+      />
     </div>
   );
 }

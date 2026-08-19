@@ -21,7 +21,7 @@ import useHospitalData from '../../hooks/useHospitalData';
 import useNotifications from '../../hooks/useNotifications';
 import NotificationBell from '../../components/NotificationBell';
 import PhoneInput from '../../components/PhoneInput';
-import LocationPickerModal from '../../components/LocationPickerModal';
+import AppSpotlightTour from '../../components/AppSpotlightTour';
 import api from '../../lib/api';
 import jsQR from 'jsqr';
 import PartnerDashboard from './PartnerDashboard';
@@ -1677,22 +1677,54 @@ function HistoryTab() {
 
 /* ── main dashboard ──────────────────────────────────────────────────────── */
 
-const TABS = [
-  { id: 'overview',   label: 'Overview',   icon: DropletIcon },
-  { id: 'requests',   label: 'Counter Check-In', icon: QrCode },
-  { id: 'history',    label: 'History Log', icon: Clock },
-  { id: 'inventory',  label: 'Inventory',  icon: Plus },
-  { id: 'profile',    label: 'Profile',    icon: Settings },
+const HOSPITAL_TOUR_STEPS = [
+  {
+    targetSelector: '#nav-overview',
+    title: 'Hospital Overview & Stock Stats',
+    description: 'Track total blood bags in stock, low-stock warnings, and real-time Code Red emergency alerts at a glance!',
+    icon: Building2,
+    preferredPos: 'right',
+  },
+  {
+    targetSelector: '#nav-inventory',
+    title: 'Blood Stock & Code Red Alert',
+    description: 'Add new blood batches with expiry tracking, set low-stock thresholds, or broadcast urgent 6-hour Code Red alerts to nearby donors!',
+    icon: DropletIcon,
+    preferredPos: 'right',
+  },
+  {
+    targetSelector: '#nav-requests',
+    title: 'Counter Check-In & QR Verification',
+    description: 'Verify donor check-in using live camera QR scan, image upload, or 8-digit verification tokens at your hospital reception counter!',
+    icon: QrCode,
+    preferredPos: 'right',
+  },
+  {
+    targetSelector: '#nav-profile',
+    title: 'Profile & EMN API Key Sync',
+    description: 'Configure hospital location maps pin, contact details, or generate your secure REST API key for automated EHR/HIS integration!',
+    icon: Settings,
+    preferredPos: 'right',
+  },
 ];
 
 export default function HospitalDashboard() {
   const { user, logout } = useAuth();
   const [tab, setTab]   = useState('overview');
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   const hookData = useHospitalData();
   const { profile, loading, error } = hookData;
   const notifs = useNotifications();
+
+  useEffect(() => {
+    const hasSeen = localStorage.getItem('bloodsync_spotlight_tour_hospital');
+    if (!hasSeen) {
+      const timer = setTimeout(() => setShowOnboarding(true), 600);
+      return () => clearTimeout(timer);
+    }
+  }, []);
 
   const initials = user?.name
     ?.split(' ')
@@ -1738,7 +1770,7 @@ export default function HospitalDashboard() {
           <span className="sidebar-logo-text">Blood<span>Sync</span></span>
         </a>
 
-        <div className="sidebar-user" onClick={() => setShowProfileModal(true)} style={{ cursor: 'pointer' }}>
+        <div className="sidebar-user" id="hospital-profile-card" onClick={() => setShowProfileModal(true)} style={{ cursor: 'pointer' }}>
           <div className="sidebar-user-card">
             <div className="sidebar-avatar" style={{ background: 'linear-gradient(135deg, var(--blue-600), var(--blue-900))' }}>{initials}</div>
             <div className="sidebar-user-info">
@@ -1763,6 +1795,7 @@ export default function HospitalDashboard() {
             return (
               <button
                 key={id}
+                id={`nav-${id}`}
                 className={`sidebar-nav-link${tab === id ? ' active' : ''}`}
                 style={{
                   ...(tab === id ? { background: 'rgba(21, 101, 192, 0.15)', color: 'var(--blue-300)' } : {}),
@@ -1963,6 +1996,20 @@ export default function HospitalDashboard() {
 
       {/* Floating Notification Bell */}
       <NotificationBell {...notifs} />
+
+      {/* Interactive Element-Targeted Spotlight Guided Tour */}
+      <AppSpotlightTour
+        isOpen={showOnboarding}
+        onClose={() => setShowOnboarding(false)}
+        steps={HOSPITAL_TOUR_STEPS}
+        tourKey="hospital"
+        onStepChange={(stepIndex) => {
+          if (stepIndex === 0) setTab('overview');
+          if (stepIndex === 1) setTab('inventory');
+          if (stepIndex === 2) setTab('requests');
+          if (stepIndex === 3) setTab('profile');
+        }}
+      />
     </div>
   );
 }

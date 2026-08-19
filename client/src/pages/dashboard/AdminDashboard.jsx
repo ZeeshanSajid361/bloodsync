@@ -14,9 +14,41 @@ import { useAuth } from '../../context/AuthContext';
 import useAdminData from '../../hooks/useAdminData';
 import useNotifications from '../../hooks/useNotifications';
 import NotificationBell from '../../components/NotificationBell';
+import AppSpotlightTour from '../../components/AppSpotlightTour';
 import { getViewableDocUrl, isPdfUrl } from '../../lib/docUrl';
 import '../../styles/dashboard.css';
 import '../../styles/admin.css';
+
+const ADMIN_TOUR_STEPS = [
+  {
+    targetSelector: '#nav-overview',
+    title: 'Platform Analytics & Overview',
+    description: 'System-wide oversight: total registered donors/seekers, blood request fulfillment rates, and low-stock hospital alerts across Pakistan!',
+    icon: TrendingUp,
+    preferredPos: 'right',
+  },
+  {
+    targetSelector: '#nav-hospitals',
+    title: 'Hospital & Partner Verification Queue',
+    description: 'Review registration documents for hospitals and partner NGOs (PRCS, Edhi, Chhipa). Approve portal access or EMN API Keys!',
+    icon: Building2,
+    preferredPos: 'right',
+  },
+  {
+    targetSelector: '#nav-requests',
+    title: 'Emergency Request Verification',
+    description: 'Verify seeker blood request hospital slips before broadcasting live push notifications to matching blood-group donors!',
+    icon: FileText,
+    preferredPos: 'right',
+  },
+  {
+    targetSelector: '#nav-users',
+    title: 'User Management & Security',
+    description: 'View registered users, track verified donor contributions, monitor seeker fulfillment history, or block suspicious accounts!',
+    icon: Users,
+    preferredPos: 'right',
+  },
+];
 
 /* ── shared note modal ───────────────────────────────────────────────────── */
 function NoteModal({ title, description, onConfirm, onClose, loading, isReject }) {
@@ -642,8 +674,17 @@ export default function AdminDashboard() {
   const { user, logout } = useAuth();
   const [tab, setTab]   = useState('overview');
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const admin           = useAdminData();
   const notifs          = useNotifications();
+
+  useEffect(() => {
+    const hasSeen = localStorage.getItem('bloodsync_spotlight_tour_admin');
+    if (!hasSeen) {
+      const timer = setTimeout(() => setShowOnboarding(true), 600);
+      return () => clearTimeout(timer);
+    }
+  }, []);
 
   const initials = user?.name
     ?.split(' ')
@@ -673,7 +714,7 @@ export default function AdminDashboard() {
           <span className="sidebar-logo-text">Blood<span>Sync</span></span>
         </a>
 
-        <div className="sidebar-user" onClick={() => setShowProfileModal(true)} style={{ cursor: 'pointer' }}>
+        <div className="sidebar-user" id="admin-profile-card" onClick={() => setShowProfileModal(true)} style={{ cursor: 'pointer' }}>
           <div className="sidebar-user-card">
             <div className="sidebar-avatar">{initials}</div>
             <div className="sidebar-user-info">
@@ -690,6 +731,7 @@ export default function AdminDashboard() {
             return (
               <button
                 key={id}
+                id={`nav-${id}`}
                 className={`sidebar-nav-link${tab === id ? ' active' : ''}`}
                 onClick={() => setTab(id)}
               >
@@ -818,6 +860,20 @@ export default function AdminDashboard() {
 
       {/* Floating Notification Bell */}
       <NotificationBell {...notifs} />
+
+      {/* Interactive Element-Targeted Spotlight Guided Tour */}
+      <AppSpotlightTour
+        isOpen={showOnboarding}
+        onClose={() => setShowOnboarding(false)}
+        steps={ADMIN_TOUR_STEPS}
+        tourKey="admin"
+        onStepChange={(stepIndex) => {
+          if (stepIndex === 0) setTab('overview');
+          if (stepIndex === 1) setTab('hospitals');
+          if (stepIndex === 2) setTab('requests');
+          if (stepIndex === 3) setTab('users');
+        }}
+      />
     </div>
   );
 }
