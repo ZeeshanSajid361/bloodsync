@@ -7,13 +7,13 @@
  *   My Requests — own request history with status timeline
  */
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Search, FilePlus, ClipboardList, LogOut,
   MapPin, AlertCircle, CheckCircle2, FileText,
   Loader2, X, ExternalLink, Edit3, Phone, Building2,
-  User, Save,
+  User, Save, HelpCircle
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -22,6 +22,7 @@ import { useSeekerRequests, useDonorSearch } from '../../hooks/useSeekerData';
 import useNotifications                     from '../../hooks/useNotifications';
 import NotificationBell                     from '../../components/NotificationBell';
 import LocationPickerModal                  from '../../components/LocationPickerModal';
+import OnboardingModal                      from '../../components/OnboardingModal';
 import api                                  from '../../lib/api';
 import { getViewableDocUrl, isPdfUrl }      from '../../lib/docUrl';
 import '../../styles/dashboard.css';
@@ -41,11 +42,21 @@ export default function SeekerDashboard() {
   const { user, logout }              = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const activeTab                      = searchParams.get('tab') || 'search';
 
   const { requests, loading: reqLoading, error: reqError, total, refetch } = useSeekerRequests();
   const navigate                      = useNavigate();
   const notifs                        = useNotifications();
+
+  // Trigger onboarding modal on first login
+  useEffect(() => {
+    const hasSeen = localStorage.getItem('bloodsync_onboarding_seeker');
+    if (!hasSeen) {
+      const timer = setTimeout(() => setShowOnboarding(true), 600);
+      return () => clearTimeout(timer);
+    }
+  }, []);
 
   function setTab(t) {
     setSearchParams({ tab: t });
@@ -98,6 +109,14 @@ export default function SeekerDashboard() {
         </nav>
 
         <div className="sidebar-footer">
+          <button
+            className="sidebar-nav-link"
+            onClick={() => setShowOnboarding(true)}
+            style={{ color: '#38bdf8' }}
+          >
+            <HelpCircle size={18} />
+            <span>App Guide & Tour</span>
+          </button>
           <button id="seeker-logout" className="sidebar-nav-link" onClick={handleLogout}>
             <LogOut size={18} />
             <span>Sign out</span>
@@ -114,14 +133,24 @@ export default function SeekerDashboard() {
             <div className="mobile-header-title">Blood<span>Sync</span></div>
           </div>
 
-          {/* User Avatar Pill — opens profile modal */}
-          <button
-            className="user-avatar-pill"
-            onClick={() => setShowProfileModal(true)}
-            aria-label="View profile details"
-          >
-            {initials}
-          </button>
+          {/* Header Action Buttons */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <button
+              onClick={() => setShowOnboarding(true)}
+              className="btn btn-ghost btn-sm"
+              style={{ padding: '6px', color: '#38bdf8' }}
+              title="Open App Guide & Tour"
+            >
+              <HelpCircle size={20} />
+            </button>
+            <button
+              className="user-avatar-pill"
+              onClick={() => setShowProfileModal(true)}
+              aria-label="View profile details"
+            >
+              {initials}
+            </button>
+          </div>
         </header>
 
         {/* Main Content Area */}
@@ -217,6 +246,15 @@ export default function SeekerDashboard() {
 
       {/* Floating Notification Bell */}
       <NotificationBell {...notifs} />
+
+      {/* Interactive User Onboarding Guided Tour */}
+      <OnboardingModal
+        isOpen={showOnboarding}
+        onClose={() => setShowOnboarding(false)}
+        role="seeker"
+        userName={user?.name}
+        userCity={user?.city}
+      />
     </div>
   );
 }

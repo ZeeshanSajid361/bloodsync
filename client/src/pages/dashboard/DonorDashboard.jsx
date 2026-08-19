@@ -16,7 +16,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, User, History, LogOut,
   Droplets, MapPin, Phone, Calendar, AlertCircle,
-  CheckCircle2, Clock, Edit3, Save, X, FileText, Mail,
+  CheckCircle2, Clock, Edit3, Save, X, FileText, Mail, HelpCircle
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -25,6 +25,7 @@ import { useDonorProfile }  from '../../hooks/useDonorProfile';
 import useNotifications     from '../../hooks/useNotifications';
 import NotificationBell     from '../../components/NotificationBell';
 import QRCheckIn            from '../../components/QRCheckIn';
+import OnboardingModal      from '../../components/OnboardingModal';
 import api                  from '../../lib/api';
 import '../../styles/dashboard.css';
 
@@ -33,9 +34,9 @@ const BLOOD_GROUPS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
 
 // ── Sidebar navigation items ──────────────────────────────────────────────
 const NAV_ITEMS = [
-  { id: 'overview', label: 'Overview',     icon: LayoutDashboard },
-  { id: 'edit',     label: 'Edit Profile', icon: Edit3 },
-  { id: 'history',  label: 'History',      icon: History },
+  { id: 'overview', label: 'Overview',      icon: LayoutDashboard },
+  { id: 'requests', label: 'Live Requests', icon: Droplets },
+  { id: 'edit',     label: 'Edit Profile',  icon: Edit3 },
 ];
 
 export default function DonorDashboard() {
@@ -44,7 +45,17 @@ export default function DonorDashboard() {
   const navigate               = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const notifs = useNotifications();
+
+  // Trigger onboarding modal on first login
+  useEffect(() => {
+    const hasSeen = localStorage.getItem('bloodsync_onboarding_donor');
+    if (!hasSeen) {
+      const timer = setTimeout(() => setShowOnboarding(true), 600);
+      return () => clearTimeout(timer);
+    }
+  }, []);
 
   // Auto-refetch donor profile & history silently every 8 seconds so status updates (like hospital fulfillment) update in real-time without screen flickering or reloading
   useEffect(() => {
@@ -108,6 +119,14 @@ export default function DonorDashboard() {
         </nav>
 
         <div className="sidebar-footer">
+          <button
+            className="sidebar-nav-link"
+            onClick={() => setShowOnboarding(true)}
+            style={{ color: '#38bdf8' }}
+          >
+            <HelpCircle size={20} />
+            <span>App Guide & Tour</span>
+          </button>
           <button id="donor-logout" className="sidebar-nav-link" onClick={handleLogout}>
             <LogOut size={20} />
             <span>Sign out</span>
@@ -125,13 +144,23 @@ export default function DonorDashboard() {
           </div>
           
           {/* User Avatar Pill */}
-          <button 
-            className="user-avatar-pill" 
-            onClick={() => setShowProfileModal(true)}
-            aria-label="View profile details"
-          >
-            {initials}
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <button
+              onClick={() => setShowOnboarding(true)}
+              className="btn btn-ghost btn-sm"
+              style={{ padding: '6px', color: '#38bdf8' }}
+              title="Open App Guide & Tour"
+            >
+              <HelpCircle size={20} />
+            </button>
+            <button 
+              className="user-avatar-pill" 
+              onClick={() => setShowProfileModal(true)}
+              aria-label="View profile details"
+            >
+              {initials}
+            </button>
+          </div>
         </header>
 
         {/* Main Content Area */}
@@ -142,12 +171,12 @@ export default function DonorDashboard() {
           {donor && (
             <>
               {activeTab === 'overview' && (
-                <OverviewTab donor={donor} refetch={refetch} />
+                <OverviewTab donor={donor} refetch={refetch} onOpenTour={() => setShowOnboarding(true)} />
               )}
               {activeTab === 'edit' && (
                 <EditProfileTab donor={donor} refetch={refetch} onSaved={() => setActiveTab('overview')} />
               )}
-              {activeTab === 'history' && (
+              {(activeTab === 'requests' || activeTab === 'history') && (
                 <HistoryTab donor={donor} />
               )}
             </>
@@ -230,6 +259,16 @@ export default function DonorDashboard() {
 
       {/* Floating Notification Bell */}
       <NotificationBell {...notifs} />
+
+      {/* Interactive User Onboarding Guided Tour */}
+      <OnboardingModal
+        isOpen={showOnboarding}
+        onClose={() => setShowOnboarding(false)}
+        role="donor"
+        userName={donor?.name || user?.name}
+        userCity={donor?.city}
+        bloodGroup={donor?.bloodGroup}
+      />
     </div>
   );
 }
@@ -940,9 +979,9 @@ function HistoryTabInner({ donor }) {
     <>
       <div className="dashboard-topbar animate-fade-up">
         <div>
-          <h1 className="dashboard-page-title">Donation History</h1>
+          <h1 className="dashboard-page-title">Live Blood Requests</h1>
           <p className="dashboard-page-subtitle">
-            {donor.confirmedDonations} confirmed donation{donor.confirmedDonations !== 1 ? 's' : ''} · QR check-in available for approved requests.
+            {donor.confirmedDonations} confirmed donation{donor.confirmedDonations !== 1 ? 's' : ''} · Active emergency blood seeker requests matching your blood group.
           </p>
         </div>
       </div>
