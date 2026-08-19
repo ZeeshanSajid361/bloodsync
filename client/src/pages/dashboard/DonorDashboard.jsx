@@ -25,7 +25,7 @@ import { useDonorProfile }  from '../../hooks/useDonorProfile';
 import useNotifications     from '../../hooks/useNotifications';
 import NotificationBell     from '../../components/NotificationBell';
 import QRCheckIn            from '../../components/QRCheckIn';
-import OnboardingModal      from '../../components/OnboardingModal';
+import AppSpotlightTour     from '../../components/AppSpotlightTour';
 import api                  from '../../lib/api';
 import '../../styles/dashboard.css';
 
@@ -37,6 +37,30 @@ const NAV_ITEMS = [
   { id: 'overview', label: 'Overview',      icon: LayoutDashboard },
   { id: 'requests', label: 'Live Requests', icon: Droplets },
   { id: 'edit',     label: 'Edit Profile',  icon: Edit3 },
+];
+
+const DONOR_TOUR_STEPS = [
+  {
+    targetSelector: '#donor-availability-card',
+    title: 'Active Availability Status',
+    description: 'Your profile is automatically set to Active so emergency blood seekers near you can find you. Toggle your status anytime right here!',
+    icon: CheckCircle2,
+    preferredPos: 'bottom',
+  },
+  {
+    targetSelector: '#nav-requests',
+    title: 'Live Blood Requests',
+    description: 'Click here to view real-time patient blood requests matching your blood type. You can pledge to donate and open exact hospital directions!',
+    icon: Droplets,
+    preferredPos: 'right',
+  },
+  {
+    targetSelector: '#notification-bell',
+    title: 'Instant Alerts & QR Check-In',
+    description: 'Receive real-time alerts when blood is needed near you. Present your QR check-in code at the hospital for instant verification!',
+    icon: HelpCircle,
+    preferredPos: 'left',
+  },
 ];
 
 export default function DonorDashboard() {
@@ -260,14 +284,12 @@ export default function DonorDashboard() {
       {/* Floating Notification Bell */}
       <NotificationBell {...notifs} />
 
-      {/* Interactive User Onboarding Guided Tour */}
-      <OnboardingModal
+      {/* Interactive Element-Targeted Spotlight Guided Tour */}
+      <AppSpotlightTour
         isOpen={showOnboarding}
         onClose={() => setShowOnboarding(false)}
-        role="donor"
-        userName={donor?.name || user?.name}
-        userCity={donor?.city}
-        bloodGroup={donor?.bloodGroup}
+        steps={DONOR_TOUR_STEPS}
+        tourKey="donor"
       />
     </div>
   );
@@ -416,7 +438,7 @@ function AvailabilityCard({ isAvailable, eligible, onToggle }) {
   }
 
   return (
-    <div className="availability-card">
+    <div className="availability-card" id="donor-availability-card">
       <div className="availability-info">
         <h4>Availability Status</h4>
         <p>

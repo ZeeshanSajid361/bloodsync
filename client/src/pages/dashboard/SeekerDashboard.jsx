@@ -22,7 +22,7 @@ import { useSeekerRequests, useDonorSearch } from '../../hooks/useSeekerData';
 import useNotifications                     from '../../hooks/useNotifications';
 import NotificationBell                     from '../../components/NotificationBell';
 import LocationPickerModal                  from '../../components/LocationPickerModal';
-import OnboardingModal                      from '../../components/OnboardingModal';
+import AppSpotlightTour                     from '../../components/AppSpotlightTour';
 import api                                  from '../../lib/api';
 import { getViewableDocUrl, isPdfUrl }      from '../../lib/docUrl';
 import '../../styles/dashboard.css';
@@ -36,6 +36,30 @@ const NAV_ITEMS = [
   { id: 'request',  label: 'New Request',  icon: FilePlus },
   { id: 'history',  label: 'My Requests',  icon: ClipboardList },
   { id: 'edit',     label: 'Edit Profile', icon: Edit3 },
+];
+
+const SEEKER_TOUR_STEPS = [
+  {
+    targetSelector: '#nav-search',
+    title: 'Find Compatible Donors',
+    description: 'Your dashboard opens directly here! Search active voluntary donors by blood group and city with real-time location matching.',
+    icon: Search,
+    preferredPos: 'right',
+  },
+  {
+    targetSelector: '#nav-request',
+    title: 'Post Emergency Blood Request',
+    description: 'In an emergency? Click here to submit patient hospital details for team verification and instant broadcast to nearby donors!',
+    icon: FilePlus,
+    preferredPos: 'right',
+  },
+  {
+    targetSelector: '#notification-bell',
+    title: 'Real-Time Status & Hospital Pins',
+    description: 'Get notified immediately when donors pledge to help. Use exact Google Maps location pins so donors reach your ward without delay!',
+    icon: HelpCircle,
+    preferredPos: 'left',
+  },
 ];
 
 export default function SeekerDashboard() {
@@ -247,13 +271,12 @@ export default function SeekerDashboard() {
       {/* Floating Notification Bell */}
       <NotificationBell {...notifs} />
 
-      {/* Interactive User Onboarding Guided Tour */}
-      <OnboardingModal
+      {/* Interactive Element-Targeted Spotlight Guided Tour */}
+      <AppSpotlightTour
         isOpen={showOnboarding}
         onClose={() => setShowOnboarding(false)}
-        role="seeker"
-        userName={user?.name}
-        userCity={user?.city}
+        steps={SEEKER_TOUR_STEPS}
+        tourKey="seeker"
       />
     </div>
   );

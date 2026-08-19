@@ -1,0 +1,263 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   SPOTLIGHT TOOLTIP ONBOARDING TOUR STYLES
+   Creates an element-targeted spotlight highlight with pulsing ripple rings
+   and directional speech-bubble tooltips (matching high-end UI design)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Dark translucent mask overlay */
+.spotlight-tour-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 999990;
+  pointer-events: auto;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Clear window cutout over target element */
+.spotlight-target-box {
+  position: fixed;
+  z-index: 999992;
+  border-radius: 14px;
+  box-shadow: 0 0 0 9999px rgba(2, 6, 23, 0.78),
+              0 0 25px rgba(239, 68, 68, 0.6),
+              inset 0 0 15px rgba(239, 68, 68, 0.3);
+  border: 2px solid #ef4444;
+  pointer-events: none;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Concentric pulsing ripple rings around target (as in reference image) */
+.spotlight-ripple-ring {
+  position: absolute;
+  top: -12px;
+  left: -12px;
+  right: -12px;
+  bottom: -12px;
+  border-radius: 20px;
+  border: 2px solid rgba(239, 68, 68, 0.8);
+  pointer-events: none;
+  animation: spotlightPulse 2s infinite ease-out;
+}
+
+.spotlight-ripple-ring-delayed {
+  position: absolute;
+  top: -20px;
+  left: -20px;
+  right: -20px;
+  bottom: -20px;
+  border-radius: 26px;
+  border: 2px solid rgba(239, 68, 68, 0.4);
+  pointer-events: none;
+  animation: spotlightPulse 2s infinite ease-out 0.6s;
+}
+
+@keyframes spotlightPulse {
+  0% {
+    transform: scale(0.95);
+    opacity: 0.9;
+  }
+  50% {
+    transform: scale(1.06);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(1.15);
+    opacity: 0;
+  }
+}
+
+/* Tooltip Callout Box */
+.spotlight-tooltip-card {
+  position: fixed;
+  z-index: 999995;
+  width: 340px;
+  max-width: calc(100vw - 32px);
+  background: #0f172a;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 18px;
+  padding: 20px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.88), 0 0 20px rgba(239, 68, 68, 0.15);
+  color: #f8fafc;
+  animation: tooltipFadeIn 0.3s ease-out;
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes tooltipFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.96);
+  }
+  to {
+    opacity: 0.99;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Circular Close Button in top right corner (pink/red badge) */
+.spotlight-close-btn {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  border: 2px solid #ffffff;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.5);
+  transition: transform 0.2s ease;
+  z-index: 999996;
+}
+
+.spotlight-close-btn:hover {
+  transform: scale(1.15);
+}
+
+/* Speech Bubble Arrow Pointers */
+.spotlight-arrow {
+  position: absolute;
+  width: 0;
+  height: 0;
+  border-style: solid;
+}
+
+.spotlight-arrow-top {
+  bottom: 100%;
+  left: 32px;
+  border-width: 0 10px 10px 10px;
+  border-color: transparent transparent #0f172a transparent;
+}
+
+.spotlight-arrow-bottom {
+  top: 100%;
+  left: 32px;
+  border-width: 10px 10px 0 10px;
+  border-color: #0f172a transparent transparent transparent;
+}
+
+.spotlight-arrow-left {
+  right: 100%;
+  top: 24px;
+  border-width: 10px 10px 10px 0;
+  border-color: transparent #0f172a transparent transparent;
+}
+
+.spotlight-arrow-right {
+  left: 100%;
+  top: 24px;
+  border-width: 10px 0 10px 10px;
+  border-color: transparent transparent transparent #0f172a;
+}
+
+/* Tooltip Header & Content */
+.spotlight-tooltip-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.spotlight-tooltip-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ef4444;
+  flex-shrink: 0;
+}
+
+.spotlight-tooltip-title {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #ffffff;
+  line-height: 1.2;
+}
+
+.spotlight-tooltip-step-tag {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #94a3b8;
+  letter-spacing: 0.04em;
+}
+
+.spotlight-tooltip-body {
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: #cbd5e1;
+  margin-bottom: 16px;
+}
+
+/* Footer Controls */
+.spotlight-tooltip-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 12px;
+}
+
+.spotlight-dots {
+  display: flex;
+  gap: 5px;
+}
+
+.spotlight-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+}
+
+.spotlight-dot.active {
+  width: 18px;
+  border-radius: 4px;
+  background: #ef4444;
+}
+
+.spotlight-nav-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.spotlight-btn-prev {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #cbd5e1;
+}
+
+.spotlight-btn-prev:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+}
+
+.spotlight-btn-next {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  border: none;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+}
+
+.spotlight-btn-next:hover {
+  opacity: 0.92;
+  transform: translateY(-1px);
+}

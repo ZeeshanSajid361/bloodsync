@@ -91,7 +91,7 @@ export default function NotificationBell({
   }
 
   return (
-    <div className="notif-bell-wrap" ref={panelRef}>
+    <div className="notif-bell-wrap" id="notification-bell" ref={panelRef}>
       {/* Bell button */}
       <button
         className={`notif-bell-btn${unreadCount > 0 ? ' has-unread' : ''}`}
