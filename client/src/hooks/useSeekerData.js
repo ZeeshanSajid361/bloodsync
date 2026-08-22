@@ -10,19 +10,30 @@
  * Fixed by using useRef to track current array length inside stable callback.
  */
 
+import { useState, useEffect, useCallback, useRef } from 'react';
+import api from '../lib/api';
 import { useAuth } from '../context/AuthContext';
+
+const CACHE_KEY = 'bloodsync_seeker_requests_cache';
 
 // ── useSeekerRequests ──────────────────────────────────────────────────────
 export function useSeekerRequests() {
   const { user } = useAuth();
   const userId = user?._id || user?.id || '';
-  const cacheKey = userId ? `bloodsync_seeker_requests_${userId}` : null;
 
   const [requests, setRequests] = useState(() => {
-    if (!cacheKey) return [];
     try {
-      const cached = localStorage.getItem(cacheKey);
-      return cached ? JSON.parse(cached) : [];
+      const cached = localStorage.getItem(CACHE_KEY);
+      if (!cached) return [];
+      const parsed = JSON.parse(cached);
+      // Validate seeker match if cached
+      if (parsed.length > 0 && userId) {
+        const seekerId = parsed[0]?.seeker?._id || parsed[0]?.seeker;
+        if (seekerId && String(seekerId) !== String(userId)) {
+          return [];
+        }
+      }
+      return parsed;
     } catch {
       return [];
     }
@@ -43,7 +54,7 @@ export function useSeekerRequests() {
       const { data } = await api.get('/seekers/requests/mine?limit=50');
       setRequests(data.data.requests);
       setTotal(data.data.total);
-      if (cacheKey) localStorage.setItem(cacheKey, JSON.stringify(data.data.requests));
+      localStorage.setItem(CACHE_KEY, JSON.stringify(data.data.requests));
     } catch (err) {
       if (requestsRef.current.length === 0) {
         setError(err.response?.data?.message || 'Failed to load your requests.');

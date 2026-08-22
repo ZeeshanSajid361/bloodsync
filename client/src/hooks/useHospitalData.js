@@ -12,18 +12,26 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import api from '../lib/api';
 import { useAuth } from '../context/AuthContext';
+
+const CACHE_KEY = 'bloodsync_hospital_profile_cache';
 
 export default function useHospitalData() {
   const { user } = useAuth();
   const userId = user?._id || user?.id || '';
-  const cacheKey = userId ? `bloodsync_hospital_profile_${userId}` : null;
 
   const [profile, setProfile] = useState(() => {
-    if (!cacheKey) return null;
     try {
-      const cached = localStorage.getItem(cacheKey);
-      return cached ? JSON.parse(cached) : null;
+      const cached = localStorage.getItem(CACHE_KEY);
+      if (!cached) return null;
+      const parsed = JSON.parse(cached);
+      // Validate owner match so another user's cache is ignored
+      const ownerId = parsed?.org?.owner?._id || parsed?.org?.owner;
+      if (ownerId && userId && String(ownerId) !== String(userId)) {
+        return null;
+      }
+      return parsed;
     } catch {
       return null;
     }
@@ -43,21 +51,21 @@ export default function useHospitalData() {
     try {
       const { data } = await api.get('/hospitals/me');
       setProfile(data.data);
-      if (cacheKey) localStorage.setItem(cacheKey, JSON.stringify(data.data));
+      localStorage.setItem(CACHE_KEY, JSON.stringify(data.data));
     } catch (err) {
       // 404 means the user hasn't registered their org yet — that's normal.
-      if (err.response?.status !== 404) {
+      if (err.response?.status === 404) {
+        setProfile(null);
+        localStorage.removeItem(CACHE_KEY);
+      } else {
         if (!profileRef.current) {
           setError(err.response?.data?.message || 'Failed to load hospital data.');
         }
-      } else {
-        setProfile(null);
-        if (cacheKey) localStorage.removeItem(cacheKey);
       }
     } finally {
       setLoading(false);
     }
-  }, [cacheKey]);
+  }, []);
 
   useEffect(() => { fetchProfile(); }, [fetchProfile]);
 

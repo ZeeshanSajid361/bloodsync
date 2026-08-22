@@ -1767,8 +1767,22 @@ export default function HospitalDashboard() {
 
   if (error) {
     return (
-      <div style={{ display: 'grid', placeItems: 'center', minHeight: '100dvh', color: 'var(--red-400)' }}>
-        {error}
+      <div style={{ display: 'grid', placeItems: 'center', minHeight: '100dvh', padding: 24, textAlign: 'center' }}>
+        <div className="card" style={{ maxWidth: 440, padding: 32, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, background: 'rgba(15, 23, 42, 0.95)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: 20 }}>
+          <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'rgba(239, 68, 68, 0.15)', display: 'grid', placeItems: 'center', color: '#f87171' }}>
+            <AlertCircle size={28} />
+          </div>
+          <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: '#f8fafc' }}>Unable to Load Hospital Profile</h3>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', margin: 0 }}>{error}</p>
+          <div style={{ display: 'flex', gap: 12, width: '100%', marginTop: 8 }}>
+            <button className="btn btn-primary btn-full" onClick={() => hookData.refetch()} style={{ background: 'linear-gradient(135deg, var(--blue-600), var(--blue-800))' }}>
+              Try Again
+            </button>
+            <button className="btn btn-secondary btn-full" onClick={handleLogout}>
+              Sign Out
+            </button>
+          </div>
+        </div>
       </div>
     );
   }
