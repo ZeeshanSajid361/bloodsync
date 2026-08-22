@@ -289,7 +289,7 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
         setMapsUrl(genUrl);
 
         setLoading(false);
-        toast.success('Current GPS location pinned!', { id: 'gps-toast' });
+        toast.success('Current GPS location acquired!', { id: 'gps-toast' });
       },
       (err) => {
         setLoading(false);

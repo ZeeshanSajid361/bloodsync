@@ -2,23 +2,23 @@ import { useState, useEffect } from 'react';
 import { Droplets, Activity, Zap, User, Building2, Siren, Stethoscope, Sparkles } from 'lucide-react';
 
 export default function CinematicSplashScreen({ onComplete }) {
-  const [stage, setStage] = useState(1); // 1: Rapid Drop Descent & Disappear Impact, 2: Fast Micro-Galaxy & Brand Reveal, 3: Fade Out
+  const [stage, setStage] = useState(1); // 1: Slow-Motion Drop Descent & Ground Impact, 2: Micro-Galaxy & Brand Reveal, 3: Fade Out
 
   useEffect(() => {
-    // Stage 1 (Drop Fall & Ground Splatter) -> Stage 2 (Orbital Galaxy & Brand Reveal)
+    // Stage 1 (Slow Drop Fall & Ground Impact) -> Stage 2 (Orbital Galaxy & Brand Reveal)
     const timer1 = setTimeout(() => {
       setStage(2);
-    }, 900);
+    }, 2300);
 
     // Stage 2 -> Stage 3 (Fade Out)
     const timer2 = setTimeout(() => {
       setStage(3);
-    }, 2400);
+    }, 3900);
 
     // Complete callback
     const timer3 = setTimeout(() => {
       if (onComplete) onComplete();
-    }, 2900);
+    }, 4400);
 
     return () => {
       clearTimeout(timer1);
@@ -60,11 +60,11 @@ export default function CinematicSplashScreen({ onComplete }) {
         }}
       />
 
-      {/* ── STAGE 1: Fast Natural Drop Descent -> Ground Impact & Disappears ── */}
+      {/* ── STAGE 1: Slow-Motion Drop Descent -> Ground Impact & Disappears ── */}
       {stage === 1 && (
         <div className="impact-stage-container">
           
-          {/* Falling Teardrop (Disappears on impact!) */}
+          {/* Falling Teardrop in Slow-Motion */}
           <div className="falling-teardrop">
             <svg viewBox="0 0 100 130" width="60" height="78" fill="none">
               <defs>
@@ -121,7 +121,7 @@ export default function CinematicSplashScreen({ onComplete }) {
         </div>
       )}
 
-      {/* ── STAGE 2: Fast Orbital Galaxy & Brand Reveal ── */}
+      {/* ── STAGE 2: Orbital Micro-Galaxy & Brand Reveal ── */}
       {stage >= 2 && (
         <div className="splash-main-content">
 
@@ -255,14 +255,14 @@ export default function CinematicSplashScreen({ onComplete }) {
         .falling-teardrop {
           position: absolute;
           bottom: 120px;
-          animation: fastDropFall 0.55s cubic-bezier(0.5, 0, 0.75, 0.9) forwards;
+          animation: slowMotionDropFall 1.8s cubic-bezier(0.42, 0, 0.58, 1) forwards;
           z-index: 10;
         }
 
-        @keyframes fastDropFall {
-          0% { transform: translateY(-80vh) scale(0.65); opacity: 0; }
-          25% { opacity: 1; }
-          85% { transform: translateY(0) scale(1, 1); opacity: 1; }
+        @keyframes slowMotionDropFall {
+          0% { transform: translateY(-85vh) scale(0.65); opacity: 0; }
+          20% { opacity: 1; }
+          88% { transform: translateY(0) scale(1, 1); opacity: 1; }
           /* Disappear instantly upon hitting the floor */
           100% { transform: translateY(10px) scale(1.4, 0.2); opacity: 0; visibility: hidden; }
         }
@@ -303,7 +303,7 @@ export default function CinematicSplashScreen({ onComplete }) {
           border-radius: 50%;
           background: linear-gradient(135deg, #ff5252, #e11d48);
           box-shadow: 0 0 60px rgba(244, 63, 94, 1);
-          animation: flattenDiscSplatter 0.4s cubic-bezier(0.1, 0.8, 0.3, 1) 0.52s forwards;
+          animation: flattenDiscSplatter 0.4s cubic-bezier(0.1, 0.8, 0.3, 1) 1.75s forwards;
           opacity: 0;
         }
 
@@ -318,7 +318,7 @@ export default function CinematicSplashScreen({ onComplete }) {
           background: radial-gradient(circle at 35% 35%, #ff5252, #be123c);
           box-shadow: 0 0 14px rgba(244, 63, 94, 1);
           opacity: 0;
-          animation: burstSubDrop 0.5s cubic-bezier(0.12, 0.8, 0.32, 1) 0.52s forwards;
+          animation: burstSubDrop 0.5s cubic-bezier(0.12, 0.8, 0.32, 1) 1.75s forwards;
         }
 
         .drop-1, .drop-2, .drop-3, .drop-4, .drop-5     { width: 12px; height: 12px; }
@@ -374,7 +374,7 @@ export default function CinematicSplashScreen({ onComplete }) {
           height: 30px;
           border-radius: 50%;
           border: 2px solid rgba(244, 63, 94, 0.95);
-          animation: crownRingSplash 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.52s forwards;
+          animation: crownRingSplash 0.5s cubic-bezier(0.16, 1, 0.3, 1) 1.75s forwards;
           opacity: 0;
         }
 

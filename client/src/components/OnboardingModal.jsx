@@ -106,14 +106,14 @@ export default function OnboardingModal({ isOpen, onClose, role = 'donor', userN
       ),
     },
     {
-      title: "Exact Location Pinning",
-      badge: "📍 Pin Hospital Pinpoint",
+      title: "Exact Location Selection",
+      badge: "📍 Select Hospital Location",
       icon: MapPin,
       color: "#10b981",
       content: (
         <div style={{ textAlign: 'center' }}>
           <p style={{ fontSize: '0.95rem', color: '#e2e8f0', lineHeight: 1.6, marginBottom: '14px' }}>
-            When posting a request, click <strong style={{ color: '#34d399' }}>Pin Location</strong> to ensure donors get exact Google Maps directions right to your hospital ward.
+            When posting a request, click <strong style={{ color: '#34d399' }}>Select Location</strong> to ensure donors get exact Google Maps directions right to your hospital ward.
           </p>
           <div style={{ background: 'rgba(16, 185, 129, 0.12)', border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: '12px', padding: '12px 16px', textAlign: 'left', fontSize: '0.85rem', color: '#a7f3d0' }}>
             🔔 Live notifications will alert you as soon as a donor pledges to arrive!

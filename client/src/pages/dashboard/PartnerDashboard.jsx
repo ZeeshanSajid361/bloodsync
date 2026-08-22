@@ -749,7 +749,7 @@ export default function PartnerDashboard({ profile, hooks, onLogout }) {
                 <div className="input-group">
                   <label className="input-label" style={{ fontSize: '0.75rem' }}>Exact Map Pin 📍</label>
                   <button type="button" className="btn btn-secondary btn-sm" style={{ width: '100%', height: 38, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, background: driveForm.latitude ? 'rgba(16, 185, 129, 0.15)' : undefined, borderColor: driveForm.latitude ? '#10b981' : undefined, color: driveForm.latitude ? '#34d399' : undefined }} onClick={() => setShowDriveMapPicker(true)}>
-                    <MapPin size={15} /> {driveForm.latitude ? '📍 Pinned' : '📍 Pin Location'}
+                    <MapPin size={15} /> {driveForm.latitude ? '📍 Selected' : '📍 Select Location'}
                   </button>
                 </div>
               </div>
@@ -860,9 +860,9 @@ export default function PartnerDashboard({ profile, hooks, onLogout }) {
                   <input className="input" placeholder="e.g. Ward 4, Emergency Dept" value={requestForm.hospitalAddress} onChange={e => setRequestForm(p => ({ ...p, hospitalAddress: e.target.value }))} />
                 </div>
                 <div className="input-group">
-                  <label className="input-label" style={{ fontSize: '0.75rem' }}>Exact Hospital Map Pin 📍</label>
+                  <label className="input-label" style={{ fontSize: '0.75rem' }}>Exact Hospital Location 📍</label>
                   <button type="button" className="btn btn-secondary btn-sm" style={{ width: '100%', height: 38, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, background: requestForm.latitude ? 'rgba(16, 185, 129, 0.15)' : undefined, borderColor: requestForm.latitude ? '#10b981' : undefined, color: requestForm.latitude ? '#34d399' : undefined }} onClick={() => setShowRequestMapPicker(true)}>
-                    <MapPin size={15} /> {requestForm.latitude ? '📍 Location Pinned' : '📍 Pin Hospital on Map'}
+                    <MapPin size={15} /> {requestForm.latitude ? '📍 Location Selected' : '📍 Select Hospital Location'}
                   </button>
                 </div>
               </div>
