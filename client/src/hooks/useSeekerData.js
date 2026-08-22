@@ -2,10 +2,15 @@
  * Custom hooks — seeker dashboard data.
  *
  * useSeekerRequests  — fetches GET /api/seekers/requests/mine
- * useCompatibility   — fetches GET /api/seekers/compatibility for a blood group
+ * useDonorSearch     — fetches GET /api/seekers/search
+ *
+ * FIX: Removed `requests.length` from useCallback deps in useSeekerRequests.
+ * That caused an infinite loop: fetch → setRequests → requests.length changes
+ * → new fetch function → useEffect fires again → repeat.
+ * Fixed by using useRef to track current array length inside stable callback.
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import api from '../lib/api';
 
 const SEEKER_CACHE_KEY = 'bloodsync_seeker_requests_cache';
@@ -25,8 +30,12 @@ export function useSeekerRequests() {
   const [error,   setError]   = useState('');
   const [total,   setTotal]   = useState(() => requests.length);
 
+  // Ref so the stable callback can check if we have data without being in deps
+  const requestsRef = useRef(requests);
+  requestsRef.current = requests;
+
   const fetch = useCallback(async () => {
-    if (requests.length === 0) setLoading(true);
+    if (requestsRef.current.length === 0) setLoading(true);
     setError('');
     try {
       const { data } = await api.get('/seekers/requests/mine?limit=50');
@@ -34,13 +43,13 @@ export function useSeekerRequests() {
       setTotal(data.data.total);
       localStorage.setItem(SEEKER_CACHE_KEY, JSON.stringify(data.data.requests));
     } catch (err) {
-      if (requests.length === 0) {
+      if (requestsRef.current.length === 0) {
         setError(err.response?.data?.message || 'Failed to load your requests.');
       }
     } finally {
       setLoading(false);
     }
-  }, [requests.length]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => { fetch(); }, [fetch]);
 

@@ -1,8 +1,14 @@
 /**
  * useAdminData — custom hook for the admin dashboard.
  *
- * Implements Stale-While-Revalidate localStorage caching for instant 0ms rendering
- * across all admin dashboard tabs (Analytics, Hospitals, Requests, Users).
+ * FIX: Removed state values from useCallback dependency arrays.
+ * Previously `fetchHospitals` depended on `hospitals.orgs`, so every
+ * time the fetch completed and set new state, a new function reference
+ * was produced, causing the useEffect in HospitalsTab to fire again —
+ * creating an infinite fetch loop.
+ *
+ * Solution: use useRef to track current values inside stable callbacks
+ * (empty deps []) so function references never change.
  */
 
 import { useState, useCallback, useRef } from 'react';
@@ -45,24 +51,36 @@ export default function useAdminData() {
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState('');
 
-  /* ── Fetchers ──────────────────────────────────────────────────────────── */
+  // Refs so callbacks can read current state without being in deps
+  const analyticsRef = useRef(analytics);
+  const hospitalsRef = useRef(hospitals);
+  const requestsRef  = useRef(requests);
+  const usersRef     = useRef(users);
+
+  analyticsRef.current = analytics;
+  hospitalsRef.current = hospitals;
+  requestsRef.current  = requests;
+  usersRef.current     = users;
+
+  /* ── Fetchers — stable references (empty deps []) ─────────────────────── */
 
   const fetchAnalytics = useCallback(async (isSilent = false) => {
     try {
-      if (!analytics && !isSilent) setLoading(true);
+      if (!analyticsRef.current && !isSilent) setLoading(true);
       const { data } = await api.get('/admin/analytics');
       setAnalytics(data.data);
       localStorage.setItem(CACHE_ANALYTICS, JSON.stringify(data.data));
     } catch (err) {
-      if (!analytics) setError(err.response?.data?.message || 'Failed to load analytics.');
+      if (!analyticsRef.current) setError(err.response?.data?.message || 'Failed to load analytics.');
     } finally {
       setLoading(false);
     }
-  }, [analytics]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchHospitals = useCallback(async (status = '', type = '', isSilent = false) => {
     try {
-      if ((!hospitals.orgs || hospitals.orgs.length === 0) && !isSilent) setLoading(true);
+      const hasCache = hospitalsRef.current?.orgs?.length > 0;
+      if (!hasCache && !isSilent) setLoading(true);
       const params = new URLSearchParams();
       if (status) params.set('status', status);
       if (type)   params.set('type', type);
@@ -70,30 +88,34 @@ export default function useAdminData() {
       setHospitals(data.data);
       if (!status && !type) localStorage.setItem(CACHE_HOSPITALS, JSON.stringify(data.data));
     } catch (err) {
-      if (!hospitals.orgs || hospitals.orgs.length === 0) setError(err.response?.data?.message || 'Failed to load hospitals.');
+      const hasCache = hospitalsRef.current?.orgs?.length > 0;
+      if (!hasCache) setError(err.response?.data?.message || 'Failed to load hospitals.');
     } finally {
       setLoading(false);
     }
-  }, [hospitals.orgs]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchRequests = useCallback(async (status = '', isSilent = false) => {
     try {
-      if ((!requests.requests || requests.requests.length === 0) && !isSilent) setLoading(true);
+      const hasCache = requestsRef.current?.requests?.length > 0;
+      if (!hasCache && !isSilent) setLoading(true);
       const params = new URLSearchParams();
       if (status) params.set('status', status);
       const { data } = await api.get(`/admin/requests?${params}`);
       setRequests(data.data);
       if (!status) localStorage.setItem(CACHE_REQUESTS, JSON.stringify(data.data));
     } catch (err) {
-      if (!requests.requests || requests.requests.length === 0) setError(err.response?.data?.message || 'Failed to load requests.');
+      const hasCache = requestsRef.current?.requests?.length > 0;
+      if (!hasCache) setError(err.response?.data?.message || 'Failed to load requests.');
     } finally {
       setLoading(false);
     }
-  }, [requests.requests]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchUsers = useCallback(async (role = '', search = '', isSilent = false) => {
     try {
-      if ((!users.users || users.users.length === 0) && !isSilent) setLoading(true);
+      const hasCache = usersRef.current?.users?.length > 0;
+      if (!hasCache && !isSilent) setLoading(true);
       const params = new URLSearchParams();
       if (role)   params.set('role', role);
       if (search) params.set('search', search);
@@ -101,11 +123,12 @@ export default function useAdminData() {
       setUsers(data.data);
       if (!role && !search) localStorage.setItem(CACHE_USERS, JSON.stringify(data.data));
     } catch (err) {
-      if (!users.users || users.users.length === 0) setError(err.response?.data?.message || 'Failed to load users.');
+      const hasCache = usersRef.current?.users?.length > 0;
+      if (!hasCache) setError(err.response?.data?.message || 'Failed to load users.');
     } finally {
       setLoading(false);
     }
-  }, [users.users]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* ── Hospital mutations ────────────────────────────────────────────────── */
 
