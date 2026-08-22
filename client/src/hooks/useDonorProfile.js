@@ -1,34 +1,52 @@
-﻿/**
- * Custom hook ΓÇö donor dashboard data.
+/**
+ * Custom hook — donor dashboard data.
  *
- * Fetches GET /api/donors/me on mount and after any mutation that calls
- * the `refetch` function. Exposes loading, error, and the full donor data
- * object (profile + eligibility + level) in one place so the dashboard
- * components stay free of fetch logic.
+ * Implements Stale-While-Revalidate caching via localStorage so donor profiles
+ * render instantly (0ms delay) upon login or tab switching, while fetching latest updates in the background.
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import api from '../lib/api';
 
-export function useDonorProfile() {
-  const [donor,   setDonor]   = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error,   setError]   = useState('');
+const DONOR_CACHE_KEY = 'bloodsync_donor_profile_cache';
 
-  const fetch = useCallback(async () => {
-    setLoading(true);
+export function useDonorProfile() {
+  const [donor, setDonor] = useState(() => {
+    try {
+      const cached = localStorage.getItem(DONOR_CACHE_KEY);
+      return cached ? JSON.parse(cached) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  const donorRef = useRef(donor);
+  donorRef.current = donor;
+
+  const [loading, setLoading] = useState(() => !donor);
+  const [error, setError]   = useState('');
+
+  const fetch = useCallback(async (isSilent = false) => {
+    if (!donorRef.current && !isSilent) {
+      setLoading(true);
+    }
     setError('');
     try {
       const { data } = await api.get('/donors/me');
       setDonor(data.data);
+      localStorage.setItem(DONOR_CACHE_KEY, JSON.stringify(data.data));
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to load donor profile.');
+      if (!donorRef.current) {
+        setError(err.response?.data?.message || 'Failed to load donor profile.');
+      }
     } finally {
       setLoading(false);
     }
   }, []);
 
-  useEffect(() => { fetch(); }, [fetch]);
+  useEffect(() => {
+    fetch(!!donorRef.current);
+  }, [fetch]);
 
   return { donor, loading, error, refetch: fetch };
 }

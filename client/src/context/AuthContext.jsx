@@ -22,6 +22,7 @@ export function AuthProvider({ children }) {
     if (stored) {
       try {
         setUser(JSON.parse(stored));
+        setLoading(false); // Instant hydration from cache (0ms delay!)
       } catch {
         localStorage.removeItem('user');
       }

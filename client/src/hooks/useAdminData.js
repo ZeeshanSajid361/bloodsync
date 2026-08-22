@@ -1,84 +1,117 @@
 /**
  * useAdminData — custom hook for the admin dashboard.
  *
- * Exposes paginated data fetchers for hospitals, requests, users, and analytics,
- * plus mutation helpers for approve/reject/block/revoke actions.
+ * Implements Stale-While-Revalidate localStorage caching for instant 0ms rendering
+ * across all admin dashboard tabs (Analytics, Hospitals, Requests, Users).
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import api from '../lib/api';
 
+const CACHE_ANALYTICS = 'bloodsync_admin_analytics_cache';
+const CACHE_HOSPITALS = 'bloodsync_admin_hospitals_cache';
+const CACHE_REQUESTS  = 'bloodsync_admin_requests_cache';
+const CACHE_USERS     = 'bloodsync_admin_users_cache';
+
 export default function useAdminData() {
-  const [analytics,  setAnalytics]  = useState(null);
-  const [hospitals,  setHospitals]  = useState({ orgs: [], total: 0 });
-  const [requests,   setRequests]   = useState({ requests: [], total: 0 });
-  const [users,      setUsers]      = useState({ users: [], total: 0 });
-  const [loading,    setLoading]    = useState(false);
-  const [error,      setError]      = useState('');
+  const [analytics, setAnalytics] = useState(() => {
+    try {
+      const cached = localStorage.getItem(CACHE_ANALYTICS);
+      return cached ? JSON.parse(cached) : null;
+    } catch { return null; }
+  });
+
+  const [hospitals, setHospitals] = useState(() => {
+    try {
+      const cached = localStorage.getItem(CACHE_HOSPITALS);
+      return cached ? JSON.parse(cached) : { orgs: [], total: 0 };
+    } catch { return { orgs: [], total: 0 }; }
+  });
+
+  const [requests, setRequests] = useState(() => {
+    try {
+      const cached = localStorage.getItem(CACHE_REQUESTS);
+      return cached ? JSON.parse(cached) : { requests: [], total: 0 };
+    } catch { return { requests: [], total: 0 }; }
+  });
+
+  const [users, setUsers] = useState(() => {
+    try {
+      const cached = localStorage.getItem(CACHE_USERS);
+      return cached ? JSON.parse(cached) : { users: [], total: 0 };
+    } catch { return { users: [], total: 0 }; }
+  });
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError]     = useState('');
 
   /* ── Fetchers ──────────────────────────────────────────────────────────── */
 
-  const fetchAnalytics = useCallback(async () => {
+  const fetchAnalytics = useCallback(async (isSilent = false) => {
     try {
-      setLoading(true);
+      if (!analytics && !isSilent) setLoading(true);
       const { data } = await api.get('/admin/analytics');
       setAnalytics(data.data);
+      localStorage.setItem(CACHE_ANALYTICS, JSON.stringify(data.data));
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to load analytics.');
+      if (!analytics) setError(err.response?.data?.message || 'Failed to load analytics.');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [analytics]);
 
-  const fetchHospitals = useCallback(async (status = '', type = '') => {
+  const fetchHospitals = useCallback(async (status = '', type = '', isSilent = false) => {
     try {
-      setLoading(true);
+      if ((!hospitals.orgs || hospitals.orgs.length === 0) && !isSilent) setLoading(true);
       const params = new URLSearchParams();
       if (status) params.set('status', status);
       if (type)   params.set('type', type);
       const { data } = await api.get(`/admin/hospitals?${params}`);
       setHospitals(data.data);
+      if (!status && !type) localStorage.setItem(CACHE_HOSPITALS, JSON.stringify(data.data));
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to load hospitals.');
+      if (!hospitals.orgs || hospitals.orgs.length === 0) setError(err.response?.data?.message || 'Failed to load hospitals.');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [hospitals.orgs]);
 
-  const fetchRequests = useCallback(async (status = '') => {
+  const fetchRequests = useCallback(async (status = '', isSilent = false) => {
     try {
-      setLoading(true);
+      if ((!requests.requests || requests.requests.length === 0) && !isSilent) setLoading(true);
       const params = new URLSearchParams();
       if (status) params.set('status', status);
       const { data } = await api.get(`/admin/requests?${params}`);
       setRequests(data.data);
+      if (!status) localStorage.setItem(CACHE_REQUESTS, JSON.stringify(data.data));
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to load requests.');
+      if (!requests.requests || requests.requests.length === 0) setError(err.response?.data?.message || 'Failed to load requests.');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [requests.requests]);
 
-  const fetchUsers = useCallback(async (role = '', search = '') => {
+  const fetchUsers = useCallback(async (role = '', search = '', isSilent = false) => {
     try {
-      setLoading(true);
+      if ((!users.users || users.users.length === 0) && !isSilent) setLoading(true);
       const params = new URLSearchParams();
       if (role)   params.set('role', role);
       if (search) params.set('search', search);
       const { data } = await api.get(`/admin/users?${params}`);
       setUsers(data.data);
+      if (!role && !search) localStorage.setItem(CACHE_USERS, JSON.stringify(data.data));
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to load users.');
+      if (!users.users || users.users.length === 0) setError(err.response?.data?.message || 'Failed to load users.');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [users.users]);
 
   /* ── Hospital mutations ────────────────────────────────────────────────── */
 
   async function approveHospital(id, note = '') {
     const { data } = await api.patch(`/admin/hospitals/${id}/approve`, { note });
-    return data; // contains rawKey — caller must display it
+    return data;
   }
 
   async function rejectHospital(id, note) {
@@ -134,4 +167,3 @@ export default function useAdminData() {
     toggleBlock, deleteUser,
   };
 }
-
