@@ -112,6 +112,16 @@ export default function DonorDashboard() {
     navigate('/login', { replace: true });
   }
 
+  function handleLogoClick(e) {
+    if (e) e.preventDefault();
+    setActiveTab('overview');
+    if (window.scrollY > 30) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      refetch(false);
+    }
+  }
+
   const initials = user?.name
     ?.split(' ')
     .map((w) => w[0])
@@ -123,7 +133,7 @@ export default function DonorDashboard() {
     <div className="dashboard-shell">
       {/* ── Desktop Collapsible Sidebar (72px → 250px on hover) ── */}
       <aside className="sidebar">
-        <a href="/" className="sidebar-logo">
+        <a href="/" className="sidebar-logo" onClick={handleLogoClick} style={{ cursor: 'pointer' }}>
           <div className="sidebar-logo-icon">🩸</div>
           <span className="sidebar-logo-text">Blood<span>Sync</span></span>
         </a>
@@ -173,7 +183,7 @@ export default function DonorDashboard() {
       <div className="dashboard-main-wrapper">
         {/* Mobile Sticky Top Header */}
         <header className="mobile-header">
-          <div className="mobile-header-logo">
+          <div className="mobile-header-logo" onClick={handleLogoClick} style={{ cursor: 'pointer' }}>
             <div className="mobile-header-logo-icon">🩸</div>
             <div className="mobile-header-title">Blood<span>Sync</span></div>
           </div>

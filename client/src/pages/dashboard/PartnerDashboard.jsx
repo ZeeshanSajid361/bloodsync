@@ -242,11 +242,21 @@ export default function PartnerDashboard({ profile, hooks, onLogout }) {
     { id: 'profile', label: 'Profile & Verification', icon: ShieldCheck },
   ];
 
+  function handleLogoClick(e) {
+    if (e) e.preventDefault();
+    setActiveTab('overview');
+    if (window.scrollY > 30) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (hooks?.refetchProfile) {
+      hooks.refetchProfile();
+    }
+  }
+
   return (
     <div className="dashboard-shell">
       {/* ── Desktop Collapsible Sidebar (72px → 250px on hover) ── */}
       <aside className="sidebar">
-        <a href="/" className="sidebar-logo">
+        <a href="/" className="sidebar-logo" onClick={handleLogoClick} style={{ cursor: 'pointer' }}>
           <div className="sidebar-logo-icon" style={{ background: 'linear-gradient(135deg, var(--blue-600), var(--blue-800))' }}>
             <Building2 size={18} color="#fff" />
           </div>
@@ -318,7 +328,7 @@ export default function PartnerDashboard({ profile, hooks, onLogout }) {
       <div className="dashboard-main-wrapper">
         {/* Mobile Sticky Top Header */}
         <header className="mobile-header">
-          <div className="mobile-header-logo">
+          <div className="mobile-header-logo" onClick={handleLogoClick} style={{ cursor: 'pointer' }}>
             <div className="mobile-header-logo-icon" style={{ background: 'linear-gradient(135deg, var(--blue-600), var(--blue-800))' }}>
               <Building2 size={16} color="#fff" />
             </div>
@@ -747,7 +757,7 @@ export default function PartnerDashboard({ profile, hooks, onLogout }) {
                   <input className="input" placeholder="e.g. Main Auditorium, Sector H-12" value={driveForm.address} onChange={e => setDriveForm(p => ({ ...p, address: e.target.value }))} required />
                 </div>
                 <div className="input-group">
-                  <label className="input-label" style={{ fontSize: '0.75rem' }}>Exact Map Pin 📍</label>
+                  <label className="input-label" style={{ fontSize: '0.75rem' }}>Exact Map Location 📍</label>
                   <button type="button" className="btn btn-secondary btn-sm" style={{ width: '100%', height: 38, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, background: driveForm.latitude ? 'rgba(16, 185, 129, 0.15)' : undefined, borderColor: driveForm.latitude ? '#10b981' : undefined, color: driveForm.latitude ? '#34d399' : undefined }} onClick={() => setShowDriveMapPicker(true)}>
                     <MapPin size={15} /> {driveForm.latitude ? '📍 Selected' : '📍 Select Location'}
                   </button>

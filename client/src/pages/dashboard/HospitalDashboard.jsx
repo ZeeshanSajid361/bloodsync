@@ -1747,6 +1747,16 @@ export default function HospitalDashboard() {
     await logout();
   }
 
+  function handleLogoClick(e) {
+    if (e) e.preventDefault();
+    setTab('overview');
+    if (window.scrollY > 30) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      hookData.refetchProfile();
+    }
+  }
+
   if (loading) {
     return (
       <div style={{ display: 'grid', placeItems: 'center', minHeight: '100dvh' }}>
@@ -1773,7 +1783,7 @@ export default function HospitalDashboard() {
     <div className="dashboard-shell">
       {/* ── Desktop Collapsible Sidebar (72px → 250px on hover) ── */}
       <aside className="sidebar">
-        <a href="/" className="sidebar-logo">
+        <a href="/" className="sidebar-logo" onClick={handleLogoClick} style={{ cursor: 'pointer' }}>
           <div className="sidebar-logo-icon" style={{ background: 'linear-gradient(135deg, var(--blue-600), var(--blue-800))' }}>
             <Building2 size={18} color="#fff" />
           </div>
@@ -1853,7 +1863,7 @@ export default function HospitalDashboard() {
       <div className="dashboard-main-wrapper">
         {/* Mobile Sticky Top Header */}
         <header className="mobile-header">
-          <div className="mobile-header-logo">
+          <div className="mobile-header-logo" onClick={handleLogoClick} style={{ cursor: 'pointer' }}>
             <div className="mobile-header-logo-icon" style={{ background: 'linear-gradient(135deg, var(--blue-600), var(--blue-800))' }}>
               <Building2 size={16} color="#fff" />
             </div>

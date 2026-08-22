@@ -95,6 +95,19 @@ export default function LandingPage() {
 
   const compatibleDonors = COMPATIBILITY_MAP[selectedGroup] || [selectedGroup];
 
+  function handleLogoClick(e) {
+    if (e) e.preventDefault();
+    const alreadyAtTop = (window.scrollY || document.documentElement.scrollTop || document.body.scrollTop) < 10;
+    if (window.location.hash) {
+      window.history.pushState('', document.title, window.location.pathname + window.location.search);
+    }
+    if (alreadyAtTop) {
+      window.location.reload();
+    } else {
+      window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+    }
+  }
+
   function handleSearch(e) {
     e.preventDefault();
     setHasSearched(true);
@@ -136,7 +149,7 @@ export default function LandingPage() {
       {/* ── Public Navbar ── */}
       <header className="landing-nav">
         <div className="landing-nav-inner">
-          <Link to="/" className="landing-logo">
+          <Link to="/" className="landing-logo" onClick={handleLogoClick}>
             <div className="landing-logo-icon">🩸</div>
             <span className="landing-logo-text">Blood<span>Sync</span></span>
           </Link>
@@ -577,7 +590,7 @@ export default function LandingPage() {
       <footer className="landing-footer">
         <div className="footer-inner">
           <div className="footer-brand">
-            <Link to="/" className="landing-logo">
+            <Link to="/" className="landing-logo" onClick={handleLogoClick}>
               <div className="landing-logo-icon">🩸</div>
               <span className="landing-logo-text">Blood<span>Sync</span></span>
             </Link>
@@ -631,37 +644,38 @@ export default function LandingPage() {
 
       {/* ── Hospital Emergency Call Modal ── */}
       {showEmergencyModal && (
-        <div className="profile-modal-overlay" onClick={() => setShowEmergencyModal(false)}>
-          <div className="profile-modal-card" onClick={(e) => e.stopPropagation()}>
-            <div className="profile-modal-header" style={{ background: 'linear-gradient(135deg, rgba(192,57,43,0.3), rgba(15,21,32,0.95))' }}>
-              <button className="profile-modal-close" onClick={() => setShowEmergencyModal(false)}>
-                <X size={18} />
+        <div className="lp-modal-overlay" onClick={() => setShowEmergencyModal(false)}>
+          <div className="lp-modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="lp-modal-header">
+              <button className="lp-modal-close" onClick={() => setShowEmergencyModal(false)}>
+                <X size={16} />
               </button>
-              <div style={{ fontSize: '2.5rem', marginBottom: 'var(--space-2)' }}>🏥</div>
-              <div className="profile-modal-name">Emergency Hospital Blood Units</div>
-              <div className="profile-modal-role">Direct Hospital Call Desks</div>
+              <span className="lp-modal-icon">🏥</span>
+              <p className="lp-modal-title">Emergency Hospital Blood Units</p>
+              <p className="lp-modal-subtitle">Direct Hospital Call Desks</p>
             </div>
 
-            <div className="profile-modal-body">
-              <div className="profile-info-row" style={{ background: 'rgba(192, 57, 43, 0.1)', borderColor: 'rgba(192,57,43,0.3)' }}>
-                <span className="profile-info-label" style={{ color: 'var(--red-300)', fontWeight: 700 }}>National Emergency Helpline</span>
-                <a href="tel:1122" style={{ color: '#fff', fontWeight: 800, fontSize: '1.1rem', textDecoration: 'none' }}>📞 1122</a>
+            <div className="lp-modal-body">
+              {/* National Helpline highlight row */}
+              <div className="lp-emergency-row highlight">
+                <span className="lp-emergency-label">📞 National Emergency Helpline</span>
+                <a href="tel:1122" style={{ color: '#fff', fontWeight: 800, fontSize: '1.1rem', textDecoration: 'none' }}>1122</a>
               </div>
 
               {EMERGENCY_HOSPITALS.map((hosp) => (
-                <div key={hosp.id} className="profile-info-row">
+                <div key={hosp.id} className="lp-emergency-row">
                   <div>
-                    <span className="profile-info-label" style={{ fontWeight: 700, color: 'var(--text-primary)', display: 'block' }}>{hosp.name}</span>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>📍 {hosp.city}</span>
+                    <span className="lp-emergency-name">{hosp.name}</span>
+                    <span className="lp-emergency-city">📍 {hosp.city}</span>
                   </div>
                   <a href={`tel:${hosp.phone.replace(/[^0-9+]/g, '')}`} className="btn btn-primary btn-sm">
-                    Call
+                    <PhoneCall size={13} /> Call
                   </a>
                 </div>
               ))}
             </div>
 
-            <div className="profile-modal-actions">
+            <div className="lp-modal-actions">
               <Link to="/login" className="btn btn-ghost btn-full" onClick={() => setShowEmergencyModal(false)}>
                 Post Request via Platform
               </Link>

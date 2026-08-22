@@ -703,11 +703,21 @@ export default function AdminDashboard() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  function handleLogoClick(e) {
+    if (e) e.preventDefault();
+    setTab('overview');
+    if (window.scrollY > 30) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      admin.fetchAnalytics();
+    }
+  }
+
   return (
     <div className="dashboard-shell">
       {/* ── Desktop Collapsible Sidebar (72px → 250px on hover) ── */}
       <aside className="sidebar">
-        <a href="/" className="sidebar-logo">
+        <a href="/" className="sidebar-logo" onClick={handleLogoClick} style={{ cursor: 'pointer' }}>
           <div className="sidebar-logo-icon">
             <ShieldCheck size={18} />
           </div>
@@ -771,7 +781,7 @@ export default function AdminDashboard() {
       <div className="dashboard-main-wrapper">
         {/* Mobile Sticky Top Header */}
         <header className="mobile-header">
-          <div className="mobile-header-logo">
+          <div className="mobile-header-logo" onClick={handleLogoClick} style={{ cursor: 'pointer' }}>
             <div className="mobile-header-logo-icon">
               <ShieldCheck size={16} color="#fff" />
             </div>

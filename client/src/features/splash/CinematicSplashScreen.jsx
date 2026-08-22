@@ -35,7 +35,7 @@ export default function CinematicSplashScreen({ onComplete }) {
         position: 'fixed',
         inset: 0,
         zIndex: 99999999,
-        background: 'linear-gradient(180deg, #070308 0%, #120514 45%, #060207 100%)',
+        background: '#080b10',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -48,13 +48,13 @@ export default function CinematicSplashScreen({ onComplete }) {
         fontFamily: 'Inter, system-ui, sans-serif',
       }}
     >
-      {/* Ambient Background Glow */}
+      {/* Ambient Background Glow — matching app's red-600 (#c0392b) */}
       <div
         style={{
           position: 'absolute',
           width: '140vw',
           height: '140vh',
-          background: 'radial-gradient(circle at 50% 50%, rgba(225, 29, 72, 0.24) 0%, rgba(18, 7, 22, 0.95) 55%, #050207 100%)',
+          background: 'radial-gradient(circle at 50% 50%, rgba(192, 57, 43, 0.32) 0%, rgba(8, 11, 16, 0.97) 58%, #080b10 100%)',
           animation: 'bgPulse 3s ease-in-out infinite alternate',
           pointerEvents: 'none',
         }}
@@ -69,9 +69,9 @@ export default function CinematicSplashScreen({ onComplete }) {
             <svg viewBox="0 0 100 130" width="60" height="78" fill="none">
               <defs>
                 <linearGradient id="dropGrad" x1="30%" y1="10%" x2="70%" y2="90%">
-                  <stop offset="0%" stopColor="#ff5252" />
-                  <stop offset="50%" stopColor="#e11d48" />
-                  <stop offset="100%" stopColor="#7f1d1d" />
+                  <stop offset="0%" stopColor="#ff4d4d" />
+                  <stop offset="50%" stopColor="#e8291b" />
+                  <stop offset="100%" stopColor="#96281b" />
                 </linearGradient>
                 <filter id="dropGlow" x="-20%" y="-20%" width="140%" height="140%">
                   <feGaussianBlur stdDeviation="4" result="blur" />
@@ -145,14 +145,14 @@ export default function CinematicSplashScreen({ onComplete }) {
               />
               <defs>
                 <linearGradient id="orbitGradient1" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#f43f5e" stopOpacity="0.9" />
-                  <stop offset="50%" stopColor="#be123c" stopOpacity="0.4" />
-                  <stop offset="100%" stopColor="#f43f5e" stopOpacity="0.9" />
+                  <stop offset="0%" stopColor="#ff4d4d" stopOpacity="0.9" />
+                  <stop offset="50%" stopColor="#c0392b" stopOpacity="0.4" />
+                  <stop offset="100%" stopColor="#ff4d4d" stopOpacity="0.9" />
                 </linearGradient>
                 <linearGradient id="orbitGradient2" x1="100%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stopColor="#fb7185" stopOpacity="0.9" />
-                  <stop offset="50%" stopColor="#881337" stopOpacity="0.4" />
-                  <stop offset="100%" stopColor="#fb7185" stopOpacity="0.9" />
+                  <stop offset="0%" stopColor="#e8291b" stopOpacity="0.9" />
+                  <stop offset="50%" stopColor="#96281b" stopOpacity="0.35" />
+                  <stop offset="100%" stopColor="#e8291b" stopOpacity="0.9" />
                 </linearGradient>
               </defs>
             </svg>
@@ -169,14 +169,14 @@ export default function CinematicSplashScreen({ onComplete }) {
                 <User size={15} color="#ffffff" />
               </div>
               <div className="node-pill-label">
-                <Zap size={12} color="#fb7185" />
+                <Zap size={12} color="#ff7b7b" />
                 <span>Voluntary Donor</span>
               </div>
             </div>
 
             <div className="orbital-capsule-node node-top-right">
               <div className="node-pill-label">
-                <Building2 size={13} color="#fb7185" />
+                <Building2 size={13} color="#ff7b7b" />
                 <span>Hospital Network</span>
               </div>
               <div className="node-icon-capsule">
@@ -189,14 +189,14 @@ export default function CinematicSplashScreen({ onComplete }) {
                 <Siren size={15} color="#ffffff" />
               </div>
               <div className="node-pill-label">
-                <Droplets size={12} color="#f43f5e" />
+                <Droplets size={12} color="#ff4d4d" />
                 <span>Emergency Units</span>
               </div>
             </div>
 
             <div className="orbital-capsule-node node-bottom-right">
               <div className="node-pill-label">
-                <Stethoscope size={13} color="#fb7185" />
+                <Stethoscope size={13} color="#ff7b7b" />
                 <span>Life Savers</span>
               </div>
               <div className="node-icon-capsule">
@@ -210,7 +210,7 @@ export default function CinematicSplashScreen({ onComplete }) {
           <div className="branding-section">
             <h1 className="brand-title">
               <div className="brand-icon-wrap">
-                <Droplets size={36} color="#f43f5e" style={{ filter: 'drop-shadow(0 0 10px #f43f5e)' }} />
+                <Droplets size={36} color="#ff4d4d" style={{ filter: 'drop-shadow(0 0 12px #ff4d4d)' }} />
               </div>
               <span>Blood<span>Sync</span></span>
             </h1>
@@ -220,7 +220,7 @@ export default function CinematicSplashScreen({ onComplete }) {
             </p>
 
             <div className="brand-bottom-pill">
-              <Sparkles size={13} color="#f43f5e" />
+              <Sparkles size={13} color="#ff4d4d" />
               <span>Real-Time Community Blood Network</span>
             </div>
           </div>
@@ -281,8 +281,8 @@ export default function CinematicSplashScreen({ onComplete }) {
           width: 360px;
           height: 22px;
           border-radius: 50%;
-          background: radial-gradient(ellipse at center, rgba(244, 63, 94, 0.85) 0%, rgba(18, 7, 22, 0.95) 60%, transparent 100%);
-          box-shadow: 0 0 40px rgba(244, 63, 94, 1);
+          background: radial-gradient(ellipse at center, rgba(192, 57, 43, 0.85) 0%, rgba(11, 15, 23, 0.96) 60%, transparent 100%);
+          box-shadow: 0 0 40px rgba(192, 57, 43, 1);
         }
 
         .splatter-impact-group {
@@ -301,8 +301,8 @@ export default function CinematicSplashScreen({ onComplete }) {
           width: 180px;
           height: 18px;
           border-radius: 50%;
-          background: linear-gradient(135deg, #ff5252, #e11d48);
-          box-shadow: 0 0 60px rgba(244, 63, 94, 1);
+          background: linear-gradient(135deg, #ff4d4d, #c0392b);
+          box-shadow: 0 0 60px rgba(192, 57, 43, 1);
           animation: flattenDiscSplatter 0.4s cubic-bezier(0.1, 0.8, 0.3, 1) 1.75s forwards;
           opacity: 0;
         }
@@ -315,8 +315,8 @@ export default function CinematicSplashScreen({ onComplete }) {
         .splatter-drop {
           position: absolute;
           border-radius: 50%;
-          background: radial-gradient(circle at 35% 35%, #ff5252, #be123c);
-          box-shadow: 0 0 14px rgba(244, 63, 94, 1);
+          background: radial-gradient(circle at 35% 35%, #ff4d4d, #96281b);
+          box-shadow: 0 0 14px rgba(192, 57, 43, 1);
           opacity: 0;
           animation: burstSubDrop 0.5s cubic-bezier(0.12, 0.8, 0.32, 1) 1.75s forwards;
         }
@@ -373,7 +373,7 @@ export default function CinematicSplashScreen({ onComplete }) {
           width: 90px;
           height: 30px;
           border-radius: 50%;
-          border: 2px solid rgba(244, 63, 94, 0.95);
+          border: 2px solid rgba(192, 57, 43, 0.95);
           animation: crownRingSplash 0.5s cubic-bezier(0.16, 1, 0.3, 1) 1.75s forwards;
           opacity: 0;
         }
@@ -423,11 +423,11 @@ export default function CinematicSplashScreen({ onComplete }) {
           width: 100px;
           height: 100px;
           border-radius: 50%;
-          background: linear-gradient(135deg, #e11d48 0%, #9f1239 100%);
+          background: linear-gradient(135deg, #ff4d4d 0%, #c0392b 60%, #96281b 100%);
           display: flex;
           align-items: center;
           justify-content: center;
-          box-shadow: 0 0 50px rgba(244, 63, 94, 0.9), 0 0 80px rgba(225, 29, 72, 0.4);
+          box-shadow: 0 0 50px rgba(255, 77, 77, 0.8), 0 0 90px rgba(192, 57, 43, 0.45);
           border: 3px solid rgba(255, 255, 255, 0.95);
           z-index: 5;
           animation: orbPulse 1.4s ease-in-out infinite alternate;
@@ -437,13 +437,13 @@ export default function CinematicSplashScreen({ onComplete }) {
           position: absolute;
           inset: -6px;
           border-radius: 50%;
-          border: 2px stroke rgba(244, 63, 94, 0.4);
+          border: 2px stroke rgba(192, 57, 43, 0.4);
           animation: ringRotate 6s linear infinite;
         }
 
         @keyframes orbPulse {
-          0% { transform: scale(0.97); boxShadow: 0 0 35px rgba(244, 63, 94, 0.8); }
-          100% { transform: scale(1.05); boxShadow: 0 0 70px rgba(244, 63, 94, 1); }
+          0% { transform: scale(0.97); boxShadow: 0 0 35px rgba(192, 57, 43, 0.8); }
+          100% { transform: scale(1.05); boxShadow: 0 0 70px rgba(192, 57, 43, 1); }
         }
 
         .orbital-capsule-node {
@@ -469,18 +469,18 @@ export default function CinematicSplashScreen({ onComplete }) {
           width: 38px;
           height: 38px;
           border-radius: 50%;
-          background: linear-gradient(135deg, #f43f5e 0%, #be123c 100%);
+          background: linear-gradient(135deg, #ff4d4d 0%, #c0392b 60%, #96281b 100%);
           display: flex;
           align-items: center;
           justify-content: center;
-          box-shadow: 0 0 16px rgba(244, 63, 94, 0.8), inset 0 2px 4px rgba(255,255,255,0.6);
+          box-shadow: 0 0 18px rgba(255, 77, 77, 0.7), inset 0 2px 4px rgba(255,255,255,0.5);
           border: 2px solid rgba(255, 255, 255, 0.9);
           flex-shrink: 0;
         }
 
         .node-pill-label {
-          background: rgba(18, 6, 24, 0.88);
-          border: 1px solid rgba(244, 63, 94, 0.5);
+          background: rgba(11, 15, 23, 0.95);
+          border: 1px solid rgba(192, 57, 43, 0.5);
           padding: 7px 14px;
           border-radius: 20px;
           font-size: 0.8rem;
@@ -511,7 +511,7 @@ export default function CinematicSplashScreen({ onComplete }) {
           gap: 12px;
           color: #ffffff;
         }
-        .brand-title span span { color: #f43f5e; }
+        .brand-title span span { color: var(--red-400, #ff4d4d); }
 
         .brand-tagline {
           margin: 4px 0 0;
@@ -528,9 +528,9 @@ export default function CinematicSplashScreen({ onComplete }) {
           margin-top: 14px;
           padding: 6px 18px;
           border-radius: 24px;
-          background: rgba(244, 63, 94, 0.12);
-          border: 1px solid rgba(244, 63, 94, 0.35);
-          color: #fb7185;
+          background: rgba(192, 57, 43, 0.15);
+          border: 1px solid rgba(192, 57, 43, 0.35);
+          color: #ff7b7b;
           font-size: 0.8rem;
           font-weight: 700;
           backdrop-filter: blur(8px);
@@ -550,8 +550,8 @@ export default function CinematicSplashScreen({ onComplete }) {
           width: 130px;
           height: 20px;
           border-radius: 50%;
-          border-top: 2px solid rgba(244, 63, 94, 0.6);
-          box-shadow: 0 -4px 15px rgba(244, 63, 94, 0.4);
+          border-top: 2px solid rgba(192, 57, 43, 0.6);
+          box-shadow: 0 -4px 15px rgba(192, 57, 43, 0.4);
           animation: crownRipple 1.6s ease-in-out infinite alternate;
         }
         @keyframes crownRipple {
@@ -564,8 +564,8 @@ export default function CinematicSplashScreen({ onComplete }) {
           width: 10px;
           height: 10px;
           border-radius: 50%;
-          background: radial-gradient(circle at 30% 30%, #ff4d4d, #be123c);
-          box-shadow: 0 0 10px rgba(244, 63, 94, 0.8);
+          background: radial-gradient(circle at 30% 30%, #ff4d4d, #96281b);
+          box-shadow: 0 0 10px rgba(192, 57, 43, 0.8);
           animation: beadBounce 1.5s ease-in-out infinite alternate;
         }
         .bead-left { left: 80px; bottom: 8px; animation-delay: 0.2s; }

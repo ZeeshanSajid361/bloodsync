@@ -63,8 +63,8 @@ const SEEKER_TOUR_STEPS = [
   },
   {
     targetSelector: '#tour-demo-location-card',
-    title: 'Google Maps Gate Pins & Live Tracking',
-    description: 'Exact Google Maps location pins guide volunteer donors straight to your emergency ward without any delay!',
+    title: 'Google Maps Gate Location & Live Tracking',
+    description: 'Exact Google Maps location coordinates guide volunteer donors straight to your emergency ward without any delay!',
     icon: MapPin,
     preferredPos: 'bottom',
   },
@@ -107,6 +107,16 @@ export default function SeekerDashboard() {
     navigate('/login', { replace: true });
   }
 
+  function handleLogoClick(e) {
+    if (e) e.preventDefault();
+    setTab('history');
+    if (window.scrollY > 30) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      refetch();
+    }
+  }
+
   const initials = user?.name
     ?.split(' ')
     .map((w) => w[0])
@@ -118,7 +128,7 @@ export default function SeekerDashboard() {
     <div className="dashboard-shell">
       {/* ── Desktop Collapsible Sidebar (72px → 250px on hover) ── */}
       <aside className="sidebar">
-        <a href="/" className="sidebar-logo">
+        <a href="/" className="sidebar-logo" onClick={handleLogoClick} style={{ cursor: 'pointer' }}>
           <div className="sidebar-logo-icon">🩸</div>
           <span className="sidebar-logo-text">Blood<span>Sync</span></span>
         </a>
@@ -168,7 +178,7 @@ export default function SeekerDashboard() {
       <div className="dashboard-main-wrapper">
         {/* Mobile Sticky Top Header */}
         <header className="mobile-header">
-          <div className="mobile-header-logo">
+          <div className="mobile-header-logo" onClick={handleLogoClick} style={{ cursor: 'pointer' }}>
             <div className="mobile-header-logo-icon">🩸</div>
             <div className="mobile-header-title">Blood<span>Sync</span></div>
           </div>
@@ -309,7 +319,7 @@ export default function SeekerDashboard() {
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '12px' }}>
             <MapPin size={22} color="#f87171" />
             <span style={{ fontSize: '1.05rem', fontWeight: 700, color: '#f87171' }}>
-              Live Hospital Gate Pin & Tracking
+              Live Hospital Gate Location & Tracking
             </span>
           </div>
 
@@ -325,7 +335,7 @@ export default function SeekerDashboard() {
               🏥 Holy Family Hospital — Emergency Ward Gate 2
             </div>
             <div style={{ fontSize: '0.78rem', color: '#94a3b8' }}>
-              📍 Rawalpindi (Exact GPS Pin Attached)
+              📍 Rawalpindi (Exact GPS Location Attached)
             </div>
             <div style={{ marginTop: '8px', fontSize: '0.78rem', color: '#38bdf8', display: 'flex', alignItems: 'center', gap: '6px' }}>
               🚗 Donor <strong>Ali Raza (O-)</strong> is <strong>En Route (ETA: 25 mins)</strong>
@@ -333,7 +343,7 @@ export default function SeekerDashboard() {
           </div>
 
           <p style={{ fontSize: '0.78rem', color: '#cbd5e1', margin: 0, lineHeight: 1.35 }}>
-            💡 Direct Google Maps pins help volunteer donors arrive directly at your patient&apos;s hospital ward without delay!
+            💡 Direct Google Maps locations help volunteer donors arrive directly at your patient&apos;s hospital ward without delay!
           </p>
           <span style={{ fontSize: '0.725rem', color: '#f87171', fontWeight: 600, display: 'block', marginTop: '6px' }}>
             ✨ (Tour Demo Preview — Auto-disappears when tour finishes)
@@ -656,7 +666,7 @@ function RequestTab({ onSubmitted }) {
           latitude: latitude.toFixed(6),
           longitude: longitude.toFixed(6),
         }));
-        setGpsStatus(`📍 GPS Pin Captured (${latitude.toFixed(4)}, ${longitude.toFixed(4)})`);
+        setGpsStatus(`📍 GPS Location Acquired (${latitude.toFixed(4)}, ${longitude.toFixed(4)})`);
         setDetectingGps(false);
         toast.success('Exact GPS coordinates captured successfully for turn-by-turn navigation!');
       },
@@ -986,7 +996,7 @@ function RequestTab({ onSubmitted }) {
               longitude:       loc.longitude ? loc.longitude.toFixed(6) : p.longitude,
             }));
             if (loc.latitude && loc.longitude) {
-              setGpsStatus(`📍 Map Pin Selected (${loc.latitude.toFixed(4)}, ${loc.longitude.toFixed(4)})`);
+              setGpsStatus(`📍 Map Location Selected (${loc.latitude.toFixed(4)}, ${loc.longitude.toFixed(4)})`);
             }
           }}
         />
