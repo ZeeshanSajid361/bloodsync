@@ -34,8 +34,12 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
-    // Pre-warm backend and Mongo connection while user is on the login page
+    // Pre-warm backend health endpoint & pre-fetch dashboard chunks in background
     api.get('/health').catch(() => {});
+    import('../dashboard/HospitalDashboard').catch(() => {});
+    import('../dashboard/DonorDashboard').catch(() => {});
+    import('../dashboard/SeekerDashboard').catch(() => {});
+    import('../dashboard/AdminDashboard').catch(() => {});
   }, []);
 
   function handleChange(e) {
