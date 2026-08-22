@@ -9,6 +9,7 @@
 
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import api from '../lib/api';
+import cacheService from '../utils/CacheService';
 
 const AuthContext = createContext(null);
 
@@ -54,12 +55,13 @@ export function AuthProvider({ children }) {
 
   const logout = useCallback(async () => {
     const refreshToken = localStorage.getItem('refreshToken');
-    // Best-effort server-side invalidation ΓÇö don't block on failure.
+    // Best-effort server-side invalidation — don't block on failure.
     api.post('/auth/logout', { refreshToken }).catch(() => {});
 
     localStorage.removeItem('user');
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
+    cacheService.clear();
     setUser(null);
   }, []);
 

@@ -1,24 +1,18 @@
 /**
  * Custom hook — donor dashboard data.
  *
- * Implements Stale-While-Revalidate caching via localStorage so donor profiles
- * render instantly (0ms delay) upon login or tab switching, while fetching latest updates in the background.
+ * Implements SWR caching via CacheService (RAM + Session Storage) for instant 0ms rendering
+ * upon login and tab switching, while fetching updates in the background.
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import api from '../lib/api';
+import cacheService from '../utils/CacheService';
 
-const DONOR_CACHE_KEY = 'bloodsync_donor_profile_cache';
+const CACHE_KEY = 'donor_profile';
 
 export function useDonorProfile() {
-  const [donor, setDonor] = useState(() => {
-    try {
-      const cached = localStorage.getItem(DONOR_CACHE_KEY);
-      return cached ? JSON.parse(cached) : null;
-    } catch {
-      return null;
-    }
-  });
+  const [donor, setDonor] = useState(() => cacheService.get(CACHE_KEY));
 
   const donorRef = useRef(donor);
   donorRef.current = donor;
@@ -34,7 +28,7 @@ export function useDonorProfile() {
     try {
       const { data } = await api.get('/donors/me');
       setDonor(data.data);
-      localStorage.setItem(DONOR_CACHE_KEY, JSON.stringify(data.data));
+      cacheService.set(CACHE_KEY, data.data);
     } catch (err) {
       if (!donorRef.current) {
         setError(err.response?.data?.message || 'Failed to load donor profile.');
