@@ -5,10 +5,12 @@
  * On cache miss, captures the response and saves it with a TTL.
  */
 
-import serverCache from '../utils/serverCache.js';
+'use strict';
 
-export function routeCache(ttlSeconds = 120, keyPrefix = '') {
-  return (req, res, next) => {
+const { serverCache } = require('#config/serverCache');
+
+function routeCache(ttlSeconds = 120, keyPrefix = '') {
+  return async (req, res, next) => {
     // Only cache GET requests
     if (req.method !== 'GET') {
       return next();
@@ -17,10 +19,14 @@ export function routeCache(ttlSeconds = 120, keyPrefix = '') {
     const userId = req.user?.id || req.user?._id || 'public';
     const cacheKey = `${keyPrefix}:${userId}:${req.originalUrl || req.url}`;
 
-    const cachedData = serverCache.get(cacheKey);
-    if (cachedData) {
-      res.setHeader('X-Cache', 'HIT');
-      return res.json(cachedData);
+    try {
+      const cachedData = await serverCache.get(cacheKey);
+      if (cachedData) {
+        res.setHeader('X-Cache', 'HIT');
+        return res.json(cachedData);
+      }
+    } catch (err) {
+      console.warn('[routeCache] error reading cache:', err.message);
     }
 
     res.setHeader('X-Cache', 'MISS');
@@ -29,7 +35,7 @@ export function routeCache(ttlSeconds = 120, keyPrefix = '') {
     const originalJson = res.json.bind(res);
     res.json = (body) => {
       if (res.statusCode >= 200 && res.statusCode < 300 && body) {
-        serverCache.set(cacheKey, body, ttlSeconds);
+        serverCache.set(cacheKey, body, ttlSeconds).catch(() => {});
       }
       return originalJson(body);
     };
@@ -38,10 +44,12 @@ export function routeCache(ttlSeconds = 120, keyPrefix = '') {
   };
 }
 
-export function invalidateCache(prefix) {
-  return (req, res, next) => {
+function invalidateCache(prefix) {
+  return async (req, res, next) => {
     const userId = req.user?.id || req.user?._id || 'public';
-    serverCache.invalidatePrefix(`${prefix}:${userId}`);
+    await serverCache.invalidatePrefix(`${prefix}:${userId}`);
     next();
   };
 }
+
+module.exports = { routeCache, invalidateCache };

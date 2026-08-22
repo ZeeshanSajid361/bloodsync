@@ -3,6 +3,13 @@
   "version": "1.0.0",
   "description": "BloodSync 2.0 REST API — MERN blood donation platform",
   "main": "src/server.js",
+  "imports": {
+    "#config/*": "./src/config/*",
+    "#modules/*": "./src/modules/*",
+    "#middleware/*": "./src/middleware/*",
+    "#models/*": "./src/models/*",
+    "#utils/*": "./src/utils/*"
+  },
   "scripts": {
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",

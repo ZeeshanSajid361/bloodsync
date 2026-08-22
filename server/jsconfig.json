@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "target": "es2020",
+    "baseUrl": ".",
+    "paths": {
+      "#config/*": ["src/config/*"],
+      "#modules/*": ["src/modules/*"],
+      "#middleware/*": ["src/middleware/*"],
+      "#models/*": ["src/models/*"],
+      "#utils/*": ["src/utils/*"]
+    }
+  },
+  "include": ["src/**/*", "api/**/*"]
+}
