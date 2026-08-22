@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { MapPin, Navigation, ExternalLink, CheckCircle2, X, Loader2, Search } from 'lucide-react';
+import { MapPin, Navigation, ExternalLink, CheckCircle2, X, Loader2, Search, RefreshCw } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const CITY_COORDS = {
@@ -130,6 +130,51 @@ function extractCityFromQuery(q) {
   return null;
 }
 
+function parseLocationInput(rawText) {
+  if (!rawText || typeof rawText !== 'string') return null;
+  let text = rawText.trim();
+
+  // 1. Google Maps URL pattern parsing (e.g. https://www.google.com/maps/place/Jamia+Al+Fazal+Mosque/@33.5989,73.0441...)
+  if (text.includes('google.com/maps') || text.includes('maps.app.goo.gl')) {
+    const placeMatch = text.match(/\/place\/([^/@?]+)/);
+    if (placeMatch && placeMatch[1]) {
+      const decodedPlace = decodeURIComponent(placeMatch[1].replace(/\+/g, ' '));
+      return {
+        formatted: formatSearchAddress(decodedPlace),
+        mapsUrl: text,
+      };
+    }
+    const coordMatch = text.match(/@(-?\d+\.\d+),\s*(-?\d+\.\d+)/) || text.match(/query=(-?\d+\.\d+),\s*(-?\d+\.\d+)/);
+    if (coordMatch) {
+      return {
+        lat: parseFloat(coordMatch[1]),
+        lng: parseFloat(coordMatch[2]),
+        formatted: `Location Pin (${coordMatch[1]}, ${coordMatch[2]})`,
+        mapsUrl: text,
+      };
+    }
+  }
+
+  // 2. Plus code pattern (e.g. H2Q8+2V9, Allama Iqbal Colony, Rawalpindi)
+  const plusCodeMatch = text.match(/([A-Z0-9]{4}\+[A-Z0-9]{2,3})(?:,\s*(.*))?/i);
+  if (plusCodeMatch) {
+    const code = plusCodeMatch[1];
+    const rest = plusCodeMatch[2] || '';
+    const full = rest ? `${code}, ${rest}` : code;
+    return {
+      formatted: formatSearchAddress(full),
+      mapsUrl: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(full)}`,
+    };
+  }
+
+  // 3. Regular text query (e.g. Jamia Al Fazal Mosque, Rawalpindi)
+  const formatted = formatSearchAddress(text);
+  return {
+    formatted: formatted,
+    mapsUrl: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(formatted)}`,
+  };
+}
+
 export default function LocationPickerModal({ isOpen, onClose, onSelectLocation, initialLocation = {} }) {
   const safeInit   = initialLocation && typeof initialLocation === 'object' ? initialLocation : {};
   const safeCity   = typeof safeInit.city === 'string' && safeInit.city.trim() ? safeInit.city.trim() : 'Islamabad';
@@ -143,12 +188,8 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
   const [mapsUrl, setMapsUrl]         = useState(typeof safeInit.mapsUrl === 'string' && safeInit.mapsUrl.trim() ? safeInit.mapsUrl.trim() : '');
 
   const [loading, setLoading]                 = useState(false);
-  const [geocoding, setGeocoding]             = useState(false);
   const [searchQuery, setSearchQuery]         = useState(safeStreet);
-
-  const mapContainerRef = useRef(null);
-  const mapInstanceRef  = useRef(null);
-  const markerRef       = useRef(null);
+  const [debouncedQuery, setDebouncedQuery]   = useState(safeStreet);
 
   // Synchronize state when modal opens
   useEffect(() => {
@@ -164,10 +205,19 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
     setLng(initialLng);
     setAddressText(initStreet);
     setSearchQuery(initStreet);
+    setDebouncedQuery(initStreet);
     setCity(initCity);
     setProvince(typeof init.province === 'string' && init.province.trim() ? init.province.trim() : getProvinceForCity(initCity));
     setMapsUrl(typeof init.mapsUrl === 'string' && init.mapsUrl.trim() ? init.mapsUrl.trim() : `https://www.google.com/maps?q=${initialLat},${initialLng}`);
   }, [isOpen, initialLocation]);
+
+  // Debounce searchQuery for live Google Map embed updates
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedQuery(searchQuery);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   // Sync province whenever city changes
   useEffect(() => {
@@ -186,167 +236,52 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
     };
   }, [isOpen]);
 
-  // Pan Leaflet map to target coordinates
-  function panMapTo(latitude, longitude, zoom = 17) {
-    setLat(latitude);
-    setLng(longitude);
-    if (mapInstanceRef.current && markerRef.current) {
-      mapInstanceRef.current.flyTo([latitude, longitude], zoom, { duration: 1.2 });
-      markerRef.current.setLatLng([latitude, longitude]);
+  // Dynamic location sync helper
+  function updateLocationFromInput(rawInput) {
+    if (!rawInput || !rawInput.trim()) return;
+    
+    const parsed = parseLocationInput(rawInput);
+    if (!parsed) return;
+
+    const formatted = parsed.formatted || formatSearchAddress(rawInput);
+    setAddressText(formatted);
+    setSearchQuery(formatted);
+
+    const detectedCity = extractCityFromQuery(rawInput) || extractCityFromQuery(formatted) || city || 'Islamabad';
+    setCity(detectedCity);
+
+    const detectedProvince = getProvinceForCity(detectedCity);
+    setProvince(detectedProvince);
+
+    const finalMapsUrl = parsed.mapsUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(formatted)}`;
+    setMapsUrl(finalMapsUrl);
+
+    if (parsed.lat && parsed.lng) {
+      setLat(parsed.lat);
+      setLng(parsed.lng);
     }
   }
 
-  // Reverse geocode via OpenStreetMap Nominatim when map is clicked or marker dragged
-  async function reverseGeocode(latitude, longitude) {
-    setGeocoding(true);
-    const genUrl = `https://www.google.com/maps?q=${latitude},${longitude}`;
-    setMapsUrl(genUrl);
-
-    try {
-      const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`);
-      const data = await res.json();
-      if (data && data.address) {
-        const addr = data.address;
-        const detectedCity = addr.city || addr.town || addr.village || addr.county || addr.state_district || city || 'Islamabad';
-        const detectedProvince = addr.state || getProvinceForCity(detectedCity);
-        
-        const streetParts = [
-          addr.hospital, addr.amenity, addr.building, addr.house_number,
-          addr.road, addr.suburb, addr.neighbourhood
-        ].filter(Boolean);
-
-        const detectedStreet = streetParts.length > 0
-          ? streetParts.join(', ')
-          : (data.display_name ? data.display_name.split(',').slice(0, 3).join(', ') : detectedCity);
-
-        setCity(detectedCity);
-        setProvince(detectedProvince);
-        setAddressText(detectedStreet);
-        setSearchQuery(detectedStreet);
-      }
-    } catch (e) {
-      console.warn('Reverse geocode failed:', e);
-      setAddressText(`Pinned Location (${latitude}, ${longitude})`);
-    } finally {
-      setGeocoding(false);
-    }
+  // Typing in Search Bar: syncs map, address, city, province, and maps URL
+  function handleSearchInputChange(e) {
+    const val = e.target.value;
+    setSearchQuery(val);
+    updateLocationFromInput(val);
   }
 
-  // Initialize Leaflet Map
-  useEffect(() => {
-    if (!isOpen) return;
-    let isMounted = true;
+  // Typing in Street Address field directly: syncs search query, map, city, province, and maps URL
+  function handleAddressInputChange(e) {
+    const val = e.target.value;
+    setAddressText(val);
+    updateLocationFromInput(val);
+  }
 
-    async function initMap() {
-      if (!document.getElementById('leaflet-css-pkg')) {
-        const link = document.createElement('link');
-        link.id = 'leaflet-css-pkg';
-        link.rel = 'stylesheet';
-        link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
-        document.head.appendChild(link);
-      }
-
-      if (!window.L) {
-        await new Promise((resolve) => {
-          if (document.getElementById('leaflet-js-pkg')) {
-            const timer = setInterval(() => {
-              if (window.L) { clearInterval(timer); resolve(); }
-            }, 50);
-            return;
-          }
-          const script = document.createElement('script');
-          script.id = 'leaflet-js-pkg';
-          script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
-          script.onload = resolve;
-          document.head.appendChild(script);
-        });
-      }
-
-      if (!isMounted || !mapContainerRef.current) return;
-      const L = window.L;
-
-      const customRedIcon = L.divIcon({
-        className: 'custom-leaflet-marker',
-        html: `<div style="
-          background: #ef4444;
-          width: 34px;
-          height: 34px;
-          border-radius: 50% 50% 50% 0;
-          transform: rotate(-45deg);
-          border: 3px solid #ffffff;
-          box-shadow: 0 4px 22px rgba(239,68,68,0.9);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-        "><div style="width: 12px; height: 12px; background: #ffffff; border-radius: 50%;"></div></div>`,
-        iconSize: [34, 34],
-        iconAnchor: [17, 34],
-      });
-
-      if (mapInstanceRef.current) {
-        mapInstanceRef.current.remove();
-        mapInstanceRef.current = null;
-      }
-
-      const initialLat = lat || 33.6844;
-      const initialLng = lng || 73.0479;
-
-      const map = L.map(mapContainerRef.current, {
-        center: [initialLat, initialLng],
-        zoom: 16,
-        maxZoom: 19,
-        zoomControl: true,
-        scrollWheelZoom: true,
-      });
-      mapInstanceRef.current = map;
-
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors',
-        maxZoom: 19,
-      }).addTo(map);
-
-      const marker = L.marker([initialLat, initialLng], { icon: customRedIcon, draggable: true }).addTo(map);
-      markerRef.current = marker;
-
-      setTimeout(() => {
-        if (mapInstanceRef.current) {
-          mapInstanceRef.current.invalidateSize();
-        }
-      }, 200);
-
-      // CLICK ANYWHERE ON MAP -> Move pin & update City, Province, Address, Shareable URL!
-      map.on('click', (e) => {
-        const clickedLat = parseFloat(e.latlng.lat.toFixed(6));
-        const clickedLng = parseFloat(e.latlng.lng.toFixed(6));
-        setLat(clickedLat);
-        setLng(clickedLng);
-        marker.setLatLng([clickedLat, clickedLng]);
-        reverseGeocode(clickedLat, clickedLng);
-      });
-
-      // DRAG MARKER PIN -> Move pin & update City, Province, Address, Shareable URL!
-      marker.on('dragend', () => {
-        const pos = marker.getLatLng();
-        const draggedLat = parseFloat(pos.lat.toFixed(6));
-        const draggedLng = parseFloat(pos.lng.toFixed(6));
-        setLat(draggedLat);
-        setLng(draggedLng);
-        reverseGeocode(draggedLat, draggedLng);
-      });
-    }
-
-    const timer = setTimeout(initMap, 100);
-
-    return () => {
-      isMounted = false;
-      clearTimeout(timer);
-      if (mapInstanceRef.current) {
-        mapInstanceRef.current.remove();
-        mapInstanceRef.current = null;
-      }
-    };
-  }, [isOpen]);
+  // Pasting/Typing in Google Maps Shareable URL field: syncs search query, address, city, and map!
+  function handleMapsUrlInputChange(e) {
+    const val = e.target.value;
+    setMapsUrl(val);
+    updateLocationFromInput(val);
+  }
 
   // Detect GPS Device Location
   function handleDetectGps() {
@@ -361,8 +296,17 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
       (pos) => {
         const latitude  = parseFloat(pos.coords.latitude.toFixed(6));
         const longitude = parseFloat(pos.coords.longitude.toFixed(6));
-        panMapTo(latitude, longitude, 17);
-        reverseGeocode(latitude, longitude);
+        setLat(latitude);
+        setLng(longitude);
+
+        const gpsQuery = `${latitude},${longitude}`;
+        setSearchQuery(gpsQuery);
+        setDebouncedQuery(gpsQuery);
+        setAddressText(`GPS Location (${latitude}, ${longitude})`);
+
+        const genUrl = `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
+        setMapsUrl(genUrl);
+
         setLoading(false);
         toast.success('Current GPS location pinned!', { id: 'gps-toast' });
       },
@@ -375,60 +319,19 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
     );
   }
 
-  // Handle Location Search
-  async function handleSearchLocation(e) {
+  // Handle Search submit / Sync button click
+  function handleSearchSubmit(e) {
     if (e) e.preventDefault();
-    const rawQuery = searchQuery.trim();
-    if (!rawQuery) return;
+    const targetQuery = searchQuery.trim() || addressText.trim();
+    if (!targetQuery) return;
 
-    setGeocoding(true);
-
-    // Direct Lat/Lng search support
-    const coordsMatch = rawQuery.match(/@?(-?\d+\.\d+),\s*(-?\d+\.\d+)/);
-    if (coordsMatch) {
-      const latitude  = parseFloat(parseFloat(coordsMatch[1]).toFixed(6));
-      const longitude = parseFloat(parseFloat(coordsMatch[2]).toFixed(6));
-      panMapTo(latitude, longitude, 17);
-      reverseGeocode(latitude, longitude);
-      setGeocoding(false);
-      return;
-    }
-
-    try {
-      const formatted = formatSearchAddress(rawQuery);
-      const cleanQuery = formatted.replace(/,\s*/g, ' ');
-
-      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cleanQuery + ' Pakistan')}&addressdetails=1&limit=1&countrycodes=pk`);
-      const items = await res.json();
-
-      if (items && items.length > 0 && items[0].lat && items[0].lon) {
-        const targetLat = parseFloat(parseFloat(items[0].lat).toFixed(6));
-        const targetLng = parseFloat(parseFloat(items[0].lon).toFixed(6));
-
-        panMapTo(targetLat, targetLng, 17);
-        reverseGeocode(targetLat, targetLng);
-        toast.success(`📍 Pinned to: ${items[0].display_name.split(',')[0]}`, { id: 'gps-toast' });
-      } else {
-        const detectedCity = extractCityFromQuery(rawQuery) || city || 'Islamabad';
-        const cityCoord = CITY_COORDS[detectedCity.toLowerCase()] || CITY_COORDS['islamabad'];
-        panMapTo(cityCoord.lat, cityCoord.lng, 15);
-        setCity(detectedCity);
-        setProvince(getProvinceForCity(detectedCity));
-        setAddressText(formatted);
-        setMapsUrl(`https://www.google.com/maps?q=${cityCoord.lat},${cityCoord.lng}`);
-        toast.success(`📍 Centered to ${detectedCity}`, { id: 'gps-toast' });
-      }
-    } catch (err) {
-      console.warn('Geocoding search error:', err);
-      toast.error('Search failed. Click map to pin location.', { id: 'gps-toast' });
-    } finally {
-      setGeocoding(false);
-    }
+    updateLocationFromInput(targetQuery);
+    toast.success(`📍 Map synced to: ${addressText || targetQuery}`, { id: 'gps-toast' });
   }
 
   function handleConfirm() {
     const finalAddress = addressText || searchQuery || 'Hospital Location';
-    const finalUrl = mapsUrl || `https://www.google.com/maps?q=${lat},${lng}`;
+    const finalUrl = mapsUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(activeEmbedQuery)}`;
     
     onSelectLocation({
       latitude:  lat,
@@ -439,9 +342,13 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
       province:  province || 'Islamabad Capital Territory',
       mapsUrl:   finalUrl,
     });
-    toast.success('Location pin confirmed!', { id: 'gps-toast' });
+    toast.success('Location confirmed!', { id: 'gps-toast' });
     onClose();
   }
+
+  // Active query for live Google Maps Embed iframe
+  const activeEmbedQuery = formatSearchAddress(debouncedQuery.trim() || searchQuery.trim() || addressText || (lat && lng ? `${lat},${lng}` : `${city}, Pakistan`));
+  const activeMapsUrl    = mapsUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(activeEmbedQuery)}`;
 
   if (!isOpen) return null;
 
@@ -456,7 +363,7 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
         touchAction: 'none'
       }}
     >
-      {/* Outer card: Wide side-by-side split screen layout */}
+      {/* Outer card: Wide side-by-side split screen layout (No scrolling needed!) */}
       <div className="card" style={{
         width: '100%', maxWidth: '980px',
         height: 'min(580px, 92vh)',
@@ -467,9 +374,19 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
         position: 'relative',
       }}>
 
-        {/* ── LEFT COLUMN: Interactive Leaflet Pin Map (Click anywhere to pin!) ── */}
-        <div style={{ flex: '1.2', position: 'relative', height: '100%', background: '#1e293b' }}>
-          <div ref={mapContainerRef} style={{ width: '100%', height: '100%', zIndex: 1 }} />
+        {/* ── LEFT COLUMN: 100% Real Google Maps View ── */}
+        <div style={{ flex: '1.2', position: 'relative', height: '100%', background: '#1e293b', display: 'flex', flexDirection: 'column' }}>
+          
+          <iframe
+            title="Real Google Map View"
+            width="100%"
+            height="100%"
+            style={{ border: 0 }}
+            loading="lazy"
+            allowFullScreen
+            referrerPolicy="no-referrer-when-downgrade"
+            src={`https://maps.google.com/maps?q=${encodeURIComponent(activeEmbedQuery)}&t=&z=17&ie=UTF8&iwloc=&output=embed`}
+          />
           
           {/* Live Location Badge Over Map */}
           <div style={{
@@ -482,19 +399,10 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
           }}>
             <MapPin size={16} color="#ef4444" style={{ flexShrink: 0 }} />
             <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              📍 Pinned: {lat.toFixed(5)}, {lng.toFixed(5)} ({city})
+              📍 Map View: {activeEmbedQuery}
             </span>
           </div>
 
-          {/* Hint Overlay */}
-          <div style={{
-            position: 'absolute', top: '16px', left: '16px', zIndex: 1000,
-            background: 'rgba(15, 23, 42, 0.85)', padding: '6px 12px', borderRadius: '8px',
-            fontSize: '0.72rem', color: '#94a3b8', border: '1px solid rgba(255,255,255,0.1)',
-            pointerEvents: 'none'
-          }}>
-            👉 Click anywhere on map to pin new location
-          </div>
         </div>
 
         {/* ── RIGHT COLUMN: Search, Controls & Auto-Filled Details Panel ── */}
@@ -504,11 +412,14 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
           borderLeft: '1px solid rgba(255,255,255,0.1)', overflow: 'hidden'
         }}>
 
-          {/* Clean Header */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px', flexShrink: 0 }}>
-            <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px', color: '#f8fafc' }}>
-              <MapPin size={20} color="#ef4444" /> Pin Location Details
-            </h3>
+          {/* Header */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexShrink: 0 }}>
+            <div>
+              <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px', color: '#f8fafc' }}>
+                <MapPin size={20} color="#ef4444" /> Pin Location Details
+              </h3>
+              <p style={{ margin: '2px 0 0', fontSize: '0.75rem', color: '#94a3b8' }}>Type venue name (e.g. Jamia Al Fazal Mosque) to sync map</p>
+            </div>
             <button onClick={onClose} className="btn btn-ghost btn-sm" style={{ padding: '6px', borderRadius: '50%' }}>
               <X size={18} />
             </button>
@@ -516,24 +427,24 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
 
           {/* Search Bar & GPS Button */}
           <div style={{ marginBottom: '16px', flexShrink: 0 }}>
-            <form onSubmit={handleSearchLocation} style={{ display: 'flex', gap: '8px' }}>
+            <form onSubmit={handleSearchSubmit} style={{ display: 'flex', gap: '8px' }}>
               <div style={{ position: 'relative', flex: 1 }}>
                 <input
                   className="input"
                   style={{ fontSize: '0.85rem', padding: '10px 14px', width: '100%', borderRadius: '10px' }}
-                  placeholder="Search location or area..."
+                  placeholder="Type venue/mosque/street (e.g. Jamia Al Fazal Mosque, Rawalpindi)..."
                   value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
+                  onChange={handleSearchInputChange}
                 />
               </div>
               <button
                 type="submit"
                 className="btn btn-primary btn-sm"
-                disabled={geocoding}
                 style={{ padding: '10px 16px', background: '#2563eb', display: 'inline-flex', alignItems: 'center', gap: '6px', flexShrink: 0, fontWeight: 700, borderRadius: '10px' }}
+                title="Sync Map to Search"
               >
-                {geocoding ? <Loader2 size={16} className="spin" /> : <Search size={16} />}
-                <span>Search</span>
+                <Search size={16} />
+                <span>Sync</span>
               </button>
               <button
                 type="button"
@@ -577,13 +488,22 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
             </div>
 
             <div className="input-group" style={{ margin: 0 }}>
-              <label className="input-label" style={{ fontSize: '0.75rem', marginBottom: '4px', fontWeight: 700 }}>Street Address / Landmark</label>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                <label className="input-label" style={{ fontSize: '0.75rem', margin: 0, fontWeight: 700 }}>Street Address / Landmark / Venue</label>
+                <button
+                  type="button"
+                  onClick={handleSearchSubmit}
+                  style={{ background: 'none', border: 'none', color: '#60a5fa', fontSize: '0.72rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '3px', padding: 0 }}
+                >
+                  <RefreshCw size={12} /> Refresh Map
+                </button>
+              </div>
               <input
                 className="input"
                 style={{ fontSize: '0.85rem', padding: '8px 12px', borderRadius: '8px' }}
                 value={addressText}
-                onChange={e => setAddressText(e.target.value)}
-                placeholder="e.g. Allama Iqbal Colony, Rawalpindi"
+                onChange={handleAddressInputChange}
+                placeholder="e.g. Jamia Al Fazal Mosque, Allama Iqbal Colony, Rawalpindi"
               />
             </div>
 
@@ -593,12 +513,12 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
                 <input
                   className="input"
                   style={{ fontSize: '0.8rem', padding: '8px 12px', flex: 1, borderRadius: '8px' }}
-                  value={mapsUrl || `https://www.google.com/maps?q=${lat},${lng}`}
-                  onChange={e => setMapsUrl(e.target.value)}
-                  placeholder="Google Maps URL"
+                  value={activeMapsUrl}
+                  onChange={handleMapsUrlInputChange}
+                  placeholder="Paste Google Maps URL or Plus Code"
                 />
                 <a
-                  href={mapsUrl || `https://www.google.com/maps?q=${lat},${lng}`}
+                  href={activeMapsUrl}
                   target="_blank"
                   rel="noreferrer"
                   className="btn btn-ghost btn-sm"
