@@ -310,6 +310,8 @@ router.post('/login', async (req, res, next) => {
           name: user.name,
           email: user.email,
           role: user.role,
+          phone: user.phone || '',
+          city: user.city || '',
         },
       },
     });
@@ -584,6 +586,34 @@ router.post('/contact', async (req, res, next) => {
     return res.status(200).json({
       success: true,
       message: 'Your message has been sent to the BloodSync Support Team.',
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /api/auth/me
+// ─────────────────────────────────────────────────────────────────────────────
+/**
+ * Fetches current authenticated user profile (name, email, role, phone, city).
+ */
+router.get('/me', requireAuth, async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found.' });
+    }
+    return res.status(200).json({
+      success: true,
+      data: {
+        id:    user._id,
+        name:  user.name,
+        email: user.email,
+        role:  user.role,
+        phone: user.phone || '',
+        city:  user.city || '',
+      },
     });
   } catch (err) {
     next(err);

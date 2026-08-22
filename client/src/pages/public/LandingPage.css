@@ -86,6 +86,14 @@
   align-items: center;
 }
 
+.section-wrapper {
+  width: 94%;
+  max-width: 1440px;
+  margin: var(--space-6) auto;
+  padding: var(--space-8);
+  box-sizing: border-box;
+}
+
 .hero-content {
   display: flex;
   flex-direction: column;

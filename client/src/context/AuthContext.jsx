@@ -16,18 +16,32 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true); // true until initial hydration done
 
-  // ΓöÇΓöÇ Hydrate from localStorage on first render ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
   useEffect(() => {
     const stored = localStorage.getItem('user');
+    const token = localStorage.getItem('accessToken');
     if (stored) {
       try {
         setUser(JSON.parse(stored));
       } catch {
-        // Corrupted data ΓÇö start fresh.
         localStorage.removeItem('user');
       }
     }
-    setLoading(false);
+    if (token) {
+      api.get('/auth/me')
+        .then((res) => {
+          if (res.data?.data) {
+            setUser((prev) => {
+              const next = { ...prev, ...res.data.data };
+              localStorage.setItem('user', JSON.stringify(next));
+              return next;
+            });
+          }
+        })
+        .catch(() => {})
+        .finally(() => setLoading(false));
+    } else {
+      setLoading(false);
+    }
   }, []);
 
   const login = useCallback(({ user: userData, accessToken, refreshToken }) => {

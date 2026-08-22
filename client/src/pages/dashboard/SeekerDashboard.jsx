@@ -65,7 +65,7 @@ const SEEKER_TOUR_STEPS = [
     title: 'Google Maps Gate Pins & Live Tracking',
     description: 'Exact Google Maps location pins guide volunteer donors straight to your emergency ward without any delay!',
     icon: MapPin,
-    preferredPos: 'top',
+    preferredPos: 'bottom',
   },
 ];
 
@@ -290,9 +290,9 @@ export default function SeekerDashboard() {
           className="animate-fade-up"
           style={{
             position: 'fixed',
-            top: '45%',
+            top: '15%',
             left: '50%',
-            transform: 'translate(-50%, -50%)',
+            transform: 'translate(-50%, 0)',
             zIndex: 9999,
             background: 'linear-gradient(145deg, #151926, #0f172a)',
             border: '2px solid rgba(239, 68, 68, 0.6)',

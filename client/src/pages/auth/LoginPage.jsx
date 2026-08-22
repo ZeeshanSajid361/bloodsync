@@ -7,7 +7,7 @@
 
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Mail, Lock, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, AlertCircle, Eye, EyeOff, ArrowLeft } from 'lucide-react';
 import api from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
 import { BrandPanel } from './RegisterPage';
@@ -98,6 +98,24 @@ export default function LoginPage() {
       <BrandPanel />
 
       <div className="auth-form-panel">
+        <div style={{ marginBottom: '16px', width: '100%', maxWidth: '440px' }}>
+          <Link
+            to="/"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              color: '#94a3b8',
+              fontSize: '0.85rem',
+              fontWeight: 600,
+              textDecoration: 'none',
+              transition: 'color 0.2s ease',
+            }}
+          >
+            <ArrowLeft size={16} /> Back to Homepage
+          </Link>
+        </div>
+
         <div className="auth-form-card">
           <div className="auth-form-header">
             <h1>Welcome back</h1>

@@ -7,7 +7,7 @@
 
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { User, Mail, Lock, Phone, MapPin, AlertCircle, CheckCircle, Eye, EyeOff, RotateCw, Loader2 } from 'lucide-react';
+import { User, Mail, Lock, Phone, MapPin, AlertCircle, CheckCircle, Eye, EyeOff, RotateCw, Loader2, ArrowLeft } from 'lucide-react';
 import PhoneInput from '../../components/PhoneInput';
 import api from '../../lib/api';
 import '../../styles/auth.css';
@@ -217,6 +217,24 @@ export default function RegisterPage() {
       <BrandPanel />
 
       <div className="auth-form-panel">
+        <div style={{ marginBottom: '16px', width: '100%', maxWidth: '440px' }}>
+          <Link
+            to="/"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              color: '#94a3b8',
+              fontSize: '0.85rem',
+              fontWeight: 600,
+              textDecoration: 'none',
+              transition: 'color 0.2s ease',
+            }}
+          >
+            <ArrowLeft size={16} /> Back to Homepage
+          </Link>
+        </div>
+
         <div className="auth-form-card">
           <div className="auth-form-header">
             <h1>Create account</h1>
@@ -506,11 +524,13 @@ export default function RegisterPage() {
 function BrandPanel() {
   return (
     <aside className="auth-brand" aria-hidden="true">
-      <div className="brand-logo-wrap">
-        <div className="brand-icon">🩸</div>
-        <div className="brand-wordmark">BloodSync</div>
-        <p className="brand-tagline">Connecting donors, seekers, and hospitals across Pakistan.</p>
-      </div>
+      <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
+        <div className="brand-logo-wrap" style={{ cursor: 'pointer' }}>
+          <div className="brand-icon">🩸</div>
+          <div className="brand-wordmark">BloodSync</div>
+          <p className="brand-tagline">Connecting donors, seekers, and hospitals across Pakistan.</p>
+        </div>
+      </Link>
 
       <div className="brand-stats">
         <div className="brand-stat">
