@@ -65,7 +65,7 @@ function validateId(req, res) {
  */
 router.get('/hospitals', async (req, res, next) => {
   try {
-    const { status, type, page = 1, limit = 20 } = req.query;
+    const { status, type, page = 1, limit = 100 } = req.query;
     const filter = {};
     if (status) filter.status = status;
     if (type)   filter.type   = type;
@@ -235,7 +235,7 @@ router.post('/hospitals/:id/regenerate-key', async (req, res, next) => {
  */
 router.get('/requests', async (req, res, next) => {
   try {
-    const { status, bloodGroup, urgency, page = 1, limit = 20 } = req.query;
+    const { status, bloodGroup, urgency, page = 1, limit = 100 } = req.query;
     const filter = {};
     if (status)     filter.status             = status;
     if (bloodGroup) filter.patientBloodGroup  = bloodGroup;
@@ -396,7 +396,7 @@ router.patch('/requests/:id/fulfill', async (req, res, next) => {
  */
 router.get('/users', async (req, res, next) => {
   try {
-    const { role, search, page = 1, limit = 20 } = req.query;
+    const { role, search, page = 1, limit = 100 } = req.query;
     const filter = {};
     if (role) filter.role = role;
     if (search) {

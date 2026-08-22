@@ -211,14 +211,19 @@ function HospitalsTab({ admin }) {
   const [modal,     setModal]     = useState(null); // { type, org }
   const [acting,    setActing]    = useState(false);
 
-  useEffect(() => { fetchHospitals(filter); }, [fetchHospitals, filter]);
+  useEffect(() => { fetchHospitals('', ''); }, [fetchHospitals]);
+
+  const displayedOrgs = (hospitals.orgs || []).filter(org => {
+    if (!filter) return true;
+    return org.status === filter;
+  });
 
   async function handleApprove(note) {
     setActing(true);
     try {
       await approveHospital(modal.org._id, note);
       setModal(null);
-      fetchHospitals(filter);
+      fetchHospitals('', '', true);
     } catch (err) {
       alert(err.response?.data?.message || 'Action failed.');
     } finally { setActing(false); }
@@ -229,7 +234,7 @@ function HospitalsTab({ admin }) {
     try {
       await rejectHospital(modal.org._id, note);
       setModal(null);
-      fetchHospitals(filter);
+      fetchHospitals('', '', true);
     } catch (err) {
       alert(err.response?.data?.message || 'Action failed.');
     } finally { setActing(false); }
@@ -239,7 +244,7 @@ function HospitalsTab({ admin }) {
     if (!window.confirm(`Revoke EMN API key for ${org.name}?`)) return;
     try {
       await revokeApiKey(org._id);
-      fetchHospitals(filter);
+      fetchHospitals('', '', true);
     } catch (err) {
       alert(err.response?.data?.message || 'Failed to revoke key.');
     }
@@ -251,7 +256,7 @@ function HospitalsTab({ admin }) {
     <>
       <div className="admin-table-wrap">
         <div className="admin-table-toolbar">
-          <h3>Organisations ({hospitals.total})</h3>
+          <h3>Organisations ({displayedOrgs.length})</h3>
           <div className="admin-filter-group">
             {STATUS_FILTERS.map(s => (
               <button key={s||'all'} className={`admin-filter-chip${filter===s?' active':''}`} onClick={() => setFilter(s)}>
@@ -261,14 +266,14 @@ function HospitalsTab({ admin }) {
           </div>
         </div>
 
-        {loading
+        {loading && hospitals.orgs.length === 0
           ? <div style={{ padding: 'var(--space-8)', textAlign: 'center' }}><Loader2 size={22} className="spin" /></div>
           : <table className="admin-table">
               <thead><tr><th>Name</th><th>Type</th><th>City</th><th>Owner</th><th>Document</th><th>API Key (EMN)</th><th>Status</th><th>Actions</th></tr></thead>
               <tbody>
-                {hospitals.orgs.length === 0
+                {displayedOrgs.length === 0
                   ? <tr><td colSpan={8} className="admin-empty">No organisations found.</td></tr>
-                  : hospitals.orgs.map(org => (
+                  : displayedOrgs.map(org => (
                       <tr key={org._id}>
                         <td style={{ fontWeight: 600 }}>{org.name}</td>
                         <td>
@@ -412,7 +417,12 @@ function RequestsTab({ admin }) {
   const [modal,  setModal]  = useState(null);
   const [acting, setActing] = useState(false);
 
-  useEffect(() => { fetchRequests(filter); }, [fetchRequests, filter]);
+  useEffect(() => { fetchRequests(''); }, [fetchRequests]);
+
+  const displayedRequests = (requests.requests || []).filter(req => {
+    if (!filter) return true;
+    return req.status === filter;
+  });
 
   async function handleAction(note) {
     setActing(true);
@@ -421,7 +431,7 @@ function RequestsTab({ admin }) {
       if (modal.type === 'reject')  await rejectRequest(modal.req._id, note);
       if (modal.type === 'fulfill') await fulfillRequest(modal.req._id);
       setModal(null);
-      fetchRequests(filter);
+      fetchRequests('', true);
     } catch (err) {
       alert(err.response?.data?.message || 'Action failed.');
     } finally { setActing(false); }
@@ -434,7 +444,7 @@ function RequestsTab({ admin }) {
     <>
       <div className="admin-table-wrap">
         <div className="admin-table-toolbar">
-          <h3>Blood Requests ({requests.total})</h3>
+          <h3>Blood Requests ({displayedRequests.length})</h3>
           <div className="admin-filter-group">
             {STATUS_FILTERS.map(s => (
               <button key={s||'all'} className={`admin-filter-chip${filter===s?' active':''}`} onClick={() => setFilter(s)}>
@@ -444,14 +454,14 @@ function RequestsTab({ admin }) {
           </div>
         </div>
 
-        {loading
+        {loading && requests.requests.length === 0
           ? <div style={{ padding: 'var(--space-8)', textAlign: 'center' }}><Loader2 size={22} className="spin" /></div>
           : <table className="admin-table">
               <thead><tr><th>Patient</th><th>Hospital</th><th>Units</th><th>Urgency</th><th>Document</th><th>Status</th><th>Actions</th></tr></thead>
               <tbody>
-                {requests.requests.length === 0
+                {displayedRequests.length === 0
                   ? <tr><td colSpan={7} className="admin-empty">No requests found.</td></tr>
-                  : requests.requests.map(r => (
+                  : displayedRequests.map(r => (
                       <tr key={r._id}>
                         <td>
                           <strong>{r.patientBloodGroup}</strong>
@@ -535,17 +545,25 @@ function UsersTab({ admin }) {
   const [acting,     setActing]     = useState('');
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      fetchUsers(roleFilter, search);
-    }, 150);
-    return () => clearTimeout(timer);
-  }, [fetchUsers, roleFilter, search]);
+    fetchUsers('', '');
+  }, [fetchUsers]);
+
+  const displayedUsers = (users.users || []).filter(u => {
+    if (roleFilter && (u.role || '').toLowerCase() !== roleFilter.toLowerCase()) {
+      return false;
+    }
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      return (u.name || '').toLowerCase().includes(q) || (u.email || '').toLowerCase().includes(q);
+    }
+    return true;
+  });
 
   async function handleBlock(user) {
     setActing(user._id);
     try {
       await toggleBlock(user._id, !user.isBlocked);
-      fetchUsers(roleFilter, search);
+      fetchUsers('', '', true);
     } catch (err) {
       alert(err.response?.data?.message || 'Action failed.');
     } finally { setActing(''); }
@@ -558,7 +576,7 @@ function UsersTab({ admin }) {
     setActing(user._id);
     try {
       await deleteUser(user._id);
-      fetchUsers(roleFilter, search);
+      fetchUsers('', '', true);
     } catch (err) {
       alert(err.response?.data?.message || 'Delete failed.');
     } finally { setActing(''); }
@@ -578,7 +596,7 @@ function UsersTab({ admin }) {
   return (
     <div className="admin-table-wrap">
       <div className="admin-table-toolbar">
-        <h3>Users ({users.total})</h3>
+        <h3>Users ({displayedUsers.length})</h3>
         <div style={{ display: 'flex', gap: 'var(--space-3)', flexWrap: 'wrap', alignItems: 'center' }}>
           <div className="admin-filter-group">
             {ROLES.map(r => (
@@ -599,14 +617,14 @@ function UsersTab({ admin }) {
         </div>
       </div>
 
-      {loading
+      {loading && users.users.length === 0
         ? <div style={{ padding: 'var(--space-8)', textAlign: 'center' }}><Loader2 size={22} className="spin" /></div>
         : <table className="admin-table">
             <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Blood Group</th><th>City</th><th>Fulfillment & Requests Track</th><th>Status</th><th>Actions</th></tr></thead>
             <tbody>
-              {users.users.length === 0
+              {displayedUsers.length === 0
                 ? <tr><td colSpan={8} className="admin-empty">No users found.</td></tr>
-                : users.users.map(u => (
+                : displayedUsers.map(u => (
                     <tr key={u._id}>
                       <td style={{ fontWeight: 600 }}>{u.name}</td>
                       <td style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>{u.email}</td>

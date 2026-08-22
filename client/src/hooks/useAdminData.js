@@ -79,8 +79,9 @@ export default function useAdminData() {
 
   const fetchHospitals = useCallback(async (status = '', type = '', isSilent = false) => {
     try {
-      if (!isSilent) setLoading(true);
-      const params = new URLSearchParams();
+      const hasCache = hospitalsRef.current?.orgs?.length > 0;
+      if (!hasCache && !isSilent) setLoading(true);
+      const params = new URLSearchParams({ limit: '100' });
       if (status) params.set('status', status);
       if (type)   params.set('type', type);
       const { data } = await api.get(`/admin/hospitals?${params}`);
@@ -96,8 +97,9 @@ export default function useAdminData() {
 
   const fetchRequests = useCallback(async (status = '', isSilent = false) => {
     try {
-      if (!isSilent) setLoading(true);
-      const params = new URLSearchParams();
+      const hasCache = requestsRef.current?.requests?.length > 0;
+      if (!hasCache && !isSilent) setLoading(true);
+      const params = new URLSearchParams({ limit: '100' });
       if (status) params.set('status', status);
       const { data } = await api.get(`/admin/requests?${params}`);
       setRequests(data.data);
@@ -112,8 +114,9 @@ export default function useAdminData() {
 
   const fetchUsers = useCallback(async (role = '', search = '', isSilent = false) => {
     try {
-      if (!isSilent) setLoading(true);
-      const params = new URLSearchParams();
+      const hasCache = usersRef.current?.users?.length > 0;
+      if (!hasCache && !isSilent) setLoading(true);
+      const params = new URLSearchParams({ limit: '100' });
       if (role)   params.set('role', role);
       if (search) params.set('search', search);
       const { data } = await api.get(`/admin/users?${params}`);
