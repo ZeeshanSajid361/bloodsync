@@ -9,12 +9,13 @@
  * bundle chunk they actually need — not all 5 dashboards at once.
  */
 
-import { useEffect, lazy, Suspense } from 'react';
+import { useEffect, lazy, Suspense, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/routing/ProtectedRoute';
 import { useAuth } from './context/AuthContext';
+import CinematicSplashScreen from './components/CinematicSplashScreen';
 
 // ── Eagerly loaded — small, needed before auth resolves ────────────────────
 import RegisterPage       from './pages/auth/RegisterPage';
@@ -78,8 +79,18 @@ function PrewarmBackend() {
 }
 
 export default function App() {
+  const [showSplash, setShowSplash] = useState(() => {
+    return !sessionStorage.getItem('bloodsync_splash_seen');
+  });
+
+  const handleSplashComplete = () => {
+    sessionStorage.setItem('bloodsync_splash_seen', 'true');
+    setShowSplash(false);
+  };
+
   return (
     <AuthProvider>
+      {showSplash && <CinematicSplashScreen onComplete={handleSplashComplete} />}
       <BrowserRouter>
         <ScrollToTop />
         <PrewarmBackend />
