@@ -6,7 +6,7 @@
 
 const express = require('express');
 const donorController = require('./donorController');
-const { requireAuth, requireRole } = require('#middleware/auth');
+const { requireAuth, requireRole } = require('../../middleware/auth');
 
 const router = express.Router();
 

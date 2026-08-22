@@ -4,13 +4,13 @@
 
 'use strict';
 
-const { DonorProfile, BLOOD_GROUPS } = require('#models/DonorProfile');
-const { User } = require('#models/User');
-const { Request } = require('#models/Request');
-const { Notification } = require('#models/Notification');
-const { getEligibility } = require('#utils/eligibility');
-const { getDonorLevel, getLevelProgress, LEVELS } = require('#utils/donorLevels');
-const cache = require('#utils/cache');
+const { DonorProfile, BLOOD_GROUPS } = require('../../models/DonorProfile');
+const { User } = require('../../models/User');
+const { Request } = require('../../models/Request');
+const { Notification } = require('../../models/Notification');
+const { getEligibility } = require('../../utils/eligibility');
+const { getDonorLevel, getLevelProgress, LEVELS } = require('../../utils/donorLevels');
+const cache = require('../../utils/cache');
 
 class DonorService {
   buildDonorResponse(user, profile) {

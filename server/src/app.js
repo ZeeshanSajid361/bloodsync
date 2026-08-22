@@ -29,7 +29,10 @@ const partnerRouter       = require('./routes/partners');
 
 const app = express();
 
-// ΓöÇΓöÇ CORS must come BEFORE helmet and all other middleware ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+// Trust reverse proxy (Vercel / Render) for IP rate-limiting and header resolution
+app.set('trust proxy', 1);
+
+// ── CORS must come BEFORE helmet and all other middleware ─────────────────────
 // This ensures Access-Control-Allow-Origin is present on every response,
 // including preflight OPTIONS requests from the Vercel serverless function.
 const corsOptions = {
@@ -40,38 +43,38 @@ const corsOptions = {
   optionsSuccessStatus: 200, // some browsers (IE11) choke on 204
 };
 
-// Handle preflight for ALL routes ΓÇö must be before everything else.
+// Handle preflight for ALL routes — must be before everything else.
 app.options('*', cors(corsOptions));
 app.use(cors(corsOptions));
 
-// ΓöÇΓöÇ Security headers ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+// ── Security headers ─────────────────────────────────────────────────────────
 // Disable crossOriginResourcePolicy so Vercel serverless assets are accessible.
 app.use(helmet({ crossOriginResourcePolicy: false }));
 
-// ΓöÇΓöÇ Body parsers ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+// ── Body parsers ─────────────────────────────────────────────────────────────
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
-// ΓöÇΓöÇ HTTP request logging ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+// ── HTTP request logging ─────────────────────────────────────────────────────
 // 'dev' format in development (coloured), 'combined' in production for log
 // aggregators (Render, etc.).
 app.use(morgan(nodeEnv === 'production' ? 'combined' : 'dev'));
 
-// ΓöÇΓöÇ Response timing header ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+// ── Response timing header ───────────────────────────────────────────────────
 // Adds X-Response-Time to every response so Render logs show per-request
-// latency ΓÇö useful for identifying slow DB queries after migration.
+// latency — useful for identifying slow DB queries after migration.
 app.use((req, res, next) => {
   const start = Date.now();
   res.on('finish', () => {
     const ms = Date.now() - start;
     if (nodeEnv === 'production' && ms > 1000) {
-      console.warn(`[perf] SLOW ${req.method} ${req.path} ΓÇö ${ms}ms`);
+      console.warn(`[perf] SLOW ${req.method} ${req.path} — ${ms}ms`);
     }
   });
   next();
 });
 
-// ΓöÇΓöÇ Global rate limits ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+// ── Global rate limits ───────────────────────────────────────────────────────
 // A permissive global limiter that guards against bulk scraping. Sensitive
 // routes (login, register, resend-verification) get tighter limits below.
 const globalLimiter = rateLimit({
@@ -96,12 +99,12 @@ app.use((req, res, next) => {
   return globalLimiter(req, res, next);
 });
 
-// ΓöÇΓöÇ Health check ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+// ── Health check ─────────────────────────────────────────────────────────────
 app.get(['/api/health', '/health'], (_req, res) => {
   res.status(200).json({ success: true, message: 'BloodSync API is running.' });
 });
 
-// ΓöÇΓöÇ API routes ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+// ── API routes ───────────────────────────────────────────────────────────────
 // Skip auth rate limiter for OPTIONS preflight on auth routes.
 app.use(['/api/auth', '/auth'], (req, res, next) => {
   if (req.method === 'OPTIONS') return next();
@@ -116,7 +119,7 @@ app.use(['/api/qr', '/qr'],             qrRouter);
 app.use(['/api/docs', '/docs'],           docsRouter);
 app.use(['/api/partners', '/partners'],       partnerRouter);
 
-// ΓöÇΓöÇ 404 and error handling ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+// ── 404 and error handling ───────────────────────────────────────────────────
 // Order matters: notFound must come before errorHandler.
 app.use(notFound);
 app.use(errorHandler);

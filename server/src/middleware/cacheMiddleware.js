@@ -7,7 +7,7 @@
 
 'use strict';
 
-const { serverCache } = require('#config/serverCache');
+const { serverCache } = require('../utils/serverCache');
 
 function routeCache(ttlSeconds = 120, keyPrefix = '') {
   return async (req, res, next) => {

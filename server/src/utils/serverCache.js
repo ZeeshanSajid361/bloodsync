@@ -6,6 +6,8 @@
  * falling back gracefully to fast in-memory caching.
  */
 
+'use strict';
+
 class ServerCacheEngine {
   constructor() {
     this.memoryCache = new Map();
@@ -22,17 +24,15 @@ class ServerCacheEngine {
     if (!key || data === undefined) return;
 
     // 1. If Redis / Upstash URL is configured (Vercel Serverless environment)
-    if (this.redisUrl) {
+    if (this.redisUrl && process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
       try {
-        const fetch = (await import('node-fetch')).default || globalThis.fetch;
-        if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
-          await fetch(`${process.env.UPSTASH_REDIS_REST_URL}/setex/${encodeURIComponent(key)}/${ttlSeconds}`, {
-            headers: { Authorization: `Bearer ${process.env.UPSTASH_REDIS_REST_TOKEN}` },
-            body: JSON.stringify(data),
-            method: 'POST',
-          });
-          return;
-        }
+        const fetch = globalThis.fetch || (await import('node-fetch')).default;
+        await fetch(`${process.env.UPSTASH_REDIS_REST_URL}/setex/${encodeURIComponent(key)}/${ttlSeconds}`, {
+          headers: { Authorization: `Bearer ${process.env.UPSTASH_REDIS_REST_TOKEN}` },
+          body: JSON.stringify(data),
+          method: 'POST',
+        });
+        return;
       } catch (err) {
         console.warn('[serverCache] Redis set fallback to memory:', err.message);
       }
@@ -54,7 +54,7 @@ class ServerCacheEngine {
     // 1. Check Redis / Upstash if configured
     if (this.redisUrl && process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
       try {
-        const fetch = (await import('node-fetch')).default || globalThis.fetch;
+        const fetch = globalThis.fetch || (await import('node-fetch')).default;
         const res = await fetch(`${process.env.UPSTASH_REDIS_REST_URL}/get/${encodeURIComponent(key)}`, {
           headers: { Authorization: `Bearer ${process.env.UPSTASH_REDIS_REST_TOKEN}` },
         });
@@ -100,5 +100,6 @@ class ServerCacheEngine {
   }
 }
 
-export const serverCache = new ServerCacheEngine();
-export default serverCache;
+const serverCache = new ServerCacheEngine();
+
+module.exports = { serverCache, ServerCacheEngine };
