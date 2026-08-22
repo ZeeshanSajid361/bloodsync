@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { MapPin, Navigation, ExternalLink, CheckCircle2, X, Loader2, Search } from 'lucide-react';
+import { MapPin, Navigation, ExternalLink, CheckCircle2, X, Loader2, Search, Globe } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const CITY_COORDS = {
@@ -145,8 +145,10 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
   const [loading, setLoading]                 = useState(false);
   const [geocoding, setGeocoding]             = useState(false);
   const [searchQuery, setSearchQuery]         = useState(safeStreet);
+  const [debouncedQuery, setDebouncedQuery]   = useState(safeStreet);
   const [searchResults, setSearchResults]     = useState([]);
   const [showResultsDropdown, setShowResultsDropdown] = useState(false);
+  const [mapMode, setMapMode]                 = useState('google'); // 'google' or 'leaflet'
 
   const mapContainerRef = useRef(null);
   const mapInstanceRef  = useRef(null);
@@ -166,12 +168,22 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
     setLng(initialLng);
     setAddressText(initStreet);
     setSearchQuery(initStreet);
+    setDebouncedQuery(initStreet);
     setCity(initCity);
     setProvince(typeof init.province === 'string' && init.province.trim() ? init.province.trim() : getProvinceForCity(initCity));
     setMapsUrl(typeof init.mapsUrl === 'string' && init.mapsUrl.trim() ? init.mapsUrl.trim() : `https://www.google.com/maps?q=${initialLat},${initialLng}`);
     setSearchResults([]);
     setShowResultsDropdown(false);
+    setMapMode('google');
   }, [isOpen, initialLocation]);
+
+  // Debounce searchQuery for live Google Map embed updates
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedQuery(searchQuery);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   // Sync province whenever city changes
   useEffect(() => {
@@ -315,6 +327,8 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
     const targetLat = parseFloat(parseFloat(item.lat).toFixed(6));
     const targetLng = parseFloat(parseFloat(item.lon).toFixed(6));
 
+    setLat(targetLat);
+    setLng(targetLng);
     panMapTo(targetLat, targetLng, 17);
 
     const addr = item.address || {};
@@ -326,6 +340,7 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
     setProvince(detProv);
     setAddressText(cleanName);
     setSearchQuery(cleanName);
+    setDebouncedQuery(cleanName);
     setMapsUrl(`https://www.google.com/maps?q=${targetLat},${targetLng}`);
 
     setShowResultsDropdown(false);
@@ -333,9 +348,9 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
     toast.success(`📍 Pinned: ${cleanName.split(',')[0]}`, { id: 'gps-toast' });
   }
 
-  // Initialize Leaflet Map
+  // Initialize Leaflet Map when in Leaflet mode
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen || mapMode !== 'leaflet') return;
     let isMounted = true;
 
     async function initMap() {
@@ -416,7 +431,6 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
         }
       }, 200);
 
-      // Handle map click: move marker & reverse geocode
       map.on('click', (e) => {
         const clickedLat = parseFloat(e.latlng.lat.toFixed(6));
         const clickedLng = parseFloat(e.latlng.lng.toFixed(6));
@@ -427,7 +441,6 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
         fetchAddressFromCoords(clickedLat, clickedLng);
       });
 
-      // Handle marker dragend
       marker.on('dragend', () => {
         const pos = marker.getLatLng();
         const draggedLat = parseFloat(pos.lat.toFixed(6));
@@ -449,7 +462,7 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
         mapInstanceRef.current = null;
       }
     };
-  }, [isOpen]);
+  }, [isOpen, mapMode]);
 
   if (!isOpen) return null;
 
@@ -466,6 +479,8 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
       (pos) => {
         const latitude  = parseFloat(pos.coords.latitude.toFixed(6));
         const longitude = parseFloat(pos.coords.longitude.toFixed(6));
+        setLat(latitude);
+        setLng(longitude);
         panMapTo(latitude, longitude, 17);
         fetchAddressFromCoords(latitude, longitude);
         setLoading(false);
@@ -499,6 +514,8 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
     if (coordsMatch) {
       const latitude  = parseFloat(parseFloat(coordsMatch[1]).toFixed(6));
       const longitude = parseFloat(parseFloat(coordsMatch[2]).toFixed(6));
+      setLat(latitude);
+      setLng(longitude);
       panMapTo(latitude, longitude, 17);
       fetchAddressFromCoords(latitude, longitude);
       toast.success(`📍 Coordinates pinned (${latitude}, ${longitude})`, { id: 'gps-toast' });
@@ -547,6 +564,8 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
         // Fallback to city center
         const detectedCity = extractCityFromQuery(rawQuery) || city || 'Islamabad';
         const cityCoord = CITY_COORDS[detectedCity.toLowerCase()] || CITY_COORDS['islamabad'];
+        setLat(cityCoord.lat);
+        setLng(cityCoord.lng);
         panMapTo(cityCoord.lat, cityCoord.lng, 15);
         const detProv = getProvinceForCity(detectedCity);
         setCity(detectedCity);
@@ -580,6 +599,9 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
     onClose();
   }
 
+  // Active query for live Google Maps Embed iframe
+  const activeEmbedQuery = formatSearchAddress(debouncedQuery.trim() || searchQuery.trim() || addressText || (lat && lng ? `${lat},${lng}` : `${city}, Pakistan`));
+
   const modalContent = (
     <div
       onWheel={(e) => e.stopPropagation()}
@@ -602,9 +624,59 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
         position: 'relative',
       }}>
 
-        {/* ── LEFT COLUMN: Interactive Map with Pin & Live Coordinates Overlay ── */}
-        <div style={{ flex: '1.2', position: 'relative', height: '100%', background: '#1e293b' }}>
-          <div ref={mapContainerRef} style={{ width: '100%', height: '100%', zIndex: 1 }} />
+        {/* ── LEFT COLUMN: Real Live Google Maps View OR Interactive Leaflet Map ── */}
+        <div style={{ flex: '1.2', position: 'relative', height: '100%', background: '#1e293b', display: 'flex', flexDirection: 'column' }}>
+          
+          {/* Mode Switcher Header over map */}
+          <div style={{
+            position: 'absolute', top: '12px', left: '12px', zIndex: 1000,
+            display: 'flex', gap: '6px', background: 'rgba(15, 23, 42, 0.9)',
+            padding: '4px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.15)',
+            backdropFilter: 'blur(6px)'
+          }}>
+            <button
+              type="button"
+              className={`btn btn-sm ${mapMode === 'google' ? 'btn-primary' : 'btn-ghost'}`}
+              onClick={() => setMapMode('google')}
+              style={{
+                fontSize: '0.75rem', padding: '4px 10px', display: 'inline-flex', alignItems: 'center', gap: '5px',
+                background: mapMode === 'google' ? '#2563eb' : 'transparent', fontWeight: mapMode === 'google' ? 700 : 500,
+                borderRadius: '6px', color: '#fff'
+              }}
+            >
+              <Globe size={13} color="#60a5fa" /> Live Google Map
+            </button>
+            <button
+              type="button"
+              className={`btn btn-sm ${mapMode === 'leaflet' ? 'btn-primary' : 'btn-ghost'}`}
+              onClick={() => setMapMode('leaflet')}
+              style={{
+                fontSize: '0.75rem', padding: '4px 10px', display: 'inline-flex', alignItems: 'center', gap: '5px',
+                background: mapMode === 'leaflet' ? '#2563eb' : 'transparent', fontWeight: mapMode === 'leaflet' ? 700 : 500,
+                borderRadius: '6px', color: '#fff'
+              }}
+            >
+              <MapPin size={13} color="#ef4444" /> Interactive Pin Map
+            </button>
+          </div>
+
+          {/* MAP AREA */}
+          <div style={{ width: '100%', height: '100%', position: 'relative' }}>
+            {mapMode === 'google' ? (
+              <iframe
+                title="Real Google Map View"
+                width="100%"
+                height="100%"
+                style={{ border: 0 }}
+                loading="lazy"
+                allowFullScreen
+                referrerPolicy="no-referrer-when-downgrade"
+                src={`https://maps.google.com/maps?q=${encodeURIComponent(activeEmbedQuery)}&t=&z=17&ie=UTF8&iwloc=&output=embed`}
+              />
+            ) : (
+              <div ref={mapContainerRef} style={{ width: '100%', height: '100%', zIndex: 1 }} />
+            )}
+          </div>
           
           {/* Live Pinned Badge Over Map */}
           <div style={{
@@ -616,18 +688,9 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
             boxShadow: '0 8px 20px rgba(0,0,0,0.4)'
           }}>
             <MapPin size={16} color="#ef4444" />
-            <span>📍 Pinned: {lat.toFixed(5)}, {lng.toFixed(5)} ({city})</span>
+            <span>📍 Map View: {activeEmbedQuery}</span>
           </div>
 
-          {/* Hint Overlay */}
-          <div style={{
-            position: 'absolute', top: '16px', left: '16px', zIndex: 1000,
-            background: 'rgba(15, 23, 42, 0.85)', padding: '6px 12px', borderRadius: '8px',
-            fontSize: '0.72rem', color: '#94a3b8', border: '1px solid rgba(255,255,255,0.1)',
-            pointerEvents: 'none'
-          }}>
-            👉 Click anywhere on map or drag pin to re-locate
-          </div>
         </div>
 
         {/* ── RIGHT COLUMN: Search, Controls & Auto-Filled Details Panel ── */}
@@ -643,7 +706,7 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
               <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px', color: '#f8fafc' }}>
                 <MapPin size={20} color="#ef4444" /> Pin Location Details
               </h3>
-              <p style={{ margin: '2px 0 0', fontSize: '0.75rem', color: '#94a3b8' }}>Search or click map to auto-fill address metadata</p>
+              <p style={{ margin: '2px 0 0', fontSize: '0.75rem', color: '#94a3b8' }}>Type address to update live Google Map instantly</p>
             </div>
             <button onClick={onClose} className="btn btn-ghost btn-sm" style={{ padding: '6px', borderRadius: '50%' }}>
               <X size={18} />
@@ -763,12 +826,12 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
                 <input
                   className="input"
                   style={{ fontSize: '0.8rem', padding: '8px 12px', flex: 1, borderRadius: '8px' }}
-                  value={mapsUrl || `https://www.google.com/maps?q=${lat},${lng}`}
+                  value={mapsUrl || `https://www.google.com/maps?q=${encodeURIComponent(activeEmbedQuery)}`}
                   onChange={e => setMapsUrl(e.target.value)}
                   placeholder="Google Maps URL"
                 />
                 <a
-                  href={mapsUrl || `https://www.google.com/maps?q=${lat},${lng}`}
+                  href={mapsUrl || `https://www.google.com/maps?q=${encodeURIComponent(activeEmbedQuery)}`}
                   target="_blank"
                   rel="noreferrer"
                   className="btn btn-ghost btn-sm"
