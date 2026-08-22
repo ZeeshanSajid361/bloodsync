@@ -65,11 +65,48 @@ export function AuthProvider({ children }) {
   }, []);
 
   const login = useCallback(({ user: userData, accessToken, refreshToken }) => {
-    clearAllUserDataCache();
+    const newUserId = userData?._id || userData?.id;
+    let prevUserId = null;
+    try {
+      const prevUserStr = localStorage.getItem('user');
+      if (prevUserStr) {
+        const prev = JSON.parse(prevUserStr);
+        prevUserId = prev?._id || prev?.id;
+      }
+    } catch {}
+
+    // Only clear cache if logging in as a DIFFERENT user account to prevent cross-account leak while keeping instant load
+    if (newUserId && prevUserId && String(newUserId) !== String(prevUserId)) {
+      clearAllUserDataCache();
+    }
+
     localStorage.setItem('user', JSON.stringify(userData));
     localStorage.setItem('accessToken', accessToken);
     localStorage.setItem('refreshToken', refreshToken);
     setUser(userData);
+
+    // Fire parallel role data pre-fetch immediately upon login to pre-warm cache before dashboard mounts
+    setTimeout(() => {
+      try {
+        if (userData?.role === 'hospital') {
+          api.get('/hospitals/me').then(res => {
+            if (res.data?.data) localStorage.setItem('bloodsync_hospital_profile_cache', JSON.stringify(res.data.data));
+          }).catch(() => {});
+        } else if (userData?.role === 'donor') {
+          api.get('/donors/me').then(res => {
+            if (res.data?.data) cacheService.set('donor_profile', res.data.data);
+          }).catch(() => {});
+        } else if (userData?.role === 'seeker') {
+          api.get('/seekers/requests/mine?limit=50').then(res => {
+            if (res.data?.data?.requests) localStorage.setItem('bloodsync_seeker_requests_cache', JSON.stringify(res.data.data.requests));
+          }).catch(() => {});
+        } else if (userData?.role === 'admin' && newUserId) {
+          api.get('/admin/analytics').then(res => {
+            if (res.data?.data) localStorage.setItem(`bloodsync_admin_analytics_${newUserId}`, JSON.stringify(res.data.data));
+          }).catch(() => {});
+        }
+      } catch {}
+    }, 0);
   }, []);
 
   const logout = useCallback(async () => {
