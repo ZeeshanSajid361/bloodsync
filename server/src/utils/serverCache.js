@@ -95,6 +95,15 @@ class ServerCacheEngine {
     }
   }
 
+  /**
+   * Delete a specific cache key
+   * @param {string} key 
+   */
+  async del(key) {
+    if (!key) return;
+    this.memoryCache.delete(key);
+  }
+
   clear() {
     this.memoryCache.clear();
   }
