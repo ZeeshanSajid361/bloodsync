@@ -23,6 +23,7 @@ import useNotifications                     from '../../hooks/useNotifications';
 import NotificationBell                     from '../../components/NotificationBell';
 import LocationPickerModal                  from '../../components/LocationPickerModal';
 import AppSpotlightTour                     from '../../components/AppSpotlightTour';
+import PhoneInput                           from '../../components/PhoneInput';
 import api                                  from '../../lib/api';
 import { getViewableDocUrl, isPdfUrl }      from '../../lib/docUrl';
 import '../../styles/dashboard.css';
@@ -1432,17 +1433,12 @@ function SeekerEditProfileTab({ onSaved }) {
             {/* Phone */}
             <div className="input-group">
               <label className="input-label" htmlFor="seeker-phone">Phone Number</label>
-              <div className="input-wrapper">
-                <Phone className="input-icon" size={17} />
-                <input
-                  id="seeker-phone"
-                  name="phone"
-                  className="input has-icon"
-                  placeholder="+92 300 0000000"
-                  value={form.phone}
-                  onChange={handleChange}
-                />
-              </div>
+              <PhoneInput
+                value={form.phone}
+                onChange={handleChange}
+                name="phone"
+                placeholder="300 0000000"
+              />
             </div>
 
             {/* City */}

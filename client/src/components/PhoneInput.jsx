@@ -14,7 +14,10 @@ export default function PhoneInput({ value = '', onChange, name = 'phone', place
   const [localNumber, setLocalNumber] = useState('');
 
   useEffect(() => {
-    if (!value) return;
+    if (!value) {
+      setLocalNumber('');
+      return;
+    }
     
     // Attempt to split an existing full number (e.g. +92 300-1234567)
     let foundCode = COUNTRY_CODES.find(c => value.startsWith(c.code));
@@ -25,7 +28,7 @@ export default function PhoneInput({ value = '', onChange, name = 'phone', place
     } else {
       setLocalNumber(formatLocal(value));
     }
-  }, []); // Only run once on mount
+  }, [value]);
 
   function formatLocal(text) {
     // Strip all non-digits

@@ -28,6 +28,7 @@ import useNotifications     from '../../hooks/useNotifications';
 import NotificationBell     from '../../components/NotificationBell';
 import QRCheckIn            from '../../components/QRCheckIn';
 import AppSpotlightTour     from '../../components/AppSpotlightTour';
+import PhoneInput           from '../../components/PhoneInput';
 import api                  from '../../lib/api';
 import '../../styles/dashboard.css';
 
@@ -769,10 +770,11 @@ function InfoRow({ icon, label, value }) {
 //  EDIT PROFILE TAB
 // ═══════════════════════════════════════════════════════════════════════════
 function EditProfileTab({ donor, refetch, onSaved }) {
+  const { user, updateUser } = useAuth();
   const [form, setForm] = useState({
-    name:        donor?.name        || '',
-    phone:       donor?.phone       || '',
-    city:        donor?.city        || '',
+    name:        donor?.name        || donor?.user?.name        || user?.name        || '',
+    phone:       donor?.phone       || donor?.user?.phone       || user?.phone       || '',
+    city:        donor?.city        || donor?.user?.city        || user?.city        || '',
     age:         donor?.age         || '',
     gender:      donor?.gender      || 'male',
     bloodGroup:  donor?.bloodGroup  || 'O+',
@@ -782,18 +784,18 @@ function EditProfileTab({ donor, refetch, onSaved }) {
   const [apiError, setApiError] = useState('');
 
   useEffect(() => {
-    if (donor) {
+    if (donor || user) {
       setForm({
-        name:        donor.name        || '',
-        phone:       donor.phone       || '',
-        city:        donor.city        || '',
-        age:         donor.age         || '',
-        gender:      donor.gender      || 'male',
-        bloodGroup:  donor.bloodGroup  || 'O+',
-        bio:         donor.bio         || '',
+        name:        donor?.name        || donor?.user?.name        || user?.name        || '',
+        phone:       donor?.phone       || donor?.user?.phone       || user?.phone       || '',
+        city:        donor?.city        || donor?.user?.city        || user?.city        || '',
+        age:         donor?.age         || '',
+        gender:      donor?.gender      || 'male',
+        bloodGroup:  donor?.bloodGroup  || 'O+',
+        bio:         donor?.bio         || '',
       });
     }
-  }, [donor]);
+  }, [donor, user]);
 
   function handleChange(e) {
     const { name, value } = e.target;
@@ -816,6 +818,9 @@ function EditProfileTab({ donor, refetch, onSaved }) {
         bloodGroup: form.bloodGroup,
         bio:        form.bio.trim()   || undefined,
       });
+      if (updateUser) {
+        updateUser({ name: form.name.trim(), phone: form.phone.trim(), city: form.city.trim() });
+      }
       await refetch();
       toast.success('Profile updated successfully.');
       onSaved();
@@ -876,17 +881,12 @@ function EditProfileTab({ donor, refetch, onSaved }) {
             {/* Phone */}
             <div className="input-group">
               <label className="input-label" htmlFor="edit-phone">Phone Number</label>
-              <div className="input-wrapper">
-                <Phone className="input-icon" size={17} />
-                <input
-                  id="edit-phone"
-                  name="phone"
-                  className="input has-icon"
-                  placeholder="+92 300 0000000"
-                  value={form.phone}
-                  onChange={handleChange}
-                />
-              </div>
+              <PhoneInput
+                value={form.phone}
+                onChange={handleChange}
+                name="phone"
+                placeholder="300 0000000"
+              />
             </div>
 
             {/* City */}
