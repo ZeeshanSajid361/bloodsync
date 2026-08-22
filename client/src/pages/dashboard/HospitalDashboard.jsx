@@ -1707,6 +1707,15 @@ const HOSPITAL_TOUR_STEPS = [
     preferredPos: 'right',
   },
 ];
+/* ── tab definitions ─────────────────────────────────────────────────────── */
+
+const TABS = [
+  { id: 'overview',   label: 'Overview',    icon: Building2      },
+  { id: 'inventory',  label: 'Inventory',   icon: Droplets       },
+  { id: 'requests',   label: 'Counter QR',  icon: QrCode         },
+  { id: 'history',    label: 'History',     icon: ClipboardList  },
+  { id: 'profile',    label: 'Profile',     icon: Settings       },
+];
 
 export default function HospitalDashboard() {
   const { user, logout } = useAuth();
