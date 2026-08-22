@@ -33,6 +33,13 @@ const BLOOD_GROUPS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
 
 /* ── helpers ─────────────────────────────────────────────────────────────── */
 
+function isBatchExpired(inv) {
+  if (!inv?.expiresAt) return false;
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  return new Date(inv.expiresAt) < todayStart;
+}
+
 function unitLevel(units, threshold) {
   if (units === 0)              return 'critical';
   if (units <= threshold)       return 'low';
@@ -45,8 +52,9 @@ function formatExpiry(date) {
 }
 
 function isCodeRedLive(inv) {
-  if (!inv.codeRed?.active) return false;
+  if (!inv?.codeRed?.active) return false;
   if (!inv.codeRed.expiresAt) return false;
+  if (isBatchExpired(inv)) return false; // Expired stock CANNOT be broadcasted for donation
   return new Date() < new Date(inv.codeRed.expiresAt);
 }
 
@@ -107,9 +115,14 @@ function CodeRedModal({ inv, onConfirm, onClose, loading }) {
 
 function OverviewTab({ profile }) {
   const { org, inventory = [] } = profile;
-  const totalUnits = inventory.reduce((s, i) => s + i.units, 0);
-  const lowCount   = inventory.filter(i => i.units <= i.lowStockThreshold).length;
-  const codeReds   = inventory.filter(isCodeRedLive).length;
+
+  // Only sum unexpired active inventory units for total metrics
+  const activeInventory  = inventory.filter(i => !isBatchExpired(i) && i.units > 0);
+  const expiredCount     = inventory.filter(i => isBatchExpired(i) || i.units === 0).length;
+
+  const totalUnits = activeInventory.reduce((s, i) => s + i.units, 0);
+  const lowCount   = activeInventory.filter(i => i.units <= i.lowStockThreshold).length;
+  const codeReds   = activeInventory.filter(isCodeRedLive).length;
 
   return (
     <>
@@ -135,39 +148,38 @@ function OverviewTab({ profile }) {
       )}
 
       <div className="hospital-stats">
-
         <div className="hospital-stat-card">
-          <div className="stat-label">Total Units</div>
+          <div className="stat-label">Total Unexpired Units</div>
           <div className="stat-value">{totalUnits}</div>
-          <div className="stat-sub">bags in stock</div>
+          <div className="stat-sub">active bags in stock</div>
         </div>
         <div className="hospital-stat-card">
           <div className="stat-label">Blood Types</div>
           <div className="stat-value">{inventory.length}</div>
-          <div className="stat-sub">tracked</div>
+          <div className="stat-sub">tracked batches</div>
         </div>
         <div className="hospital-stat-card">
-          <div className="stat-label">Low Stock</div>
+          <div className="stat-label">Low Stock Alerts</div>
           <div className="stat-value" style={{ color: lowCount ? 'var(--color-warning)' : 'inherit' }}>
             {lowCount}
           </div>
-          <div className="stat-sub">need attention</div>
+          <div className="stat-sub">unexpired batches</div>
         </div>
         <div className="hospital-stat-card">
-          <div className="stat-label">Code Reds</div>
-          <div className="stat-value" style={{ color: codeReds ? 'var(--red-400)' : 'inherit' }}>
-            {codeReds}
+          <div className="stat-label">Expired / Depleted</div>
+          <div className="stat-value" style={{ color: expiredCount ? 'var(--red-400)' : 'inherit' }}>
+            {expiredCount}
           </div>
-          <div className="stat-sub">active alerts</div>
+          <div className="stat-sub">batches archived</div>
         </div>
       </div>
 
       {lowCount > 0 && (
         <div style={{ marginBottom: 'var(--space-6)' }}>
           <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: 'var(--space-4)', color: 'var(--color-warning)' }}>
-            ⚠️ Low Stock Alerts
+            ⚠️ Active Low Stock Alerts
           </h3>
-          {inventory
+          {activeInventory
             .filter(i => i.units <= i.lowStockThreshold)
             .map(i => {
               const codeRedActive = isCodeRedLive(i);
@@ -209,27 +221,35 @@ function OverviewTab({ profile }) {
                 No inventory entries yet. Go to the Inventory tab to add stock.
               </td></tr>
             ) : inventory.map(inv => {
-              const level = unitLevel(inv.units, inv.lowStockThreshold);
-              const pct   = Math.min(100, Math.round((inv.units / Math.max(inv.units, inv.lowStockThreshold * 4, 1)) * 100));
+              const expired = isBatchExpired(inv) || inv.units === 0;
+              const level   = expired ? 'critical' : unitLevel(inv.units, inv.lowStockThreshold);
+              const pct     = Math.min(100, Math.round((inv.units / Math.max(inv.units, inv.lowStockThreshold * 4, 1)) * 100));
               return (
-                <tr key={inv._id}>
+                <tr key={inv._id} style={{ opacity: expired ? 0.65 : 1 }}>
                   <td><span className="blood-group-pill">{inv.bloodGroup}</span></td>
                   <td>
                     <div className="units-bar-wrap">
                       <div className="units-bar">
-                        <div className={`units-bar-fill ${level}`} style={{ width: `${pct}%` }} />
+                        <div className={`units-bar-fill ${expired ? 'critical' : level}`} style={{ width: `${expired ? 0 : pct}%` }} />
                       </div>
                       <span className="units-count">{inv.units}</span>
                     </div>
                   </td>
-                  <td style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>{formatExpiry(inv.expiresAt)}</td>
+                  <td style={{ color: expired ? 'var(--red-400)' : 'var(--text-secondary)', fontSize: '0.875rem' }}>
+                    {formatExpiry(inv.expiresAt)}
+                  </td>
                   <td>
-                    {isCodeRedLive(inv)
-                      ? <span className="code-red-badge"><span className="pulse-dot" />Code Red</span>
-                      : <span className={`badge badge-${level === 'good' ? 'green' : level === 'low' ? 'amber' : 'red'}`}>
-                          {level === 'good' ? 'Adequate' : level === 'low' ? 'Low' : 'Critical'}
-                        </span>
-                    }
+                    {expired ? (
+                      <span className="badge badge-red" style={{ background: 'rgba(239, 68, 68, 0.2)', color: '#ef4444' }}>
+                        ❌ {inv.units === 0 ? 'Depleted' : 'Expired'}
+                      </span>
+                    ) : isCodeRedLive(inv) ? (
+                      <span className="code-red-badge"><span className="pulse-dot" />Code Red</span>
+                    ) : (
+                      <span className={`badge badge-${level === 'good' ? 'green' : level === 'low' ? 'amber' : 'red'}`}>
+                        {level === 'good' ? 'Adequate' : level === 'low' ? 'Low' : 'Critical'}
+                      </span>
+                    )}
                   </td>
                 </tr>
               );
@@ -250,6 +270,7 @@ function InventoryTab({ profile, hooks }) {
   const [saving, setSaving]               = useState(false);
   const [codeRedTarget, setCodeRedTarget] = useState(null);
   const [broadcasting, setBroadcasting]   = useState(false);
+  const [stockTab, setStockTab]           = useState('active'); // 'active' | 'expired'
 
   function resetForm() {
     setForm({ bloodGroup: '', units: '', expiresAt: '', lowStockThreshold: 2 });
@@ -325,12 +346,22 @@ function InventoryTab({ profile, hooks }) {
   }
 
   async function handleDelete(id) {
-    if (!window.confirm('Remove this blood batch entry?')) return;
+    if (!window.confirm('Remove this blood batch entry permanently?')) return;
     try {
       await removeInventory(id);
       toast.success('Batch entry removed.');
     } catch {
       toast.error('Failed to remove batch entry.');
+    }
+  }
+
+  async function handleResetZero(inv) {
+    if (!window.confirm(`Reset units for ${inv.bloodGroup} (Batch Expiry: ${formatExpiry(inv.expiresAt)}) to 0?`)) return;
+    try {
+      await updateInventory(inv._id, { units: 0 });
+      toast.success(`Units for ${inv.bloodGroup} batch reset to 0.`);
+    } catch {
+      toast.error('Failed to reset units.');
     }
   }
 
@@ -361,7 +392,7 @@ function InventoryTab({ profile, hooks }) {
   // Compute aggregated unexpired totals for summary bar
   const now = new Date();
   const summaryMap = inventory.reduce((acc, item) => {
-    const isExpired = item.expiresAt && new Date(item.expiresAt) < now;
+    const isExpired = isBatchExpired(item);
     if (!isExpired && item.units > 0) {
       if (!acc[item.bloodGroup]) acc[item.bloodGroup] = { units: 0, batches: 0 };
       acc[item.bloodGroup].units += item.units;
@@ -369,6 +400,11 @@ function InventoryTab({ profile, hooks }) {
     }
     return acc;
   }, {});
+
+  const activeBatches  = inventory.filter(inv => !isBatchExpired(inv) && inv.units > 0);
+  const expiredBatches = inventory.filter(inv => isBatchExpired(inv) || inv.units === 0);
+
+  const displayedInventory = stockTab === 'active' ? activeBatches : expiredBatches;
 
   return (
     <>
@@ -504,6 +540,33 @@ function InventoryTab({ profile, hooks }) {
         </div>
       </div>
 
+      {/* Sub-Tab Selector for Active vs Expired Archive */}
+      <div style={{ display: 'flex', gap: 12, margin: '20px 0 14px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: 10 }}>
+        <button
+          type="button"
+          className={`btn btn-sm ${stockTab === 'active' ? 'btn-primary' : 'btn-ghost'}`}
+          onClick={() => setStockTab('active')}
+          style={{ borderRadius: 20, padding: '6px 18px', fontSize: '0.85rem' }}
+        >
+          🟢 Active Unexpired Stock ({activeBatches.length})
+        </button>
+        <button
+          type="button"
+          className={`btn btn-sm ${stockTab === 'expired' ? 'btn-primary' : 'btn-ghost'}`}
+          onClick={() => setStockTab('expired')}
+          style={{
+            borderRadius: 20,
+            padding: '6px 18px',
+            fontSize: '0.85rem',
+            background: stockTab === 'expired' ? 'rgba(239, 68, 68, 0.2)' : 'transparent',
+            borderColor: stockTab === 'expired' ? '#ef4444' : 'transparent',
+            color: stockTab === 'expired' ? '#f87171' : 'var(--text-muted)'
+          }}
+        >
+          ⚠️ Expired & Depleted Archive ({expiredBatches.length})
+        </button>
+      </div>
+
       <div className="inventory-table-wrap">
         <table className="inventory-table">
           <thead>
@@ -513,32 +576,36 @@ function InventoryTab({ profile, hooks }) {
             </tr>
           </thead>
           <tbody>
-            {inventory.length === 0 ? (
-              <tr><td colSpan={isApproved ? 6 : 5} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: 'var(--space-8)' }}>
-                No inventory batches added yet.
-              </td></tr>
-            ) : inventory.map(inv => {
+            {displayedInventory.length === 0 ? (
+              <tr>
+                <td colSpan={isApproved ? 6 : 5} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: 'var(--space-8)' }}>
+                  {stockTab === 'active'
+                    ? 'No active unexpired blood batches in stock.'
+                    : 'No expired or depleted blood batches archived.'}
+                </td>
+              </tr>
+            ) : displayedInventory.map(inv => {
               const live = isCodeRedLive(inv);
-              const isExpired = inv.expiresAt && new Date(inv.expiresAt) < now;
+              const expired = isBatchExpired(inv) || inv.units === 0;
               const daysLeft = inv.expiresAt ? Math.ceil((new Date(inv.expiresAt) - now) / (1000 * 60 * 60 * 24)) : null;
               const isExpiringSoon = daysLeft !== null && daysLeft >= 0 && daysLeft <= 7;
               const level = unitLevel(inv.units, inv.lowStockThreshold);
 
               return (
-                <tr key={inv._id} style={{ opacity: isExpired ? 0.6 : 1 }}>
+                <tr key={inv._id} style={{ opacity: expired ? 0.75 : 1 }}>
                   <td><span className="blood-group-pill">{inv.bloodGroup}</span></td>
                   <td><strong>{inv.units}</strong></td>
                   <td style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{inv.lowStockThreshold}</td>
-                  <td style={{ color: isExpired ? 'var(--red-400)' : isExpiringSoon ? '#f59e0b' : 'var(--text-secondary)', fontSize: '0.875rem' }}>
+                  <td style={{ color: expired ? 'var(--red-400)' : isExpiringSoon ? '#f59e0b' : 'var(--text-secondary)', fontSize: '0.875rem' }}>
                     {formatExpiry(inv.expiresAt)}
                   </td>
                   <td>
-                    {live ? (
-                      <span className="code-red-badge"><span className="pulse-dot" />Code Red</span>
-                    ) : isExpired ? (
+                    {expired ? (
                       <span className="badge badge-red" style={{ background: 'rgba(239, 68, 68, 0.2)', color: '#ef4444' }}>
-                        ❌ Expired (Hidden from Search)
+                        ❌ {inv.units === 0 ? 'Depleted Batch' : 'Expired Batch'}
                       </span>
+                    ) : live ? (
+                      <span className="code-red-badge"><span className="pulse-dot" />Code Red</span>
                     ) : isExpiringSoon ? (
                       <span className="badge badge-amber" style={{ background: 'rgba(245, 158, 11, 0.2)', color: '#f59e0b' }}>
                         ⚠️ Expiring ({daysLeft}d left)
@@ -551,21 +618,37 @@ function InventoryTab({ profile, hooks }) {
                   </td>
                   {isApproved && (
                     <td>
-                      <div style={{ display: 'flex', gap: 'var(--space-2)', alignItems: 'center' }}>
-                        <button title="Edit Batch" className="btn btn-ghost btn-sm" style={{ padding: '4px 8px' }} onClick={() => startEdit(inv)}>
-                          <Pencil size={14} />
-                        </button>
-                        {live
-                          ? <button title="Cancel Code Red" className="btn btn-ghost btn-sm" style={{ padding: '4px 8px', color: 'var(--red-400)' }} onClick={() => handleCancelRed(inv._id)}>
-                              <X size={14} />
+                      <div style={{ display: 'flex', gap: 'var(--space-2)', alignItems: 'center', flexWrap: 'wrap' }}>
+                        {stockTab === 'active' ? (
+                          <>
+                            <button title="Edit Batch" className="btn btn-ghost btn-sm" style={{ padding: '4px 8px' }} onClick={() => startEdit(inv)}>
+                              <Pencil size={14} />
                             </button>
-                          : <button title="Issue Code Red" className="btn btn-danger btn-sm" style={{ padding: '4px 8px' }} onClick={() => setCodeRedTarget(inv)}>
-                              <Siren size={14} />
+                            {live
+                              ? <button title="Cancel Code Red" className="btn btn-ghost btn-sm" style={{ padding: '4px 8px', color: 'var(--red-400)' }} onClick={() => handleCancelRed(inv._id)}>
+                                  <X size={14} />
+                                </button>
+                              : <button title="Issue Code Red" className="btn btn-danger btn-sm" style={{ padding: '4px 8px' }} onClick={() => setCodeRedTarget(inv)}>
+                                  <Siren size={14} />
+                                </button>
+                            }
+                            <button title="Delete Batch" className="btn btn-ghost btn-sm" style={{ padding: '4px 8px', color: 'var(--red-400)' }} onClick={() => handleDelete(inv._id)}>
+                              <Trash2 size={14} />
                             </button>
-                        }
-                        <button title="Delete Batch" className="btn btn-ghost btn-sm" style={{ padding: '4px 8px', color: 'var(--red-400)' }} onClick={() => handleDelete(inv._id)}>
-                          <Trash2 size={14} />
-                        </button>
+                          </>
+                        ) : (
+                          <>
+                            <button title="Reset Units to 0" className="btn btn-ghost btn-sm" style={{ padding: '4px 8px', color: '#f59e0b' }} onClick={() => handleResetZero(inv)}>
+                              🔄 Reset 0
+                            </button>
+                            <button title="Restock & Renew Expiry Date" className="btn btn-primary btn-sm" style={{ padding: '4px 8px', fontSize: '0.75rem' }} onClick={() => startEdit(inv)}>
+                              📅 Restock
+                            </button>
+                            <button title="Delete Batch" className="btn btn-ghost btn-sm" style={{ padding: '4px 8px', color: 'var(--red-400)' }} onClick={() => handleDelete(inv._id)}>
+                              <Trash2 size={14} />
+                            </button>
+                          </>
+                        )}
                       </div>
                     </td>
                   )}
@@ -1245,7 +1328,7 @@ function LiveCameraScannerModal({ onScan, onClose }) {
 
 /* ── tabs ────────────────────────────────────────────────────────────────── */
 
-function RequestsTab({ profile, onNavigateToHistory }) {
+function RequestsTab({ profile, hooks, onNavigateToHistory }) {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [qrTokenInput, setQrTokenInput] = useState('');
@@ -1279,10 +1362,29 @@ function RequestsTab({ profile, onNavigateToHistory }) {
 
     try {
       const res = await api.post('/hospitals/verify-qr', { token: t });
+      const data = res.data.data;
       toast.success(res.data.message || 'Donation verified successfully!');
-      setVerifyResult(res.data.data);
+      setVerifyResult(data);
       setQrTokenInput('');
       fetchRequests();
+
+      // Auto-add donated unit to stock as fresh batch (Today + 35 Days shelf life)
+      if (data?.bloodGroup && hooks?.saveInventory) {
+        const freshExpiry = new Date();
+        freshExpiry.setDate(freshExpiry.getDate() + 35);
+        const freshExpiryStr = freshExpiry.toISOString().split('T')[0];
+        try {
+          await hooks.saveInventory({
+            bloodGroup: data.bloodGroup,
+            units: 1,
+            expiresAt: freshExpiryStr,
+            lowStockThreshold: 2
+          });
+          toast.success(`🩸 Added +1 unit of ${data.bloodGroup} (35-day shelf life batch) to inventory!`);
+        } catch {
+          /* inventory save fallback */
+        }
+      }
     } catch (err) {
       setVerifyError(err.response?.data?.message || err.message || 'QR Verification failed.');
     } finally {
@@ -1958,7 +2060,7 @@ export default function HospitalDashboard() {
                 </div>
               ) : (
                 <>
-                  {tab === 'requests'  && <RequestsTab profile={profile} onNavigateToHistory={() => setTab('history')} />}
+                  {tab === 'requests'  && <RequestsTab profile={profile} hooks={hookData} onNavigateToHistory={() => setTab('history')} />}
                   {tab === 'history'   && <HistoryTab />}
                   {tab === 'inventory' && <InventoryTab profile={profile} hooks={hookData} />}
                 </>
