@@ -300,11 +300,28 @@ function HospitalsTab({ admin }) {
                         <td>
                           {org.type === 'api_hospital' ? (
                             org.apiKeyPrefix ? (
-                              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: '#60a5fa', background: 'rgba(37, 99, 235, 0.12)', padding: '3px 8px', borderRadius: 4, border: '1px solid rgba(59, 130, 246, 0.3)' }} title="Active Key Prefix">
-                                🔑 Active ({org.apiKeyPrefix})
-                              </span>
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'flex-start' }}>
+                                <span className="badge badge-blue" style={{ fontSize: '0.68rem', padding: '2px 8px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                  <Key size={11} /> Active EMN Key
+                                </span>
+                                <span 
+                                  style={{ 
+                                    fontFamily: 'var(--font-mono)', 
+                                    fontSize: '0.72rem', 
+                                    color: '#60a5fa', 
+                                    background: 'rgba(30, 58, 138, 0.25)', 
+                                    padding: '2px 8px', 
+                                    borderRadius: '4px', 
+                                    border: '1px solid rgba(59, 130, 246, 0.3)',
+                                    whiteSpace: 'nowrap'
+                                  }} 
+                                  title={`Active Key Prefix: ${org.apiKeyPrefix}`}
+                                >
+                                  {org.apiKeyPrefix}
+                                </span>
+                              </div>
                             ) : (
-                              <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>Not Generated Yet (Self-service in Profile)</span>
+                              <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>Not Generated</span>
                             )
                           ) : (
                             <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>— (Web Access)</span>
@@ -316,23 +333,45 @@ function HospitalsTab({ admin }) {
                           </span>
                         </td>
                         <td>
-                          <div className="admin-actions">
-                            {org.status === 'pending' && <>
-                              <button className="btn btn-secondary btn-sm" style={{ padding: '4px 10px' }} onClick={() => setModal({ type: 'approve', org })}>
-                                <CheckCircle size={13} /> Approve
-                              </button>
-                              <button className="btn btn-danger btn-sm" style={{ padding: '4px 10px' }} onClick={() => setModal({ type: 'reject', org })}>
-                                <XCircle size={13} /> Reject
-                              </button>
-                            </>}
-                            {org.status === 'approved' && (
-                              org.type === 'api_hospital' && org.apiKeyPrefix ? (
-                                <button className="btn btn-ghost btn-sm" style={{ padding: '4px 10px', color: 'var(--red-400)' }} onClick={() => handleRevoke(org)}>
-                                  <Key size={13} /> Revoke EMN Key
+                          <div className="admin-actions" style={{ alignItems: 'center', gap: '8px' }}>
+                            {org.status === 'pending' && (
+                              <>
+                                <button className="btn btn-secondary btn-sm" style={{ padding: '4px 10px' }} onClick={() => setModal({ type: 'approve', org })}>
+                                  <CheckCircle size={13} /> Approve
                                 </button>
-                              ) : (
-                                <span style={{ color: '#34d399', fontSize: '0.78rem', fontWeight: 600 }}>✓ Verified</span>
-                              )
+                                <button className="btn btn-danger btn-sm" style={{ padding: '4px 10px' }} onClick={() => setModal({ type: 'reject', org })}>
+                                  <XCircle size={13} /> Reject
+                                </button>
+                              </>
+                            )}
+                            {org.status === 'approved' && (
+                              <>
+                                <span style={{ color: '#34d399', fontSize: '0.78rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                  ✓ Verified
+                                </span>
+                                {org.type === 'api_hospital' && org.apiKeyPrefix && (
+                                  <button 
+                                    className="btn btn-sm" 
+                                    style={{ 
+                                      padding: '4px 10px', 
+                                      fontSize: '0.72rem',
+                                      color: '#f87171', 
+                                      background: 'rgba(239, 68, 68, 0.1)', 
+                                      border: '1px solid rgba(239, 68, 68, 0.3)',
+                                      borderRadius: 'var(--radius-md)',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '4px',
+                                      cursor: 'pointer',
+                                      transition: 'all 0.15s ease'
+                                    }} 
+                                    onClick={() => handleRevoke(org)}
+                                    title="Revoke active API key"
+                                  >
+                                    <Key size={12} /> Revoke Key
+                                  </button>
+                                )}
+                              </>
                             )}
                           </div>
                         </td>
