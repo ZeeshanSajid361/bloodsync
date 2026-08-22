@@ -22,6 +22,7 @@ import useNotifications from '../../hooks/useNotifications';
 import NotificationBell from '../../components/NotificationBell';
 import PhoneInput from '../../components/PhoneInput';
 import AppSpotlightTour from '../../components/AppSpotlightTour';
+import LocationPickerModal from '../../components/LocationPickerModal';
 import api from '../../lib/api';
 import jsQR from 'jsqr';
 import PartnerDashboard from './PartnerDashboard';
