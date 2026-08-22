@@ -211,6 +211,26 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
     setMapsUrl(googleSearchUrl);
   }
 
+  // Handle typing directly in Street Address field: sync Search query, City, Province, and Google Maps URL live!
+  function handleAddressInputChange(e) {
+    const rawVal = e.target.value;
+    setAddressText(rawVal);
+
+    if (!rawVal.trim()) return;
+
+    const formatted = formatSearchAddress(rawVal);
+    setSearchQuery(formatted);
+
+    const detectedCity = extractCityFromQuery(rawVal) || city || 'Islamabad';
+    setCity(detectedCity);
+
+    const detectedProvince = getProvinceForCity(detectedCity);
+    setProvince(detectedProvince);
+
+    const googleSearchUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(formatted)}`;
+    setMapsUrl(googleSearchUrl);
+  }
+
   // Detect GPS Device Location
   function handleDetectGps() {
     if (!navigator.geolocation) {
@@ -382,7 +402,7 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
                 style={{ padding: '10px 16px', background: '#2563eb', display: 'inline-flex', alignItems: 'center', gap: '6px', flexShrink: 0, fontWeight: 700, borderRadius: '10px' }}
               >
                 <Search size={16} />
-                <span>Search</span>
+                <span>Sync</span>
               </button>
               <button
                 type="button"
@@ -431,7 +451,7 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
                 className="input"
                 style={{ fontSize: '0.85rem', padding: '8px 12px', borderRadius: '8px' }}
                 value={addressText}
-                onChange={e => setAddressText(e.target.value)}
+                onChange={handleAddressInputChange}
                 placeholder="e.g. Allama Iqbal Colony Street 39, Rawalpindi"
               />
             </div>
