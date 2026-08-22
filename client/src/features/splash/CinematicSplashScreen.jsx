@@ -2,23 +2,23 @@ import { useState, useEffect } from 'react';
 import { Droplets, Activity, Zap, User, Building2, Siren, Stethoscope, Sparkles } from 'lucide-react';
 
 export default function CinematicSplashScreen({ onComplete }) {
-  const [stage, setStage] = useState(1); // 1: Drop Fall & Ground Impact Splatter, 2: Sub-Drops Rise & Form Orbital Galaxy, 3: Fade Out
+  const [stage, setStage] = useState(1); // 1: Rapid Drop Descent & Disappear Impact, 2: Fast Micro-Galaxy & Brand Reveal, 3: Fade Out
 
   useEffect(() => {
-    // Stage 1 (Drop Fall & Ground Impact Splatter) -> Stage 2 (Orbital Galaxy & Brand Reveal)
+    // Stage 1 (Drop Fall & Ground Splatter) -> Stage 2 (Orbital Galaxy & Brand Reveal)
     const timer1 = setTimeout(() => {
       setStage(2);
-    }, 2200);
+    }, 900);
 
     // Stage 2 -> Stage 3 (Fade Out)
     const timer2 = setTimeout(() => {
       setStage(3);
-    }, 5600);
+    }, 2400);
 
     // Complete callback
     const timer3 = setTimeout(() => {
       if (onComplete) onComplete();
-    }, 6200);
+    }, 2900);
 
     return () => {
       clearTimeout(timer1);
@@ -41,7 +41,7 @@ export default function CinematicSplashScreen({ onComplete }) {
         alignItems: 'center',
         justifyContent: 'center',
         overflow: 'hidden',
-        transition: 'opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
+        transition: 'opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
         opacity: stage === 3 ? 0 : 1,
         pointerEvents: stage === 3 ? 'none' : 'auto',
         color: '#ffffff',
@@ -55,18 +55,18 @@ export default function CinematicSplashScreen({ onComplete }) {
           width: '140vw',
           height: '140vh',
           background: 'radial-gradient(circle at 50% 50%, rgba(225, 29, 72, 0.24) 0%, rgba(18, 7, 22, 0.95) 55%, #050207 100%)',
-          animation: 'bgPulse 4s ease-in-out infinite alternate',
+          animation: 'bgPulse 3s ease-in-out infinite alternate',
           pointerEvents: 'none',
         }}
       />
 
-      {/* ── STAGE 1: Natural Drop Descent, Ground Impact & 20 Sub-Droplets Splattering Across Floor ── */}
+      {/* ── STAGE 1: Fast Natural Drop Descent -> Ground Impact & Disappears ── */}
       {stage === 1 && (
         <div className="impact-stage-container">
           
-          {/* Falling Teardrop */}
+          {/* Falling Teardrop (Disappears on impact!) */}
           <div className="falling-teardrop">
-            <svg viewBox="0 0 100 130" width="70" height="91" fill="none">
+            <svg viewBox="0 0 100 130" width="60" height="78" fill="none">
               <defs>
                 <linearGradient id="dropGrad" x1="30%" y1="10%" x2="70%" y2="90%">
                   <stop offset="0%" stopColor="#ff5252" />
@@ -84,7 +84,6 @@ export default function CinematicSplashScreen({ onComplete }) {
                 filter="url(#dropGlow)"
               />
               <ellipse cx="38" cy="72" rx="10" ry="18" fill="rgba(255, 255, 255, 0.75)" transform="rotate(-15 38 72)" />
-              <ellipse cx="32" cy="62" rx="4" ry="7" fill="rgba(255, 255, 255, 0.9)" transform="rotate(-15 32 62)" />
             </svg>
           </div>
 
@@ -93,7 +92,7 @@ export default function CinematicSplashScreen({ onComplete }) {
             <div className="ground-shadow" />
           </div>
 
-          {/* Ground Impact Splatter & 20 Sub-Small Droplets Bursting All Over */}
+          {/* Ground Impact Splatter & Sub-Droplets Bursting */}
           <div className="splatter-impact-group">
             <div className="impact-flatten-disc" />
             <div className="splatter-drop drop-1" />
@@ -122,7 +121,7 @@ export default function CinematicSplashScreen({ onComplete }) {
         </div>
       )}
 
-      {/* ── STAGE 2: Sub-Droplets Morph & Form the Orbital Micro-Galaxy & Brand Reveal ── */}
+      {/* ── STAGE 2: Fast Orbital Galaxy & Brand Reveal ── */}
       {stage >= 2 && (
         <div className="splash-main-content">
 
@@ -161,47 +160,47 @@ export default function CinematicSplashScreen({ onComplete }) {
             {/* Central Glowing EKG Heartbeat Orb */}
             <div className="central-ekg-orb">
               <div className="ekg-inner-ring" />
-              <Activity size={52} color="#ffffff" style={{ filter: 'drop-shadow(0 0 12px #ffffff)' }} />
+              <Activity size={48} color="#ffffff" style={{ filter: 'drop-shadow(0 0 10px #ffffff)' }} />
             </div>
 
             {/* 4 Sleek Glowing Function Pills */}
             <div className="orbital-capsule-node node-top-left">
               <div className="node-icon-capsule">
-                <User size={16} color="#ffffff" />
+                <User size={15} color="#ffffff" />
               </div>
               <div className="node-pill-label">
-                <Zap size={13} color="#fb7185" />
+                <Zap size={12} color="#fb7185" />
                 <span>Voluntary Donor</span>
               </div>
             </div>
 
             <div className="orbital-capsule-node node-top-right">
               <div className="node-pill-label">
-                <Building2 size={14} color="#fb7185" />
+                <Building2 size={13} color="#fb7185" />
                 <span>Hospital Network</span>
               </div>
               <div className="node-icon-capsule">
-                <Building2 size={16} color="#ffffff" />
+                <Building2 size={15} color="#ffffff" />
               </div>
             </div>
 
             <div className="orbital-capsule-node node-bottom-left">
               <div className="node-icon-capsule">
-                <Siren size={16} color="#ffffff" />
+                <Siren size={15} color="#ffffff" />
               </div>
               <div className="node-pill-label">
-                <Droplets size={13} color="#f43f5e" />
+                <Droplets size={12} color="#f43f5e" />
                 <span>Emergency Units</span>
               </div>
             </div>
 
             <div className="orbital-capsule-node node-bottom-right">
               <div className="node-pill-label">
-                <Stethoscope size={14} color="#fb7185" />
+                <Stethoscope size={13} color="#fb7185" />
                 <span>Life Savers</span>
               </div>
               <div className="node-icon-capsule">
-                <Stethoscope size={16} color="#ffffff" />
+                <Stethoscope size={15} color="#ffffff" />
               </div>
             </div>
 
@@ -211,7 +210,7 @@ export default function CinematicSplashScreen({ onComplete }) {
           <div className="branding-section">
             <h1 className="brand-title">
               <div className="brand-icon-wrap">
-                <Droplets size={38} color="#f43f5e" style={{ filter: 'drop-shadow(0 0 12px #f43f5e)' }} />
+                <Droplets size={36} color="#f43f5e" style={{ filter: 'drop-shadow(0 0 10px #f43f5e)' }} />
               </div>
               <span>Blood<span>Sync</span></span>
             </h1>
@@ -221,7 +220,7 @@ export default function CinematicSplashScreen({ onComplete }) {
             </p>
 
             <div className="brand-bottom-pill">
-              <Sparkles size={14} color="#f43f5e" />
+              <Sparkles size={13} color="#f43f5e" />
               <span>Real-Time Community Blood Network</span>
             </div>
           </div>
@@ -240,7 +239,7 @@ export default function CinematicSplashScreen({ onComplete }) {
       <style>{`
         @keyframes bgPulse {
           0% { transform: scale(1); opacity: 0.8; }
-          100% { transform: scale(1.1); opacity: 1; }
+          100% { transform: scale(1.08); opacity: 1; }
         }
 
         .impact-stage-container {
@@ -256,21 +255,22 @@ export default function CinematicSplashScreen({ onComplete }) {
         .falling-teardrop {
           position: absolute;
           bottom: 120px;
-          animation: dropFallAnimation 1.3s cubic-bezier(0.5, 0, 0.75, 0.9) forwards;
+          animation: fastDropFall 0.55s cubic-bezier(0.5, 0, 0.75, 0.9) forwards;
           z-index: 10;
         }
 
-        @keyframes dropFallAnimation {
-          0% { transform: translateY(-90vh) scale(0.65); opacity: 0; }
-          30% { opacity: 1; }
-          88% { transform: translateY(0) scale(1, 1); opacity: 1; }
-          100% { transform: translateY(14px) scale(1.35, 0.45); opacity: 1; }
+        @keyframes fastDropFall {
+          0% { transform: translateY(-80vh) scale(0.65); opacity: 0; }
+          25% { opacity: 1; }
+          85% { transform: translateY(0) scale(1, 1); opacity: 1; }
+          /* Disappear instantly upon hitting the floor */
+          100% { transform: translateY(10px) scale(1.4, 0.2); opacity: 0; visibility: hidden; }
         }
 
         .ground-contact-line {
           position: absolute;
           bottom: 110px;
-          width: 460px;
+          width: 440px;
           height: 26px;
           display: flex;
           align-items: center;
@@ -278,11 +278,11 @@ export default function CinematicSplashScreen({ onComplete }) {
         }
 
         .ground-shadow {
-          width: 380px;
-          height: 24px;
+          width: 360px;
+          height: 22px;
           border-radius: 50%;
           background: radial-gradient(ellipse at center, rgba(244, 63, 94, 0.85) 0%, rgba(18, 7, 22, 0.95) 60%, transparent 100%);
-          box-shadow: 0 0 45px rgba(244, 63, 94, 1);
+          box-shadow: 0 0 40px rgba(244, 63, 94, 1);
         }
 
         .splatter-impact-group {
@@ -298,33 +298,33 @@ export default function CinematicSplashScreen({ onComplete }) {
 
         .impact-flatten-disc {
           position: absolute;
-          width: 190px;
-          height: 20px;
+          width: 180px;
+          height: 18px;
           border-radius: 50%;
           background: linear-gradient(135deg, #ff5252, #e11d48);
-          box-shadow: 0 0 70px rgba(244, 63, 94, 1);
-          animation: flattenDiscSplatter 0.6s cubic-bezier(0.1, 0.8, 0.3, 1) 1.2s forwards;
+          box-shadow: 0 0 60px rgba(244, 63, 94, 1);
+          animation: flattenDiscSplatter 0.4s cubic-bezier(0.1, 0.8, 0.3, 1) 0.52s forwards;
           opacity: 0;
         }
 
         @keyframes flattenDiscSplatter {
           0% { transform: scale(0.2, 2.5); opacity: 1; }
-          100% { transform: scale(3.2, 0.1); opacity: 0; }
+          100% { transform: scale(3, 0.1); opacity: 0; }
         }
 
         .splatter-drop {
           position: absolute;
           border-radius: 50%;
           background: radial-gradient(circle at 35% 35%, #ff5252, #be123c);
-          box-shadow: 0 0 16px rgba(244, 63, 94, 1);
+          box-shadow: 0 0 14px rgba(244, 63, 94, 1);
           opacity: 0;
-          animation: burstSubDrop 0.9s cubic-bezier(0.12, 0.8, 0.32, 1) 1.2s forwards;
+          animation: burstSubDrop 0.5s cubic-bezier(0.12, 0.8, 0.32, 1) 0.52s forwards;
         }
 
-        .drop-1, .drop-2, .drop-3, .drop-4, .drop-5     { width: 14px; height: 14px; }
-        .drop-6, .drop-7, .drop-8, .drop-9, .drop-10    { width: 10px; height: 10px; }
-        .drop-11, .drop-12, .drop-13, .drop-14, .drop-15 { width: 7px;  height: 7px; }
-        .drop-16, .drop-17, .drop-18, .drop-19, .drop-20 { width: 5px;  height: 5px; }
+        .drop-1, .drop-2, .drop-3, .drop-4, .drop-5     { width: 12px; height: 12px; }
+        .drop-6, .drop-7, .drop-8, .drop-9, .drop-10    { width: 9px;  height: 9px; }
+        .drop-11, .drop-12, .drop-13, .drop-14, .drop-15 { width: 6px;  height: 6px; }
+        .drop-16, .drop-17, .drop-18, .drop-19, .drop-20 { width: 4px;  height: 4px; }
 
         .drop-1  { animation-name: burst1; }
         .drop-2  { animation-name: burst2; }
@@ -347,40 +347,40 @@ export default function CinematicSplashScreen({ onComplete }) {
         .drop-19 { animation-name: burst19; }
         .drop-20 { animation-name: burst20; }
 
-        @keyframes burst1  { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(-220px, -120px) scale(0.3); opacity: 0; } }
-        @keyframes burst2  { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(220px, -120px) scale(0.3); opacity: 0; } }
-        @keyframes burst3  { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(-280px, -40px) scale(0.4); opacity: 0; } }
-        @keyframes burst4  { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(280px, -40px) scale(0.4); opacity: 0; } }
-        @keyframes burst5  { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(-140px, -180px) scale(0.3); opacity: 0; } }
-        @keyframes burst6  { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(140px, -180px) scale(0.3); opacity: 0; } }
-        @keyframes burst7  { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(-80px, -220px) scale(0.2); opacity: 0; } }
-        @keyframes burst8  { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(80px, -220px) scale(0.2); opacity: 0; } }
-        @keyframes burst9  { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(-300px, -80px) scale(0.2); opacity: 0; } }
-        @keyframes burst10 { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(300px, -80px) scale(0.2); opacity: 0; } }
-        @keyframes burst11 { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(-180px, -30px) scale(0.2); opacity: 0; } }
-        @keyframes burst12 { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(180px, -30px) scale(0.2); opacity: 0; } }
-        @keyframes burst13 { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(-110px, -130px) scale(0.2); opacity: 0; } }
-        @keyframes burst14 { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(110px, -130px) scale(0.2); opacity: 0; } }
-        @keyframes burst15 { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(-240px, -150px) scale(0.2); opacity: 0; } }
-        @keyframes burst16 { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(240px, -150px) scale(0.2); opacity: 0; } }
-        @keyframes burst17 { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(-50px, -240px) scale(0.2); opacity: 0; } }
-        @keyframes burst18 { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(50px, -240px) scale(0.2); opacity: 0; } }
-        @keyframes burst19 { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(-320px, -20px) scale(0.2); opacity: 0; } }
-        @keyframes burst20 { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(320px, -20px) scale(0.2); opacity: 0; } }
+        @keyframes burst1  { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(-200px, -100px) scale(0.2); opacity: 0; } }
+        @keyframes burst2  { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(200px, -100px) scale(0.2); opacity: 0; } }
+        @keyframes burst3  { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(-250px, -30px) scale(0.3); opacity: 0; } }
+        @keyframes burst4  { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(250px, -30px) scale(0.3); opacity: 0; } }
+        @keyframes burst5  { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(-120px, -150px) scale(0.2); opacity: 0; } }
+        @keyframes burst6  { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(120px, -150px) scale(0.2); opacity: 0; } }
+        @keyframes burst7  { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(-70px, -180px) scale(0.2); opacity: 0; } }
+        @keyframes burst8  { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(70px, -180px) scale(0.2); opacity: 0; } }
+        @keyframes burst9  { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(-270px, -60px) scale(0.2); opacity: 0; } }
+        @keyframes burst10 { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(270px, -60px) scale(0.2); opacity: 0; } }
+        @keyframes burst11 { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(-160px, -20px) scale(0.2); opacity: 0; } }
+        @keyframes burst12 { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(160px, -20px) scale(0.2); opacity: 0; } }
+        @keyframes burst13 { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(-90px, -110px) scale(0.2); opacity: 0; } }
+        @keyframes burst14 { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(90px, -110px) scale(0.2); opacity: 0; } }
+        @keyframes burst15 { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(-210px, -130px) scale(0.2); opacity: 0; } }
+        @keyframes burst16 { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(210px, -130px) scale(0.2); opacity: 0; } }
+        @keyframes burst17 { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(-40px, -200px) scale(0.2); opacity: 0; } }
+        @keyframes burst18 { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(40px, -200px) scale(0.2); opacity: 0; } }
+        @keyframes burst19 { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(-290px, -10px) scale(0.2); opacity: 0; } }
+        @keyframes burst20 { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(290px, -10px) scale(0.2); opacity: 0; } }
 
         .ground-splash-ring {
           position: absolute;
-          width: 100px;
-          height: 36px;
+          width: 90px;
+          height: 30px;
           border-radius: 50%;
-          border: 3px solid rgba(244, 63, 94, 0.95);
-          animation: crownRingSplash 0.8s cubic-bezier(0.16, 1, 0.3, 1) 1.2s forwards;
+          border: 2px solid rgba(244, 63, 94, 0.95);
+          animation: crownRingSplash 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.52s forwards;
           opacity: 0;
         }
 
         @keyframes crownRingSplash {
           0% { transform: scale(0.2); opacity: 1; }
-          100% { transform: scale(3.5); opacity: 0; }
+          100% { transform: scale(3.2); opacity: 0; }
         }
 
         .splash-main-content {
@@ -391,22 +391,22 @@ export default function CinematicSplashScreen({ onComplete }) {
           width: 100%;
           max-width: 680px;
           padding: 0 20px;
-          animation: mainFadeIn 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+          animation: mainFadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
 
         @keyframes mainFadeIn {
-          0% { opacity: 0; transform: translateY(30px) scale(0.92); }
+          0% { opacity: 0; transform: translateY(20px) scale(0.95); }
           100% { opacity: 1; transform: translateY(0) scale(1); }
         }
 
         .orbital-galaxy-wrapper {
           position: relative;
           width: 440px;
-          height: 240px;
+          height: 220px;
           display: flex;
           align-items: center;
           justify-content: center;
-          margin-bottom: 20px;
+          margin-bottom: 16px;
         }
 
         .orbital-svg-paths {
@@ -420,30 +420,30 @@ export default function CinematicSplashScreen({ onComplete }) {
 
         .central-ekg-orb {
           position: relative;
-          width: 110px;
-          height: 110px;
+          width: 100px;
+          height: 100px;
           border-radius: 50%;
           background: linear-gradient(135deg, #e11d48 0%, #9f1239 100%);
           display: flex;
           align-items: center;
           justify-content: center;
-          box-shadow: 0 0 60px rgba(244, 63, 94, 0.9), 0 0 100px rgba(225, 29, 72, 0.4);
+          box-shadow: 0 0 50px rgba(244, 63, 94, 0.9), 0 0 80px rgba(225, 29, 72, 0.4);
           border: 3px solid rgba(255, 255, 255, 0.95);
           z-index: 5;
-          animation: orbPulse 1.6s ease-in-out infinite alternate;
+          animation: orbPulse 1.4s ease-in-out infinite alternate;
         }
 
         .ekg-inner-ring {
           position: absolute;
-          inset: -8px;
+          inset: -6px;
           border-radius: 50%;
           border: 2px stroke rgba(244, 63, 94, 0.4);
-          animation: ringRotate 8s linear infinite;
+          animation: ringRotate 6s linear infinite;
         }
 
         @keyframes orbPulse {
-          0% { transform: scale(0.97); boxShadow: 0 0 40px rgba(244, 63, 94, 0.8); }
-          100% { transform: scale(1.06); boxShadow: 0 0 80px rgba(244, 63, 94, 1); }
+          0% { transform: scale(0.97); boxShadow: 0 0 35px rgba(244, 63, 94, 0.8); }
+          100% { transform: scale(1.05); boxShadow: 0 0 70px rgba(244, 63, 94, 1); }
         }
 
         .orbital-capsule-node {
@@ -452,28 +452,28 @@ export default function CinematicSplashScreen({ onComplete }) {
           align-items: center;
           gap: 8px;
           z-index: 6;
-          animation: capsuleFloat 2.5s ease-in-out infinite alternate;
+          animation: capsuleFloat 2s ease-in-out infinite alternate;
         }
 
-        .node-top-left { top: 15px; left: 10px; animation-delay: 0s; }
-        .node-top-right { top: 15px; right: 10px; animation-delay: 0.5s; }
-        .node-bottom-left { bottom: 25px; left: 10px; animation-delay: 0.25s; }
-        .node-bottom-right { bottom: 25px; right: 10px; animation-delay: 0.75s; }
+        .node-top-left { top: 10px; left: 10px; animation-delay: 0s; }
+        .node-top-right { top: 10px; right: 10px; animation-delay: 0.4s; }
+        .node-bottom-left { bottom: 20px; left: 10px; animation-delay: 0.2s; }
+        .node-bottom-right { bottom: 20px; right: 10px; animation-delay: 0.6s; }
 
         @keyframes capsuleFloat {
           0% { transform: translateY(0); }
-          100% { transform: translateY(-6px); }
+          100% { transform: translateY(-5px); }
         }
 
         .node-icon-capsule {
-          width: 42px;
-          height: 42px;
+          width: 38px;
+          height: 38px;
           border-radius: 50%;
           background: linear-gradient(135deg, #f43f5e 0%, #be123c 100%);
           display: flex;
           align-items: center;
           justify-content: center;
-          box-shadow: 0 0 20px rgba(244, 63, 94, 0.8), inset 0 2px 4px rgba(255,255,255,0.6);
+          box-shadow: 0 0 16px rgba(244, 63, 94, 0.8), inset 0 2px 4px rgba(255,255,255,0.6);
           border: 2px solid rgba(255, 255, 255, 0.9);
           flex-shrink: 0;
         }
@@ -481,9 +481,9 @@ export default function CinematicSplashScreen({ onComplete }) {
         .node-pill-label {
           background: rgba(18, 6, 24, 0.88);
           border: 1px solid rgba(244, 63, 94, 0.5);
-          padding: 8px 16px;
+          padding: 7px 14px;
           border-radius: 20px;
-          font-size: 0.82rem;
+          font-size: 0.8rem;
           font-weight: 700;
           color: #ffffff;
           display: flex;
@@ -497,12 +497,12 @@ export default function CinematicSplashScreen({ onComplete }) {
         .branding-section {
           text-align: center;
           z-index: 5;
-          margin-bottom: 24px;
+          margin-bottom: 20px;
         }
 
         .brand-title {
           margin: 0;
-          font-size: 3.4rem;
+          font-size: 3.2rem;
           font-weight: 900;
           letter-spacing: 1px;
           display: flex;
@@ -514,8 +514,8 @@ export default function CinematicSplashScreen({ onComplete }) {
         .brand-title span span { color: #f43f5e; }
 
         .brand-tagline {
-          margin: 6px 0 0;
-          font-size: 1.15rem;
+          margin: 4px 0 0;
+          font-size: 1.1rem;
           color: #cbd5e1;
           font-weight: 600;
           letter-spacing: 0.5px;
@@ -525,13 +525,13 @@ export default function CinematicSplashScreen({ onComplete }) {
           display: inline-flex;
           align-items: center;
           gap: 8px;
-          margin-top: 18px;
-          padding: 8px 22px;
+          margin-top: 14px;
+          padding: 6px 18px;
           border-radius: 24px;
           background: rgba(244, 63, 94, 0.12);
           border: 1px solid rgba(244, 63, 94, 0.35);
           color: #fb7185;
-          font-size: 0.82rem;
+          font-size: 0.8rem;
           font-weight: 700;
           backdrop-filter: blur(8px);
         }
@@ -539,20 +539,20 @@ export default function CinematicSplashScreen({ onComplete }) {
         .obsidian-splash-base {
           position: relative;
           width: 100%;
-          max-width: 420px;
-          height: 40px;
+          max-width: 400px;
+          height: 32px;
           display: flex;
           align-items: center;
           justify-content: center;
         }
 
         .water-crown-splash {
-          width: 140px;
-          height: 24px;
+          width: 130px;
+          height: 20px;
           border-radius: 50%;
           border-top: 2px solid rgba(244, 63, 94, 0.6);
           box-shadow: 0 -4px 15px rgba(244, 63, 94, 0.4);
-          animation: crownRipple 2s ease-in-out infinite alternate;
+          animation: crownRipple 1.6s ease-in-out infinite alternate;
         }
         @keyframes crownRipple {
           0% { transform: scaleX(0.9); opacity: 0.5; }
@@ -561,19 +561,19 @@ export default function CinematicSplashScreen({ onComplete }) {
 
         .bouncing-liquid-bead {
           position: absolute;
-          width: 12px;
-          height: 12px;
+          width: 10px;
+          height: 10px;
           border-radius: 50%;
           background: radial-gradient(circle at 30% 30%, #ff4d4d, #be123c);
-          box-shadow: 0 0 12px rgba(244, 63, 94, 0.8);
-          animation: beadBounce 1.8s ease-in-out infinite alternate;
+          box-shadow: 0 0 10px rgba(244, 63, 94, 0.8);
+          animation: beadBounce 1.5s ease-in-out infinite alternate;
         }
-        .bead-left { left: 80px; bottom: 10px; animation-delay: 0.2s; }
-        .bead-right { right: 80px; bottom: 10px; animation-delay: 0.6s; }
+        .bead-left { left: 80px; bottom: 8px; animation-delay: 0.2s; }
+        .bead-right { right: 80px; bottom: 8px; animation-delay: 0.5s; }
 
         @keyframes beadBounce {
           0% { transform: translateY(0) scale(0.9); }
-          100% { transform: translateY(-14px) scale(1.1); }
+          100% { transform: translateY(-12px) scale(1.1); }
         }
       `}</style>
     </div>

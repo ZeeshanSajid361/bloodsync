@@ -8,15 +8,12 @@ const mongoose = require('mongoose');
 const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 
-const { User, ROLES } = require('#models/User');
-const { DonorProfile } = require('#models/DonorProfile');
-const { signAccessToken, signRefreshToken, verifyRefreshToken } = require('#utils/token');
-const { sendVerificationEmail, sendWelcomeEmail, sendPasswordResetEmail, sendContactSupportEmail } = require('#utils/email');
+const { User, ROLES } = require('../../models/User');
+const { DonorProfile } = require('../../models/DonorProfile');
+const { signAccessToken, signRefreshToken, verifyRefreshToken } = require('../../utils/token');
+const { sendVerificationEmail, sendWelcomeEmail, sendPasswordResetEmail, sendContactSupportEmail } = require('../../utils/email');
 
 class AuthService {
-  /**
-   * Registers a new user account (donor or other roles)
-   */
   async registerUser(userData) {
     const session = await mongoose.startSession();
     try {
@@ -84,9 +81,6 @@ class AuthService {
     }
   }
 
-  /**
-   * Verifies user email via token
-   */
   async verifyEmail(token) {
     if (!token) throw { status: 400, message: 'Verification token is required.' };
 
@@ -112,9 +106,6 @@ class AuthService {
     return true;
   }
 
-  /**
-   * Authenticates user and issues access/refresh tokens
-   */
   async loginUser(email, password) {
     if (!email || !password) throw { status: 400, message: 'Email and password are required.' };
 
@@ -156,9 +147,6 @@ class AuthService {
     };
   }
 
-  /**
-   * Refreshes access token via refresh token
-   */
   async refreshTokenPair(refreshToken) {
     if (!refreshToken) throw { status: 400, message: 'Refresh token is required.' };
 
@@ -186,9 +174,6 @@ class AuthService {
     return { accessToken: newAccessToken, refreshToken: newRefreshToken };
   }
 
-  /**
-   * Logs user out by revoking refresh token
-   */
   async logoutUser(refreshToken) {
     if (!refreshToken) return true;
     try {
@@ -204,9 +189,6 @@ class AuthService {
     return true;
   }
 
-  /**
-   * Generates password reset link & emails user
-   */
   async forgotPassword(email) {
     if (!email) throw { status: 400, message: 'Email address is required.' };
     const cleanEmail = email.toLowerCase().trim();
@@ -226,9 +208,6 @@ class AuthService {
     return cleanEmail;
   }
 
-  /**
-   * Resets password using token
-   */
   async resetPassword(token, password) {
     if (!token || !password) throw { status: 400, message: 'Token and new password are required.' };
     if (password.length < 8) throw { status: 400, message: 'Password must be at least 8 characters.' };
@@ -251,18 +230,12 @@ class AuthService {
     return true;
   }
 
-  /**
-   * Support contact inquiry
-   */
   async submitContactInquiry({ name, email, message }) {
     if (!name || !email || !message) throw { status: 400, message: 'Name, email, and message are required.' };
     await sendContactSupportEmail({ name, email, message });
     return true;
   }
 
-  /**
-   * Fetch profile by ID
-   */
   async getProfile(userId) {
     const user = await User.findById(userId);
     if (!user) throw { status: 404, message: 'User not found.' };
@@ -276,9 +249,6 @@ class AuthService {
     };
   }
 
-  /**
-   * Update profile by ID
-   */
   async updateProfile(userId, { name, phone, city }) {
     const user = await User.findById(userId);
     if (!user) throw { status: 404, message: 'User not found.' };
