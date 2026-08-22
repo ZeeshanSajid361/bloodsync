@@ -2,23 +2,23 @@ import { useState, useEffect } from 'react';
 import { Droplets, Activity, Zap, User, Building2, Siren, Stethoscope, Sparkles } from 'lucide-react';
 
 export default function CinematicSplashScreen({ onComplete }) {
-  const [stage, setStage] = useState(1); // 1: Top Drop Descent & Splash, 2: Orbital System & Brand Reveal, 3: Fade Out
+  const [stage, setStage] = useState(1); // 1: Slow Motion Teardrop Falling to Surface, 2: Surface Impact & Orbital Galaxy Reveal, 3: Fade Out
 
   useEffect(() => {
-    // Stage 1 (Top Drop Descent & Liquid Splash) -> Stage 2 (Orbital Galaxy & Brand Reveal)
+    // Stage 1 (Teardrop falls in slow-mo & impacts obsidian surface plane) -> Stage 2 (Orbital Galaxy)
     const timer1 = setTimeout(() => {
       setStage(2);
-    }, 1400);
+    }, 1800);
 
     // Stage 2 -> Stage 3 (Fade Out)
     const timer2 = setTimeout(() => {
       setStage(3);
-    }, 4500);
+    }, 4800);
 
     // Complete callback
     const timer3 = setTimeout(() => {
       if (onComplete) onComplete();
-    }, 5100);
+    }, 5400);
 
     return () => {
       clearTimeout(timer1);
@@ -35,7 +35,7 @@ export default function CinematicSplashScreen({ onComplete }) {
         position: 'fixed',
         inset: 0,
         zIndex: 99999999,
-        background: 'linear-gradient(180deg, #09030a 0%, #150616 40%, #08030b 100%)',
+        background: 'linear-gradient(180deg, #070308 0%, #120514 45%, #060207 100%)',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -48,36 +48,64 @@ export default function CinematicSplashScreen({ onComplete }) {
         fontFamily: 'Inter, system-ui, sans-serif',
       }}
     >
-      {/* Background Ambient Radial Glow */}
+      {/* Deep Radial Background Glow */}
       <div
         style={{
           position: 'absolute',
           width: '140vw',
           height: '140vh',
-          background: 'radial-gradient(circle at 50% 45%, rgba(225, 29, 72, 0.22) 0%, rgba(20, 8, 25, 0.95) 55%, #050208 100%)',
+          background: 'radial-gradient(circle at 50% 50%, rgba(225, 29, 72, 0.24) 0%, rgba(18, 7, 22, 0.95) 55%, #050207 100%)',
           animation: 'bgPulse 4s ease-in-out infinite alternate',
           pointerEvents: 'none',
         }}
       />
 
-      {/* Scattered Ambient Life-Data Micro Particles */}
-      <div className="orbital-particle p1" />
-      <div className="orbital-particle p2" />
-      <div className="orbital-particle p3" />
-      <div className="orbital-particle p4" />
-      <div className="orbital-particle p5" />
+      {/* Floating Micro Particles */}
+      <div className="micro-particle p1" />
+      <div className="micro-particle p2" />
+      <div className="micro-particle p3" />
+      <div className="micro-particle p4" />
 
-      {/* ── PHASE 1: Top Descent Drop Trace ── */}
+      {/* ── PHASE 1: Perfect 3D Teardrop Falling in Slow-Motion onto Surface Plane (NO LINE) ── */}
       {stage === 1 && (
-        <div className="phase1-container">
-          <div className="top-funnel-trace" />
-          <div className="descent-blood-drop">
-            <div className="drop-glow-core" />
+        <div className="phase1-surface-stage">
+          
+          {/* Perfect Upright 3D Teardrop (Slow Motion Descent) */}
+          <div className="slow-mo-teardrop">
+            <svg viewBox="0 0 100 130" width="70" height="91" fill="none">
+              <defs>
+                <linearGradient id="dropGrad" x1="30%" y1="10%" x2="70%" y2="90%">
+                  <stop offset="0%" stopColor="#ff5252" />
+                  <stop offset="50%" stopColor="#e11d48" />
+                  <stop offset="100%" stopColor="#7f1d1d" />
+                </linearGradient>
+                <filter id="dropGlow" x="-20%" y="-20%" width="140%" height="140%">
+                  <feGaussianBlur stdDeviation="4" result="blur" />
+                  <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                </filter>
+              </defs>
+              {/* Perfectly mathematically contoured teardrop shape */}
+              <path
+                d="M50,4 C50,4 90,65 90,90 C90,112 72,126 50,126 C28,126 10,112 10,90 C10,65 50,4 50,4 Z"
+                fill="url(#dropGrad)"
+                filter="url(#dropGlow)"
+              />
+              {/* 3D Specular Curved Light Reflection */}
+              <ellipse cx="38" cy="72" rx="10" ry="18" fill="rgba(255, 255, 255, 0.75)" transform="rotate(-15 38 72)" />
+              <ellipse cx="32" cy="62" rx="4" ry="7" fill="rgba(255, 255, 255, 0.9)" transform="rotate(-15 32 62)" />
+            </svg>
           </div>
+
+          {/* Polished Obsidian Surface Plane at Ground */}
+          <div className="surface-impact-plane">
+            <div className="surface-plane-ellipse" />
+            <div className="surface-plane-glow" />
+          </div>
+
         </div>
       )}
 
-      {/* ── PHASE 2: Refined Orbital Galaxy System & Liquid Splash Base ── */}
+      {/* ── PHASE 2: Refined Orbital Galaxy System & Impact Ripple ── */}
       {stage >= 2 && (
         <div className="splash-main-content">
 
@@ -86,7 +114,6 @@ export default function CinematicSplashScreen({ onComplete }) {
             
             {/* SVG Elliptical Orbital Path Lines (Separated Micro-Galaxy Paths) */}
             <svg className="orbital-svg-paths" viewBox="0 0 400 240" fill="none">
-              {/* Top-Left to Bottom-Right Ellipse Path */}
               <ellipse
                 cx="200" cy="120" rx="160" ry="75"
                 stroke="url(#orbitGradient1)"
@@ -94,7 +121,6 @@ export default function CinematicSplashScreen({ onComplete }) {
                 transform="rotate(-15 200 120)"
                 opacity="0.75"
               />
-              {/* Top-Right to Bottom-Left Ellipse Path */}
               <ellipse
                 cx="200" cy="120" rx="160" ry="75"
                 stroke="url(#orbitGradient2)"
@@ -122,7 +148,7 @@ export default function CinematicSplashScreen({ onComplete }) {
               <Activity size={52} color="#ffffff" style={{ filter: 'drop-shadow(0 0 12px #ffffff)' }} />
             </div>
 
-            {/* ── 4 Sleek Glowing Function Pills (Distinct Orbital Nodes - No Overlap) ── */}
+            {/* 4 Sleek Glowing Function Pills (Distinct Orbital Nodes - No Overlap) */}
 
             {/* 1. Top-Left Pill: Voluntary Donor */}
             <div className="orbital-capsule-node node-top-left">
@@ -189,7 +215,7 @@ export default function CinematicSplashScreen({ onComplete }) {
             </div>
           </div>
 
-          {/* Polished Obsidian Surface Base with Water Crown Splash & Bouncing Beads */}
+          {/* Polished Obsidian Surface Base with Water Crown Splash */}
           <div className="obsidian-splash-base">
             <div className="water-crown-splash" />
             <div className="bouncing-liquid-bead bead-left" />
@@ -199,54 +225,87 @@ export default function CinematicSplashScreen({ onComplete }) {
         </div>
       )}
 
-      {/* Embedded High-End Styles */}
+      {/* Embedded High-End CSS */}
       <style>{`
         @keyframes bgPulse {
           0% { transform: scale(1); opacity: 0.8; }
           100% { transform: scale(1.1); opacity: 1; }
         }
 
-        /* Phase 1 Top Descent */
-        .phase1-container {
+        /* ── Phase 1 Surface & Teardrop Slow Motion Descent ── */
+        .phase1-surface-stage {
           position: relative;
+          width: 100vw;
+          height: 100vh;
           display: flex;
-          flexDirection: column;
+          flex-direction: column;
           align-items: center;
-        }
-        .top-funnel-trace {
-          position: absolute;
-          top: -200px;
-          width: 2px;
-          height: 180px;
-          background: linear-gradient(to bottom, transparent, rgba(244, 63, 94, 0.6));
-        }
-        .descent-blood-drop {
-          width: 60px;
-          height: 80px;
-          border-radius: 50% 50% 50% 0;
-          transform: rotate(-45deg);
-          background: linear-gradient(135deg, #ff4d4d 0%, #e11d48 50%, #881337 100%);
-          box-shadow: 0 0 50px rgba(244, 63, 94, 0.9), inset -6px -6px 18px rgba(0,0,0,0.6);
-          animation: dropSlowDescent 1.4s cubic-bezier(0.25, 1, 0.5, 1) forwards;
-          position: relative;
-        }
-        .drop-glow-core {
-          position: absolute;
-          top: 12px;
-          left: 12px;
-          width: 14px;
-          height: 14px;
-          border-radius: 50%;
-          background: rgba(255, 255, 255, 0.85);
-          filter: blur(1px);
-        }
-        @keyframes dropSlowDescent {
-          0% { transform: translateY(-100px) rotate(-45deg) scale(0.6); opacity: 0; }
-          70% { transform: translateY(10px) rotate(-45deg) scale(1.05); opacity: 1; }
-          100% { transform: translateY(0) rotate(-45deg) scale(1); opacity: 1; }
+          justify-content: flex-end;
+          padding-bottom: 120px;
         }
 
-        /* Main Content Layout */
+        .slow-mo-teardrop {
+          position: absolute;
+          animation: teardropSlowFall 1.7s cubic-bezier(0.33, 1, 0.68, 1) forwards;
+          filter: drop-shadow(0 15px 25px rgba(225, 29, 72, 0.8));
+          z-index: 10;
+        }
+
+        @keyframes teardropSlowFall {
+          0% {
+            transform: translateY(-90vh) scale(0.7);
+            opacity: 0;
+          }
+          30% {
+            opacity: 1;
+          }
+          85% {
+            transform: translateY(-130px) scale(1);
+            opacity: 1;
+          }
+          100% {
+            transform: translateY(-110px) scale(1.1, 0.8);
+            opacity: 1;
+          }
+        }
+
+        /* Ground Surface Impact Plane */
+        .surface-impact-plane {
+          position: relative;
+          width: 320px;
+          height: 60px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .surface-plane-ellipse {
+          width: 260px;
+          height: 30px;
+          border-radius: 50%;
+          background: radial-gradient(ellipse at center, rgba(225, 29, 72, 0.35) 0%, rgba(18, 7, 22, 0.8) 60%, transparent 100%);
+          border: 1px solid rgba(244, 63, 94, 0.4);
+          box-shadow: 0 0 30px rgba(225, 29, 72, 0.6);
+        }
+
+        .surface-plane-glow {
+          position: absolute;
+          width: 180px;
+          height: 14px;
+          border-radius: 50%;
+          background: #f43f5e;
+          filter: blur(12px);
+          opacity: 0.7;
+          animation: surfaceGlowPulse 1.7s ease-out forwards;
+        }
+
+        @keyframes surfaceGlowPulse {
+          0% { transform: scale(0.3); opacity: 0.2; }
+          85% { transform: scale(1); opacity: 0.8; }
+          100% { transform: scale(1.4); opacity: 1; }
+        }
+
+        /* ── Main Orbital Galaxy Layout ── */
         .splash-main-content {
           display: flex;
           flex-direction: column;
@@ -262,7 +321,6 @@ export default function CinematicSplashScreen({ onComplete }) {
           100% { opacity: 1; transform: translateY(0) scale(1); }
         }
 
-        /* Orbital Galaxy Container */
         .orbital-galaxy-wrapper {
           position: relative;
           width: 440px;
@@ -282,7 +340,6 @@ export default function CinematicSplashScreen({ onComplete }) {
           pointer-events: none;
         }
 
-        /* Central EKG Orb */
         .central-ekg-orb {
           position: relative;
           width: 110px;
@@ -297,6 +354,7 @@ export default function CinematicSplashScreen({ onComplete }) {
           z-index: 5;
           animation: orbPulse 1.6s ease-in-out infinite alternate;
         }
+
         .ekg-inner-ring {
           position: absolute;
           inset: -8px;
@@ -309,7 +367,6 @@ export default function CinematicSplashScreen({ onComplete }) {
           100% { transform: scale(1.06); boxShadow: 0 0 80px rgba(244, 63, 94, 1); }
         }
 
-        /* Sleek Capsule Nodes (No Overlap) */
         .orbital-capsule-node {
           position: absolute;
           display: flex;
@@ -319,33 +376,16 @@ export default function CinematicSplashScreen({ onComplete }) {
           animation: capsuleFloat 2.5s ease-in-out infinite alternate;
         }
 
-        .node-top-left {
-          top: 15px;
-          left: 10px;
-          animation-delay: 0s;
-        }
-        .node-top-right {
-          top: 15px;
-          right: 10px;
-          animation-delay: 0.5s;
-        }
-        .node-bottom-left {
-          bottom: 25px;
-          left: 10px;
-          animation-delay: 0.25s;
-        }
-        .node-bottom-right {
-          bottom: 25px;
-          right: 10px;
-          animation-delay: 0.75s;
-        }
+        .node-top-left { top: 15px; left: 10px; animation-delay: 0s; }
+        .node-top-right { top: 15px; right: 10px; animation-delay: 0.5s; }
+        .node-bottom-left { bottom: 25px; left: 10px; animation-delay: 0.25s; }
+        .node-bottom-right { bottom: 25px; right: 10px; animation-delay: 0.75s; }
 
         @keyframes capsuleFloat {
           0% { transform: translateY(0); }
           100% { transform: translateY(-6px); }
         }
 
-        /* Circular Capsule Icon (3D Pill Bulb) */
         .node-icon-capsule {
           width: 42px;
           height: 42px;
@@ -359,7 +399,6 @@ export default function CinematicSplashScreen({ onComplete }) {
           flex-shrink: 0;
         }
 
-        /* Pill Label Capsule */
         .node-pill-label {
           background: rgba(18, 6, 24, 0.88);
           border: 1px solid rgba(244, 63, 94, 0.5);
@@ -376,7 +415,6 @@ export default function CinematicSplashScreen({ onComplete }) {
           white-space: nowrap;
         }
 
-        /* Branding Section */
         .branding-section {
           text-align: center;
           z-index: 5;
@@ -394,16 +432,7 @@ export default function CinematicSplashScreen({ onComplete }) {
           gap: 12px;
           color: #ffffff;
         }
-
-        .brand-title span span {
-          color: #f43f5e;
-        }
-
-        .brand-icon-wrap {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-        }
+        .brand-title span span { color: #f43f5e; }
 
         .brand-tagline {
           margin: 6px 0 0;
@@ -428,7 +457,6 @@ export default function CinematicSplashScreen({ onComplete }) {
           backdrop-filter: blur(8px);
         }
 
-        /* Polished Obsidian Base & Liquid Water Crown */
         .obsidian-splash-base {
           position: relative;
           width: 100%;
@@ -469,8 +497,7 @@ export default function CinematicSplashScreen({ onComplete }) {
           100% { transform: translateY(-14px) scale(1.1); }
         }
 
-        /* Ambient Micro Particles */
-        .orbital-particle {
+        .micro-particle {
           position: absolute;
           border-radius: 50%;
           background: #f43f5e;
@@ -482,7 +509,6 @@ export default function CinematicSplashScreen({ onComplete }) {
         .p2 { width: 6px; height: 6px; left: 85%; animation-duration: 6s; }
         .p3 { width: 10px; height: 10px; left: 35%; animation-duration: 4.5s; }
         .p4 { width: 7px; height: 7px; left: 65%; animation-duration: 5.5s; }
-        .p5 { width: 9px; height: 9px; left: 50%; animation-duration: 4.8s; }
 
         @keyframes floatUp {
           0% { transform: translateY(100vh); opacity: 0.1; }
