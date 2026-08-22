@@ -135,37 +135,39 @@ export default function LandingPage() {
 
       {/* ── Public Navbar ── */}
       <header className="landing-nav">
-        <Link to="/" className="landing-logo">
-          <div className="landing-logo-icon">🩸</div>
-          <span className="landing-logo-text">Blood<span>Sync</span></span>
-        </Link>
-
-        {/* Desktop Nav Links */}
-        <ul className="landing-nav-links">
-          <li><a href="#how-it-works">How It Works</a></li>
-          <li><a href="#checker">Donor Checker</a></li>
-          <li><a href="#emergencies">Live Requests</a></li>
-          <li><a href="#tiers">Recognition</a></li>
-          <li><a href="#contact">Contact</a></li>
-        </ul>
-
-        {/* Desktop & Mobile Quick Action Buttons */}
-        <div className="landing-nav-actions">
-          <Link to="/login" className="btn btn-ghost btn-sm">
-            Sign In
-          </Link>
-          <Link to="/register" className="btn btn-primary btn-sm">
-            Register
+        <div className="landing-nav-inner">
+          <Link to="/" className="landing-logo">
+            <div className="landing-logo-icon">🩸</div>
+            <span className="landing-logo-text">Blood<span>Sync</span></span>
           </Link>
 
-          {/* Mobile Hamburger Toggle (≡ 3 parallel lines button) */}
-          <button 
-            className="mobile-nav-toggle"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            aria-label="Toggle navigation menu"
-          >
-            {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
+          {/* Desktop Nav Links */}
+          <ul className="landing-nav-links">
+            <li><a href="#how-it-works">How It Works</a></li>
+            <li><a href="#checker">Donor Checker</a></li>
+            <li><a href="#emergencies">Live Requests</a></li>
+            <li><a href="#tiers">Recognition</a></li>
+            <li><a href="#contact">Contact</a></li>
+          </ul>
+
+          {/* Desktop & Mobile Quick Action Buttons */}
+          <div className="landing-nav-actions">
+            <Link to="/login" className="btn btn-ghost btn-sm">
+              Sign In
+            </Link>
+            <Link to="/register" className="btn btn-primary btn-sm">
+              Register
+            </Link>
+
+            {/* Mobile Hamburger Toggle (≡ 3 parallel lines button) */}
+            <button 
+              className="mobile-nav-toggle"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label="Toggle navigation menu"
+            >
+              {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
+          </div>
         </div>
 
         {/* Mobile Dropdown Slide Menu */}

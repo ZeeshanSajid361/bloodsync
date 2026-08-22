@@ -9,6 +9,18 @@
   padding-top: 68px;
 }
 
+/* Standardized Landing Page Fluid Layout with Uniform Very Small Side Gaps */
+.landing-nav-inner,
+.landing-hero,
+.section-wrapper,
+.footer-inner {
+  width: 98% !important;
+  max-width: 1760px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  box-sizing: border-box !important;
+}
+
 /* ── Navbar ──────────────────────────────────────────────────────────────── */
 .landing-nav {
   position: fixed;
@@ -20,7 +32,10 @@
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--surface-border);
-  padding: var(--space-4) var(--space-8);
+  padding: var(--space-3) var(--space-4);
+}
+
+.landing-nav-inner {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -76,22 +91,11 @@
 /* ── Hero Section ────────────────────────────────────────────────────────── */
 .landing-hero {
   position: relative;
-  padding: var(--space-16) var(--space-8) var(--space-12);
-  width: 94%;
-  max-width: 1440px;
-  margin: 0 auto;
+  padding: var(--space-12) var(--space-4) var(--space-8);
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: var(--space-10);
+  gap: var(--space-8);
   align-items: center;
-}
-
-.section-wrapper {
-  width: 94%;
-  max-width: 1440px;
-  margin: var(--space-6) auto;
-  padding: var(--space-8);
-  box-sizing: border-box;
 }
 
 .hero-content {
@@ -195,10 +199,7 @@
 
 /* ── Compatibility Checker Section ───────────────────────────────────────── */
 .section-wrapper {
-  width: 94%;
-  max-width: 1440px;
-  margin: 0 auto;
-  padding: var(--space-12) var(--space-8);
+  padding: var(--space-8) var(--space-4);
   scroll-margin-top: 90px;
 }
 
@@ -421,8 +422,8 @@
 .footer-col a:hover { color: var(--text-primary); }
 
 .footer-bottom {
-  width: 94%;
-  max-width: 1440px;
+  width: 98%;
+  max-width: 1760px;
   margin: var(--space-8) auto 0;
   padding-top: var(--space-6);
   border-top: 1px solid var(--surface-border);
