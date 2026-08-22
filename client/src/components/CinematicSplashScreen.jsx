@@ -2,28 +2,28 @@ import { useState, useEffect } from 'react';
 import { Droplets, Activity, Zap, User, Building2, Siren, Stethoscope, Sparkles } from 'lucide-react';
 
 export default function CinematicSplashScreen({ onComplete }) {
-  const [stage, setStage] = useState(1); // 1: Falling to Ground, 2: Ground Impact & Splitting, 3: Orbital Galaxy, 4: Fade Out
+  const [stage, setStage] = useState(1); // 1: Slow Motion Falling, 2: Ground Impact & 16-Sub-Drop Splatter, 3: Orbital Galaxy, 4: Fade Out
 
   useEffect(() => {
-    // Stage 1 (Falling to Ground) -> Stage 2 (Hits Ground Surface & Liquid Splitting Explosion)
+    // Stage 1 (Falling straight down) -> Stage 2 (Impacts Ground & Splatters 16 sub-drops across floor)
     const timer1 = setTimeout(() => {
       setStage(2);
-    }, 1300);
+    }, 1200);
 
-    // Stage 2 (Splitting) -> Stage 3 (Orbital System & Brand Reveal)
+    // Stage 2 (Sub-Drops Splattering & Spreading) -> Stage 3 (Orbital System & Brand Reveal)
     const timer2 = setTimeout(() => {
       setStage(3);
-    }, 2400);
+    }, 2600);
 
     // Stage 3 -> Stage 4 (Fade Out)
     const timer3 = setTimeout(() => {
       setStage(4);
-    }, 5400);
+    }, 5600);
 
     // Complete callback
     const timer4 = setTimeout(() => {
       if (onComplete) onComplete();
-    }, 6000);
+    }, 6200);
 
     return () => {
       clearTimeout(timer1);
@@ -72,11 +72,11 @@ export default function CinematicSplashScreen({ onComplete }) {
       <div className="micro-particle p3" />
       <div className="micro-particle p4" />
 
-      {/* ── STAGE 1 & 2: Drops from top of viewport straight down to the GROUND SURFACE PLANE ── */}
+      {/* ── STAGE 1 & 2: Natural Teardrop Falling to Ground & Splitting into 16 Sub-Small Drops Spreading Out ── */}
       {stage <= 2 && (
         <div className="ground-drop-viewport">
 
-          {/* Upright 3D Teardrop - Falls in slow-mo down to ground level */}
+          {/* Upright 3D Teardrop - Falls in slow-mo straight to ground */}
           {stage === 1 && (
             <div className="teardrop-falling-container">
               <svg viewBox="0 0 100 130" width="65" height="85" fill="none">
@@ -102,28 +102,37 @@ export default function CinematicSplashScreen({ onComplete }) {
             </div>
           )}
 
-          {/* STAGE 2: Impact on Ground Surface Plane & Liquid Splitting */}
+          {/* STAGE 2: Ground Impact Site & 16 Sub-Small Droplets Scattering All Over */}
           {stage === 2 && (
             <div className="ground-impact-splash-site">
-              {/* Flattening Liquid Disc */}
+              {/* Flattening Center Splash Disc */}
               <div className="flattening-impact-disc" />
 
-              {/* 8 Radial Splitting Liquid Droplets */}
-              <div className="split-droplet d1" />
-              <div className="split-droplet d2" />
-              <div className="split-droplet d3" />
-              <div className="split-droplet d4" />
-              <div className="split-droplet d5" />
-              <div className="split-droplet d6" />
-              <div className="split-droplet d7" />
-              <div className="split-droplet d8" />
+              {/* 16 Sub-Small Droplets Splitting & Scattering All Over */}
+              <div className="sub-drop sd1" />
+              <div className="sub-drop sd2" />
+              <div className="sub-drop sd3" />
+              <div className="sub-drop sd4" />
+              <div className="sub-drop sd5" />
+              <div className="sub-drop sd6" />
+              <div className="sub-drop sd7" />
+              <div className="sub-drop sd8" />
+              <div className="sub-drop sd9" />
+              <div className="sub-drop sd10" />
+              <div className="sub-drop sd11" />
+              <div className="sub-drop sd12" />
+              <div className="sub-drop sd13" />
+              <div className="sub-drop sd14" />
+              <div className="sub-drop sd15" />
+              <div className="sub-drop sd16" />
 
-              {/* Expanding Crown Splash Ring */}
-              <div className="liquid-crown-ring" />
+              {/* Concentric Expanding Ground Waves */}
+              <div className="ground-wave wave-1" />
+              <div className="ground-wave wave-2" />
             </div>
           )}
 
-          {/* Actual Ground Plane Surface Line at bottom of browser window */}
+          {/* Ground Surface Contact Line */}
           <div className="bottom-ground-plane">
             <div className="ground-surface-shadow" />
           </div>
@@ -131,7 +140,7 @@ export default function CinematicSplashScreen({ onComplete }) {
         </div>
       )}
 
-      {/* ── STAGE 3: Refined Orbital Galaxy System & Brand Reveal (Appears After Split) ── */}
+      {/* ── STAGE 3: Refined Orbital Galaxy System & Brand Reveal (Appears After Sub-Drop Spread) ── */}
       {stage >= 3 && (
         <div className="splash-main-content">
 
@@ -245,14 +254,14 @@ export default function CinematicSplashScreen({ onComplete }) {
         </div>
       )}
 
-      {/* Embedded Physics & Animation CSS */}
+      {/* Embedded Physics & Splatter Animation CSS */}
       <style>{`
         @keyframes bgPulse {
           0% { transform: scale(1); opacity: 0.8; }
           100% { transform: scale(1.1); opacity: 1; }
         }
 
-        /* ── Stage 1 & 2 Viewport Ground Setup ── */
+        /* Viewport Ground Container */
         .ground-drop-viewport {
           position: absolute;
           inset: 0;
@@ -260,14 +269,13 @@ export default function CinematicSplashScreen({ onComplete }) {
           flex-direction: column;
           align-items: center;
           justify-content: flex-end;
-          padding-bottom: 90px; /* Ground level plane near bottom of browser screen */
+          padding-bottom: 90px;
         }
 
-        /* Actual Ground Surface Line near bottom of viewport */
         .bottom-ground-plane {
           position: absolute;
           bottom: 80px;
-          width: 380px;
+          width: 440px;
           height: 24px;
           display: flex;
           align-items: center;
@@ -275,45 +283,45 @@ export default function CinematicSplashScreen({ onComplete }) {
         }
 
         .ground-surface-shadow {
-          width: 320px;
-          height: 20px;
+          width: 360px;
+          height: 22px;
           border-radius: 50%;
-          background: radial-gradient(ellipse at center, rgba(244, 63, 94, 0.7) 0%, rgba(18, 7, 22, 0.95) 60%, transparent 100%);
-          box-shadow: 0 0 35px rgba(244, 63, 94, 0.9);
+          background: radial-gradient(ellipse at center, rgba(244, 63, 94, 0.75) 0%, rgba(18, 7, 22, 0.95) 60%, transparent 100%);
+          box-shadow: 0 0 40px rgba(244, 63, 94, 0.9);
         }
 
-        /* Teardrop falls from top edge (-100vh) straight down to touch ground-surface-shadow */
+        /* Main Teardrop Fall */
         .teardrop-falling-container {
           position: absolute;
-          bottom: 90px; /* Exactly touches ground-surface-shadow */
-          animation: fallStraightToGround 1.3s cubic-bezier(0.55, 0, 0.85, 0.9) forwards;
+          bottom: 90px;
+          animation: fallStraightToGround 1.2s cubic-bezier(0.55, 0, 0.85, 0.9) forwards;
           z-index: 10;
         }
 
         @keyframes fallStraightToGround {
           0% {
-            transform: translateY(-90vh) scale(0.6);
+            transform: translateY(-90vh) scale(0.65);
             opacity: 0;
           }
           40% {
             opacity: 1;
           }
-          95% {
+          92% {
             transform: translateY(0) scale(1, 1);
             opacity: 1;
           }
           100% {
-            transform: translateY(10px) scale(1.25, 0.65); /* Flattens directly on ground contact */
+            transform: translateY(12px) scale(1.3, 0.5); /* Flattens completely on ground */
             opacity: 1;
           }
         }
 
-        /* Stage 2 Liquid Impact & Radial Splitting on Ground Surface */
+        /* Impact Site & 16 Sub-Small Droplets Splattering All Over */
         .ground-impact-splash-site {
           position: absolute;
           bottom: 85px;
-          width: 320px;
-          height: 100px;
+          width: 400px;
+          height: 120px;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -321,61 +329,82 @@ export default function CinematicSplashScreen({ onComplete }) {
         }
 
         .flattening-impact-disc {
-          width: 160px;
-          height: 16px;
+          width: 180px;
+          height: 18px;
           border-radius: 50%;
           background: linear-gradient(135deg, #ff5252, #e11d48);
-          box-shadow: 0 0 50px rgba(244, 63, 94, 1);
-          animation: flattenOnGround 0.4s ease-out forwards;
+          box-shadow: 0 0 60px rgba(244, 63, 94, 1);
+          animation: flattenSplatter 0.5s ease-out forwards;
         }
 
-        @keyframes flattenOnGround {
+        @keyframes flattenSplatter {
           0% { transform: scale(0.2, 2.5); opacity: 1; }
-          100% { transform: scale(2.6, 0.15); opacity: 0; }
+          100% { transform: scale(2.8, 0.1); opacity: 0; }
         }
 
-        /* 8 Radial Splitting Liquid Droplets bursting from ground */
-        .split-droplet {
+        /* 16 Sub-Small Droplets Scattering All Over in 360 Parabolic Trajectories */
+        .sub-drop {
           position: absolute;
-          width: 14px;
-          height: 14px;
           border-radius: 50%;
-          background: radial-gradient(circle at 30% 30%, #ff5252, #be123c);
-          box-shadow: 0 0 18px rgba(244, 63, 94, 1);
-          animation: splitOutward 0.6s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+          background: radial-gradient(circle at 35% 35%, #ff4d4d, #be123c);
+          box-shadow: 0 0 14px rgba(244, 63, 94, 1);
+          animation: subDropScatter 0.8s cubic-bezier(0.12, 0.8, 0.32, 1) forwards;
         }
 
-        .d1 { animation-name: split1; }
-        .d2 { animation-name: split2; }
-        .d3 { animation-name: split3; }
-        .d4 { animation-name: split4; }
-        .d5 { animation-name: split5; }
-        .d6 { animation-name: split6; }
-        .d7 { animation-name: split7; }
-        .d8 { animation-name: split8; }
+        /* Varying sizes of sub-small drops */
+        .sd1, .sd2, .sd3, .sd4   { width: 14px; height: 14px; }
+        .sd5, .sd6, .sd7, .sd8   { width: 10px; height: 10px; }
+        .sd9, .sd10, .sd11, .sd12 { width: 7px;  height: 7px; }
+        .sd13, .sd14, .sd15, .sd16 { width: 5px;  height: 5px; }
 
-        @keyframes split1 { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(-120px, -80px) scale(0.3); opacity: 0; } }
-        @keyframes split2 { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(120px, -80px) scale(0.3); opacity: 0; } }
-        @keyframes split3 { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(-160px, -20px) scale(0.3); opacity: 0; } }
-        @keyframes split4 { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(160px, -20px) scale(0.3); opacity: 0; } }
-        @keyframes split5 { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(-80px, -110px) scale(0.3); opacity: 0; } }
-        @keyframes split6 { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(80px, -110px) scale(0.3); opacity: 0; } }
-        @keyframes split7 { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(-180px, -40px) scale(0.2); opacity: 0; } }
-        @keyframes split8 { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(180px, -40px) scale(0.2); opacity: 0; } }
+        /* 360-degree radial parabolic scatter directions */
+        .sd1  { animation-name: scat1; }
+        .sd2  { animation-name: scat2; }
+        .sd3  { animation-name: scat3; }
+        .sd4  { animation-name: scat4; }
+        .sd5  { animation-name: scat5; }
+        .sd6  { animation-name: scat6; }
+        .sd7  { animation-name: scat7; }
+        .sd8  { animation-name: scat8; }
+        .sd9  { animation-name: scat9; }
+        .sd10 { animation-name: scat10; }
+        .sd11 { animation-name: scat11; }
+        .sd12 { animation-name: scat12; }
+        .sd13 { animation-name: scat13; }
+        .sd14 { animation-name: scat14; }
+        .sd15 { animation-name: scat15; }
+        .sd16 { animation-name: scat16; }
 
-        /* Liquid Crown Splash Ring */
-        .liquid-crown-ring {
+        @keyframes scat1  { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(-180px, -90px) scale(0.3); opacity: 0; } }
+        @keyframes scat2  { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(180px, -90px) scale(0.3); opacity: 0; } }
+        @keyframes scat3  { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(-230px, -30px) scale(0.4); opacity: 0; } }
+        @keyframes scat4  { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(230px, -30px) scale(0.4); opacity: 0; } }
+        @keyframes scat5  { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(-120px, -140px) scale(0.3); opacity: 0; } }
+        @keyframes scat6  { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(120px, -140px) scale(0.3); opacity: 0; } }
+        @keyframes scat7  { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(-60px, -170px) scale(0.2); opacity: 0; } }
+        @keyframes scat8  { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(60px, -170px) scale(0.2); opacity: 0; } }
+        @keyframes scat9  { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(-260px, -60px) scale(0.2); opacity: 0; } }
+        @keyframes scat10 { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(260px, -60px) scale(0.2); opacity: 0; } }
+        @keyframes scat11 { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(-150px, -20px) scale(0.2); opacity: 0; } }
+        @keyframes scat12 { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(150px, -20px) scale(0.2); opacity: 0; } }
+        @keyframes scat13 { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(-90px, -100px) scale(0.2); opacity: 0; } }
+        @keyframes scat14 { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(90px, -100px) scale(0.2); opacity: 0; } }
+        @keyframes scat15 { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(-200px, -120px) scale(0.2); opacity: 0; } }
+        @keyframes scat16 { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(200px, -120px) scale(0.2); opacity: 0; } }
+
+        /* Concentric Ground Waves */
+        .ground-wave {
           position: absolute;
-          width: 90px;
-          height: 34px;
           border-radius: 50%;
-          border: 3px solid rgba(244, 63, 94, 0.9);
-          animation: crownSplash 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+          border: 2px solid rgba(244, 63, 94, 0.8);
+          animation: waveOutward 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
+        .wave-1 { width: 100px; height: 36px; animation-delay: 0s; }
+        .wave-2 { width: 100px; height: 36px; animation-delay: 0.15s; }
 
-        @keyframes crownSplash {
+        @keyframes waveOutward {
           0% { transform: scale(0.2); opacity: 1; }
-          100% { transform: scale(3); opacity: 0; }
+          100% { transform: scale(3.2); opacity: 0; }
         }
 
         /* ── Stage 3 Main Orbital Galaxy Layout ── */
