@@ -2,28 +2,28 @@ import { useState, useEffect } from 'react';
 import { Droplets, Activity, Zap, User, Building2, Siren, Stethoscope, Sparkles } from 'lucide-react';
 
 export default function CinematicSplashScreen({ onComplete }) {
-  const [stage, setStage] = useState(1); // 1: Slow Motion Teardrop Falling, 2: Impact & Splitting, 3: Orbital System, 4: Fade Out
+  const [stage, setStage] = useState(1); // 1: Falling to Ground, 2: Ground Impact & Splitting, 3: Orbital Galaxy, 4: Fade Out
 
   useEffect(() => {
-    // Stage 1 (Falling) -> Stage 2 (Impact ground & split into liquid droplets)
+    // Stage 1 (Falling to Ground) -> Stage 2 (Hits Ground Surface & Liquid Splitting Explosion)
     const timer1 = setTimeout(() => {
       setStage(2);
-    }, 1200);
+    }, 1300);
 
     // Stage 2 (Splitting) -> Stage 3 (Orbital System & Brand Reveal)
     const timer2 = setTimeout(() => {
       setStage(3);
-    }, 2200);
+    }, 2400);
 
     // Stage 3 -> Stage 4 (Fade Out)
     const timer3 = setTimeout(() => {
       setStage(4);
-    }, 5200);
+    }, 5400);
 
     // Complete callback
     const timer4 = setTimeout(() => {
       if (onComplete) onComplete();
-    }, 5800);
+    }, 6000);
 
     return () => {
       clearTimeout(timer1);
@@ -72,14 +72,14 @@ export default function CinematicSplashScreen({ onComplete }) {
       <div className="micro-particle p3" />
       <div className="micro-particle p4" />
 
-      {/* ── STAGE 1 & 2: Natural Teardrop Falling, Hitting Ground & Splitting Outward ── */}
+      {/* ── STAGE 1 & 2: Drops from top of viewport straight down to the GROUND SURFACE PLANE ── */}
       {stage <= 2 && (
-        <div className="natural-drop-stage">
+        <div className="ground-drop-viewport">
 
-          {/* Upright 3D Teardrop - Lands directly on ground surface */}
+          {/* Upright 3D Teardrop - Falls in slow-mo down to ground level */}
           {stage === 1 && (
-            <div className="teardrop-descent-wrapper">
-              <svg viewBox="0 0 100 130" width="70" height="91" fill="none">
+            <div className="teardrop-falling-container">
+              <svg viewBox="0 0 100 130" width="65" height="85" fill="none">
                 <defs>
                   <linearGradient id="dropGrad" x1="30%" y1="10%" x2="70%" y2="90%">
                     <stop offset="0%" stopColor="#ff5252" />
@@ -102,28 +102,30 @@ export default function CinematicSplashScreen({ onComplete }) {
             </div>
           )}
 
-          {/* Liquid Impact Crown & Splitting Droplets upon touching ground */}
+          {/* STAGE 2: Impact on Ground Surface Plane & Liquid Splitting */}
           {stage === 2 && (
-            <div className="impact-splitting-wrapper">
+            <div className="ground-impact-splash-site">
               {/* Flattening Liquid Disc */}
               <div className="flattening-impact-disc" />
 
-              {/* Splitting Radial Liquid Droplets */}
+              {/* 8 Radial Splitting Liquid Droplets */}
               <div className="split-droplet d1" />
               <div className="split-droplet d2" />
               <div className="split-droplet d3" />
               <div className="split-droplet d4" />
               <div className="split-droplet d5" />
               <div className="split-droplet d6" />
+              <div className="split-droplet d7" />
+              <div className="split-droplet d8" />
 
-              {/* Liquid Crown Splash Ring */}
+              {/* Expanding Crown Splash Ring */}
               <div className="liquid-crown-ring" />
             </div>
           )}
 
-          {/* Ground Surface Contact Line / Base */}
-          <div className="ground-contact-plane">
-            <div className="ground-shadow-ellipse" />
+          {/* Actual Ground Plane Surface Line at bottom of browser window */}
+          <div className="bottom-ground-plane">
+            <div className="ground-surface-shadow" />
           </div>
 
         </div>
@@ -250,62 +252,67 @@ export default function CinematicSplashScreen({ onComplete }) {
           100% { transform: scale(1.1); opacity: 1; }
         }
 
-        /* ── Stage 1 & 2 Natural Drop Physics ── */
-        .natural-drop-stage {
+        /* ── Stage 1 & 2 Viewport Ground Setup ── */
+        .ground-drop-viewport {
           position: absolute;
           inset: 0;
           display: flex;
           flex-direction: column;
           align-items: center;
-          justify-content: center;
+          justify-content: flex-end;
+          padding-bottom: 90px; /* Ground level plane near bottom of browser screen */
         }
 
-        /* Teardrop falls straight down until bottom touches ground plane exactly */
-        .teardrop-descent-wrapper {
+        /* Actual Ground Surface Line near bottom of viewport */
+        .bottom-ground-plane {
           position: absolute;
-          bottom: 48%;
-          animation: naturalFallToGround 1.2s cubic-bezier(0.45, 0, 0.75, 0.9) forwards;
-          z-index: 10;
-        }
-
-        @keyframes naturalFallToGround {
-          0% {
-            transform: translateY(-90vh) scale(0.65);
-            opacity: 0.2;
-          }
-          60% {
-            opacity: 1;
-          }
-          100% {
-            transform: translateY(0) scale(1);
-            opacity: 1;
-          }
-        }
-
-        /* Ground Contact Base */
-        .ground-contact-plane {
-          position: absolute;
-          bottom: 48%;
-          width: 300px;
-          height: 20px;
+          bottom: 80px;
+          width: 380px;
+          height: 24px;
           display: flex;
           align-items: center;
           justify-content: center;
         }
 
-        .ground-shadow-ellipse {
-          width: 220px;
-          height: 18px;
+        .ground-surface-shadow {
+          width: 320px;
+          height: 20px;
           border-radius: 50%;
-          background: radial-gradient(ellipse at center, rgba(244, 63, 94, 0.6) 0%, rgba(18, 7, 22, 0.9) 60%, transparent 100%);
-          box-shadow: 0 0 25px rgba(244, 63, 94, 0.8);
+          background: radial-gradient(ellipse at center, rgba(244, 63, 94, 0.7) 0%, rgba(18, 7, 22, 0.95) 60%, transparent 100%);
+          box-shadow: 0 0 35px rgba(244, 63, 94, 0.9);
         }
 
-        /* Stage 2 Liquid Impact & Splitting */
-        .impact-splitting-wrapper {
+        /* Teardrop falls from top edge (-100vh) straight down to touch ground-surface-shadow */
+        .teardrop-falling-container {
           position: absolute;
-          bottom: 48%;
-          width: 300px;
+          bottom: 90px; /* Exactly touches ground-surface-shadow */
+          animation: fallStraightToGround 1.3s cubic-bezier(0.55, 0, 0.85, 0.9) forwards;
+          z-index: 10;
+        }
+
+        @keyframes fallStraightToGround {
+          0% {
+            transform: translateY(-90vh) scale(0.6);
+            opacity: 0;
+          }
+          40% {
+            opacity: 1;
+          }
+          95% {
+            transform: translateY(0) scale(1, 1);
+            opacity: 1;
+          }
+          100% {
+            transform: translateY(10px) scale(1.25, 0.65); /* Flattens directly on ground contact */
+            opacity: 1;
+          }
+        }
+
+        /* Stage 2 Liquid Impact & Radial Splitting on Ground Surface */
+        .ground-impact-splash-site {
+          position: absolute;
+          bottom: 85px;
+          width: 320px;
           height: 100px;
           display: flex;
           align-items: center;
@@ -314,57 +321,61 @@ export default function CinematicSplashScreen({ onComplete }) {
         }
 
         .flattening-impact-disc {
-          width: 140px;
-          height: 14px;
+          width: 160px;
+          height: 16px;
           border-radius: 50%;
           background: linear-gradient(135deg, #ff5252, #e11d48);
-          box-shadow: 0 0 40px rgba(244, 63, 94, 1);
-          animation: flattenDisc 0.4s ease-out forwards;
+          box-shadow: 0 0 50px rgba(244, 63, 94, 1);
+          animation: flattenOnGround 0.4s ease-out forwards;
         }
 
-        @keyframes flattenDisc {
-          0% { transform: scale(0.2, 2); opacity: 1; }
-          100% { transform: scale(2.2, 0.2); opacity: 0.2; }
+        @keyframes flattenOnGround {
+          0% { transform: scale(0.2, 2.5); opacity: 1; }
+          100% { transform: scale(2.6, 0.15); opacity: 0; }
         }
 
-        /* Splitting Liquid Droplets radiating outwards */
+        /* 8 Radial Splitting Liquid Droplets bursting from ground */
         .split-droplet {
           position: absolute;
-          width: 12px;
-          height: 12px;
+          width: 14px;
+          height: 14px;
           border-radius: 50%;
           background: radial-gradient(circle at 30% 30%, #ff5252, #be123c);
-          box-shadow: 0 0 15px rgba(244, 63, 94, 0.9);
-          animation: splitRadiate 0.6s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+          box-shadow: 0 0 18px rgba(244, 63, 94, 1);
+          animation: splitOutward 0.6s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
         }
 
-        .d1 { animation-name: splitUpLeft; }
-        .d2 { animation-name: splitUpRight; }
-        .d3 { animation-name: splitLeft; }
-        .d4 { animation-name: splitRight; }
-        .d5 { animation-name: splitDownLeft; }
-        .d6 { animation-name: splitDownRight; }
+        .d1 { animation-name: split1; }
+        .d2 { animation-name: split2; }
+        .d3 { animation-name: split3; }
+        .d4 { animation-name: split4; }
+        .d5 { animation-name: split5; }
+        .d6 { animation-name: split6; }
+        .d7 { animation-name: split7; }
+        .d8 { animation-name: split8; }
 
-        @keyframes splitUpLeft    { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(-100px, -60px) scale(0.4); opacity: 0; } }
-        @keyframes splitUpRight   { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(100px, -60px) scale(0.4); opacity: 0; } }
-        @keyframes splitLeft      { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(-140px, 0px) scale(0.3); opacity: 0; } }
-        @keyframes splitRight     { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(140px, 0px) scale(0.3); opacity: 0; } }
-        @keyframes splitDownLeft  { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(-90px, 40px) scale(0.4); opacity: 0; } }
-        @keyframes splitDownRight { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(90px, 40px) scale(0.4); opacity: 0; } }
+        @keyframes split1 { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(-120px, -80px) scale(0.3); opacity: 0; } }
+        @keyframes split2 { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(120px, -80px) scale(0.3); opacity: 0; } }
+        @keyframes split3 { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(-160px, -20px) scale(0.3); opacity: 0; } }
+        @keyframes split4 { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(160px, -20px) scale(0.3); opacity: 0; } }
+        @keyframes split5 { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(-80px, -110px) scale(0.3); opacity: 0; } }
+        @keyframes split6 { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(80px, -110px) scale(0.3); opacity: 0; } }
+        @keyframes split7 { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(-180px, -40px) scale(0.2); opacity: 0; } }
+        @keyframes split8 { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(180px, -40px) scale(0.2); opacity: 0; } }
 
         /* Liquid Crown Splash Ring */
         .liquid-crown-ring {
           position: absolute;
-          width: 80px;
-          height: 30px;
+          width: 90px;
+          height: 34px;
           border-radius: 50%;
           border: 3px solid rgba(244, 63, 94, 0.9);
-          animation: crownExpand 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+          animation: crownSplash 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
 
-        @keyframes crownExpand {
-          0% { transform: scale(0.3); opacity: 1; }
-          100% { transform: scale(2.8); opacity: 0; }
+        @keyframes crownSplash {
+          0% { transform: scale(0.2); opacity: 1; }
+          100% { transform: scale(3); opacity: 0; }
         }
 
         /* ── Stage 3 Main Orbital Galaxy Layout ── */
