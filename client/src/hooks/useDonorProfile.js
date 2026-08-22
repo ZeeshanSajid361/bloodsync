@@ -9,10 +9,14 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import api from '../lib/api';
 import cacheService from '../utils/CacheService';
 
-const CACHE_KEY = 'donor_profile';
+import { useAuth } from '../context/AuthContext';
 
 export function useDonorProfile() {
-  const [donor, setDonor] = useState(() => cacheService.get(CACHE_KEY));
+  const { user } = useAuth();
+  const userId = user?._id || user?.id || '';
+  const cacheKey = userId ? `donor_profile_${userId}` : null;
+
+  const [donor, setDonor] = useState(() => cacheKey ? cacheService.get(cacheKey) : null);
 
   const donorRef = useRef(donor);
   donorRef.current = donor;
@@ -28,7 +32,7 @@ export function useDonorProfile() {
     try {
       const { data } = await api.get('/donors/me');
       setDonor(data.data);
-      cacheService.set(CACHE_KEY, data.data);
+      if (cacheKey) cacheService.set(cacheKey, data.data);
     } catch (err) {
       if (!donorRef.current) {
         setError(err.response?.data?.message || 'Failed to load donor profile.');

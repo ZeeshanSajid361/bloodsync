@@ -13,14 +13,19 @@
 
 import { useState, useCallback, useRef } from 'react';
 import api from '../lib/api';
-
-const CACHE_ANALYTICS = 'bloodsync_admin_analytics_cache';
-const CACHE_HOSPITALS = 'bloodsync_admin_hospitals_cache';
-const CACHE_REQUESTS  = 'bloodsync_admin_requests_cache';
-const CACHE_USERS     = 'bloodsync_admin_users_cache';
+import { useAuth } from '../context/AuthContext';
 
 export default function useAdminData() {
+  const { user } = useAuth();
+  const userId = (user?.role === 'admin' && (user._id || user.id)) ? (user._id || user.id) : null;
+
+  const CACHE_ANALYTICS = userId ? `bloodsync_admin_analytics_${userId}` : null;
+  const CACHE_HOSPITALS = userId ? `bloodsync_admin_hospitals_${userId}` : null;
+  const CACHE_REQUESTS  = userId ? `bloodsync_admin_requests_${userId}` : null;
+  const CACHE_USERS     = userId ? `bloodsync_admin_users_${userId}` : null;
+
   const [analytics, setAnalytics] = useState(() => {
+    if (!CACHE_ANALYTICS) return null;
     try {
       const cached = localStorage.getItem(CACHE_ANALYTICS);
       return cached ? JSON.parse(cached) : null;
@@ -28,6 +33,7 @@ export default function useAdminData() {
   });
 
   const [hospitals, setHospitals] = useState(() => {
+    if (!CACHE_HOSPITALS) return { orgs: [], total: 0 };
     try {
       const cached = localStorage.getItem(CACHE_HOSPITALS);
       return cached ? JSON.parse(cached) : { orgs: [], total: 0 };
@@ -35,6 +41,7 @@ export default function useAdminData() {
   });
 
   const [requests, setRequests] = useState(() => {
+    if (!CACHE_REQUESTS) return { requests: [], total: 0 };
     try {
       const cached = localStorage.getItem(CACHE_REQUESTS);
       return cached ? JSON.parse(cached) : { requests: [], total: 0 };
@@ -42,6 +49,7 @@ export default function useAdminData() {
   });
 
   const [users, setUsers] = useState(() => {
+    if (!CACHE_USERS) return { users: [], total: 0 };
     try {
       const cached = localStorage.getItem(CACHE_USERS);
       return cached ? JSON.parse(cached) : { users: [], total: 0 };
@@ -69,13 +77,13 @@ export default function useAdminData() {
       if (!isSilent) setLoading(true);
       const { data } = await api.get('/admin/analytics');
       setAnalytics(data.data);
-      localStorage.setItem(CACHE_ANALYTICS, JSON.stringify(data.data));
+      if (CACHE_ANALYTICS) localStorage.setItem(CACHE_ANALYTICS, JSON.stringify(data.data));
     } catch (err) {
       if (!analyticsRef.current) setError(err.response?.data?.message || 'Failed to load analytics.');
     } finally {
       setLoading(false);
     }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [CACHE_ANALYTICS]);
 
   const fetchHospitals = useCallback(async (status = '', type = '', isSilent = false) => {
     try {
@@ -86,14 +94,14 @@ export default function useAdminData() {
       if (type)   params.set('type', type);
       const { data } = await api.get(`/admin/hospitals?${params}`);
       setHospitals(data.data);
-      if (!status && !type) localStorage.setItem(CACHE_HOSPITALS, JSON.stringify(data.data));
+      if (!status && !type && CACHE_HOSPITALS) localStorage.setItem(CACHE_HOSPITALS, JSON.stringify(data.data));
     } catch (err) {
       const hasCache = hospitalsRef.current?.orgs?.length > 0;
       if (!hasCache) setError(err.response?.data?.message || 'Failed to load hospitals.');
     } finally {
       setLoading(false);
     }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [CACHE_HOSPITALS]);
 
   const fetchRequests = useCallback(async (status = '', isSilent = false) => {
     try {
@@ -103,14 +111,14 @@ export default function useAdminData() {
       if (status) params.set('status', status);
       const { data } = await api.get(`/admin/requests?${params}`);
       setRequests(data.data);
-      if (!status) localStorage.setItem(CACHE_REQUESTS, JSON.stringify(data.data));
+      if (!status && CACHE_REQUESTS) localStorage.setItem(CACHE_REQUESTS, JSON.stringify(data.data));
     } catch (err) {
       const hasCache = requestsRef.current?.requests?.length > 0;
       if (!hasCache) setError(err.response?.data?.message || 'Failed to load requests.');
     } finally {
       setLoading(false);
     }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [CACHE_REQUESTS]);
 
   const fetchUsers = useCallback(async (role = '', search = '', isSilent = false) => {
     try {
@@ -121,14 +129,14 @@ export default function useAdminData() {
       if (search) params.set('search', search);
       const { data } = await api.get(`/admin/users?${params}`);
       setUsers(data.data);
-      if (!role && !search) localStorage.setItem(CACHE_USERS, JSON.stringify(data.data));
+      if (!role && !search && CACHE_USERS) localStorage.setItem(CACHE_USERS, JSON.stringify(data.data));
     } catch (err) {
       const hasCache = usersRef.current?.users?.length > 0;
       if (!hasCache) setError(err.response?.data?.message || 'Failed to load users.');
     } finally {
       setLoading(false);
     }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [CACHE_USERS]);
 
   /* ── Hospital mutations ────────────────────────────────────────────────── */
 

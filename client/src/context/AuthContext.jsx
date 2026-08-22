@@ -13,6 +13,24 @@ import cacheService from '../utils/CacheService';
 
 const AuthContext = createContext(null);
 
+export function clearAllUserDataCache() {
+  cacheService.clear();
+  try {
+    const keysToRemove = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && (key.startsWith('bloodsync_') || key.startsWith('app_cache:') || key.startsWith('donor_profile'))) {
+        if (!key.startsWith('bloodsync_verif_resend_') && !key.startsWith('bloodsync_spotlight_tour_')) {
+          keysToRemove.push(key);
+        }
+      }
+    }
+    keysToRemove.forEach(k => localStorage.removeItem(k));
+  } catch (e) {
+    console.error('Error clearing app cache:', e);
+  }
+}
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true); // true until initial hydration done
@@ -47,6 +65,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   const login = useCallback(({ user: userData, accessToken, refreshToken }) => {
+    clearAllUserDataCache();
     localStorage.setItem('user', JSON.stringify(userData));
     localStorage.setItem('accessToken', accessToken);
     localStorage.setItem('refreshToken', refreshToken);
@@ -61,7 +80,7 @@ export function AuthProvider({ children }) {
     localStorage.removeItem('user');
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
-    cacheService.clear();
+    clearAllUserDataCache();
     setUser(null);
   }, []);
 

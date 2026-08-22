@@ -79,10 +79,14 @@ api.interceptors.response.use(
         pendingRequests = [];
         isRefreshing = false;
 
-        // Refresh failed ΓÇö clear tokens and redirect to login.
+        // Refresh failed — clear tokens, purge cache, and redirect to login.
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
         localStorage.removeItem('user');
+        try {
+          const { clearAllUserDataCache } = await import('../context/AuthContext');
+          clearAllUserDataCache();
+        } catch {}
         window.location.href = '/login';
       }
     }

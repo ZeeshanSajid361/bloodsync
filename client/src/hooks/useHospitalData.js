@@ -12,14 +12,17 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import api from '../lib/api';
-
-const CACHE_KEY = 'bloodsync_hospital_profile_cache';
+import { useAuth } from '../context/AuthContext';
 
 export default function useHospitalData() {
+  const { user } = useAuth();
+  const userId = user?._id || user?.id || '';
+  const cacheKey = userId ? `bloodsync_hospital_profile_${userId}` : null;
+
   const [profile, setProfile] = useState(() => {
+    if (!cacheKey) return null;
     try {
-      const cached = localStorage.getItem(CACHE_KEY);
+      const cached = localStorage.getItem(cacheKey);
       return cached ? JSON.parse(cached) : null;
     } catch {
       return null;
@@ -40,7 +43,7 @@ export default function useHospitalData() {
     try {
       const { data } = await api.get('/hospitals/me');
       setProfile(data.data);
-      localStorage.setItem(CACHE_KEY, JSON.stringify(data.data));
+      if (cacheKey) localStorage.setItem(cacheKey, JSON.stringify(data.data));
     } catch (err) {
       // 404 means the user hasn't registered their org yet — that's normal.
       if (err.response?.status !== 404) {
@@ -49,12 +52,12 @@ export default function useHospitalData() {
         }
       } else {
         setProfile(null);
-        localStorage.removeItem(CACHE_KEY);
+        if (cacheKey) localStorage.removeItem(cacheKey);
       }
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [cacheKey]);
 
   useEffect(() => { fetchProfile(); }, [fetchProfile]);
 
