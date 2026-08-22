@@ -66,7 +66,7 @@ export default function useAdminData() {
 
   const fetchAnalytics = useCallback(async (isSilent = false) => {
     try {
-      if (!analyticsRef.current && !isSilent) setLoading(true);
+      if (!isSilent) setLoading(true);
       const { data } = await api.get('/admin/analytics');
       setAnalytics(data.data);
       localStorage.setItem(CACHE_ANALYTICS, JSON.stringify(data.data));
@@ -79,8 +79,7 @@ export default function useAdminData() {
 
   const fetchHospitals = useCallback(async (status = '', type = '', isSilent = false) => {
     try {
-      const hasCache = hospitalsRef.current?.orgs?.length > 0;
-      if (!hasCache && !isSilent) setLoading(true);
+      if (!isSilent) setLoading(true);
       const params = new URLSearchParams();
       if (status) params.set('status', status);
       if (type)   params.set('type', type);
@@ -97,8 +96,7 @@ export default function useAdminData() {
 
   const fetchRequests = useCallback(async (status = '', isSilent = false) => {
     try {
-      const hasCache = requestsRef.current?.requests?.length > 0;
-      if (!hasCache && !isSilent) setLoading(true);
+      if (!isSilent) setLoading(true);
       const params = new URLSearchParams();
       if (status) params.set('status', status);
       const { data } = await api.get(`/admin/requests?${params}`);
@@ -114,8 +112,7 @@ export default function useAdminData() {
 
   const fetchUsers = useCallback(async (role = '', search = '', isSilent = false) => {
     try {
-      const hasCache = usersRef.current?.users?.length > 0;
-      if (!hasCache && !isSilent) setLoading(true);
+      if (!isSilent) setLoading(true);
       const params = new URLSearchParams();
       if (role)   params.set('role', role);
       if (search) params.set('search', search);

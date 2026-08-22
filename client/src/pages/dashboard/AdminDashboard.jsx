@@ -534,7 +534,12 @@ function UsersTab({ admin }) {
   const [search,     setSearch]     = useState('');
   const [acting,     setActing]     = useState('');
 
-  useEffect(() => { fetchUsers(roleFilter, search); }, [fetchUsers, roleFilter]);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchUsers(roleFilter, search);
+    }, 150);
+    return () => clearTimeout(timer);
+  }, [fetchUsers, roleFilter, search]);
 
   async function handleBlock(user) {
     setActing(user._id);
@@ -560,9 +565,7 @@ function UsersTab({ admin }) {
   }
 
   function handleSearchChange(e) {
-    const val = e.target.value;
-    setSearch(val);
-    fetchUsers(roleFilter, val);
+    setSearch(e.target.value);
   }
 
   function handleSearchSubmit(e) {
@@ -579,7 +582,11 @@ function UsersTab({ admin }) {
         <div style={{ display: 'flex', gap: 'var(--space-3)', flexWrap: 'wrap', alignItems: 'center' }}>
           <div className="admin-filter-group">
             {ROLES.map(r => (
-              <button key={r||'all'} className={`admin-filter-chip${roleFilter===r?' active':''}`} onClick={() => setRoleFilter(r)}>
+              <button 
+                key={r||'all'} 
+                className={`admin-filter-chip${roleFilter===r?' active':''}`} 
+                onClick={() => setRoleFilter(r)}
+              >
                 {r || 'All'}
               </button>
             ))}
@@ -664,28 +671,40 @@ function UsersTab({ admin }) {
                       </td>
                       <td>
                         {u.role !== 'admin' && (
-                          <div style={{ display: 'flex', gap: '6px' }}>
+                          <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
                             <button
                               className={`btn btn-sm ${u.isBlocked ? 'btn-secondary' : 'btn-ghost'}`}
-                              style={{ padding: '4px 8px', fontSize: '0.75rem' }}
+                              style={{ 
+                                padding: '5px 10px', 
+                                fontSize: '0.78rem', 
+                                display: 'inline-flex', 
+                                alignItems: 'center', 
+                                gap: '5px' 
+                              }}
                               disabled={acting === u._id}
                               onClick={() => handleBlock(u)}
                             >
                               {acting === u._id
-                                ? <Loader2 size={13} className="spin" />
+                                ? <Loader2 size={15} className="spin" />
                                 : u.isBlocked
-                                  ? <><Unlock size={13} /> Unblock</>
-                                  : <><Lock size={13} /> Block</>
+                                  ? <><Unlock size={15} /> Unblock</>
+                                  : <><Lock size={15} /> Block</>
                               }
                             </button>
                             <button
                               className="btn btn-danger btn-sm"
-                              style={{ padding: '4px 8px', fontSize: '0.75rem' }}
+                              style={{ 
+                                padding: '5px 10px', 
+                                fontSize: '0.78rem', 
+                                display: 'inline-flex', 
+                                alignItems: 'center', 
+                                gap: '5px' 
+                              }}
                               disabled={acting === u._id}
                               onClick={() => handleDelete(u)}
                               title="Permanently delete user"
                             >
-                              <Trash2 size={13} /> Delete
+                              <Trash2 size={15} /> Delete
                             </button>
                           </div>
                         )}
