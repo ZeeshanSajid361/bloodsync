@@ -231,6 +231,39 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
     setMapsUrl(googleSearchUrl);
   }
 
+  // Handle typing/pasting directly in Google Maps Shareable URL field: auto-extract venue/plus-code, city, and province!
+  function handleMapsUrlInputChange(e) {
+    const rawVal = e.target.value;
+    setMapsUrl(rawVal);
+
+    if (!rawVal.trim()) return;
+
+    if (rawVal.includes('google.com/maps') || rawVal.includes('maps.app.goo.gl')) {
+      const placeMatch = rawVal.match(/\/place\/([^/@?]+)/);
+      if (placeMatch && placeMatch[1]) {
+        const decoded = decodeURIComponent(placeMatch[1].replace(/\+/g, ' '));
+        const formatted = formatSearchAddress(decoded);
+        setAddressText(formatted);
+        setSearchQuery(formatted);
+        const detectedCity = extractCityFromQuery(decoded) || city || 'Islamabad';
+        setCity(detectedCity);
+        setProvince(getProvinceForCity(detectedCity));
+        return;
+      }
+    }
+
+    const plusMatch = rawVal.match(/([A-Z0-9]{4}\+[A-Z0-9]{2,3})(?:,\s*(.*))?/i);
+    if (plusMatch) {
+      const rest = plusMatch[2] || '';
+      const formatted = rest ? `${plusMatch[1]}, ${rest}` : plusMatch[1];
+      setAddressText(formatted);
+      setSearchQuery(formatted);
+      const detectedCity = extractCityFromQuery(rest) || city || 'Islamabad';
+      setCity(detectedCity);
+      setProvince(getProvinceForCity(detectedCity));
+    }
+  }
+
   // Detect GPS Device Location
   function handleDetectGps() {
     if (!navigator.geolocation) {
@@ -463,7 +496,7 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
                   className="input"
                   style={{ fontSize: '0.8rem', padding: '8px 12px', flex: 1, borderRadius: '8px' }}
                   value={activeMapsUrl}
-                  onChange={e => setMapsUrl(e.target.value)}
+                  onChange={handleMapsUrlInputChange}
                   placeholder="Google Maps URL"
                 />
                 <a
