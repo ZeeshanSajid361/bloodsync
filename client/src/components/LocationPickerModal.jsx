@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { MapPin, Navigation, ExternalLink, CheckCircle2, X, Loader2, Search } from 'lucide-react';
+import { MapPin, Navigation, ExternalLink, CheckCircle2, X, Loader2, Search, RefreshCw } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const CITY_COORDS = {
@@ -130,6 +130,51 @@ function extractCityFromQuery(q) {
   return null;
 }
 
+function parseLocationInput(rawText) {
+  if (!rawText || typeof rawText !== 'string') return null;
+  let text = rawText.trim();
+
+  // 1. Google Maps URL pattern parsing (e.g. https://www.google.com/maps/place/Jamia+Al+Fazal+Mosque/@33.5989,73.0441...)
+  if (text.includes('google.com/maps') || text.includes('maps.app.goo.gl')) {
+    const placeMatch = text.match(/\/place\/([^/@?]+)/);
+    if (placeMatch && placeMatch[1]) {
+      const decodedPlace = decodeURIComponent(placeMatch[1].replace(/\+/g, ' '));
+      return {
+        formatted: formatSearchAddress(decodedPlace),
+        mapsUrl: text,
+      };
+    }
+    const coordMatch = text.match(/@(-?\d+\.\d+),\s*(-?\d+\.\d+)/) || text.match(/query=(-?\d+\.\d+),\s*(-?\d+\.\d+)/);
+    if (coordMatch) {
+      return {
+        lat: parseFloat(coordMatch[1]),
+        lng: parseFloat(coordMatch[2]),
+        formatted: `Location Pin (${coordMatch[1]}, ${coordMatch[2]})`,
+        mapsUrl: text,
+      };
+    }
+  }
+
+  // 2. Plus code pattern (e.g. H2Q8+2V9, Allama Iqbal Colony, Rawalpindi)
+  const plusCodeMatch = text.match(/([A-Z0-9]{4}\+[A-Z0-9]{2,3})(?:,\s*(.*))?/i);
+  if (plusCodeMatch) {
+    const code = plusCodeMatch[1];
+    const rest = plusCodeMatch[2] || '';
+    const full = rest ? `${code}, ${rest}` : code;
+    return {
+      formatted: formatSearchAddress(full),
+      mapsUrl: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(full)}`,
+    };
+  }
+
+  // 3. Regular text query (e.g. Jamia Al Fazal Mosque, Rawalpindi)
+  const formatted = formatSearchAddress(text);
+  return {
+    formatted: formatted,
+    mapsUrl: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(formatted)}`,
+  };
+}
+
 export default function LocationPickerModal({ isOpen, onClose, onSelectLocation, initialLocation = {} }) {
   const safeInit   = initialLocation && typeof initialLocation === 'object' ? initialLocation : {};
   const safeCity   = typeof safeInit.city === 'string' && safeInit.city.trim() ? safeInit.city.trim() : 'Islamabad';
@@ -191,24 +236,51 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
     };
   }, [isOpen]);
 
-  // Handle typing directly in the Search Input: sync Address, City, Province, and Google Maps URL live!
-  function handleSearchInputChange(e) {
-    const rawVal = e.target.value;
-    setSearchQuery(rawVal);
+  // Dynamic location sync helper
+  function updateLocationFromInput(rawInput) {
+    if (!rawInput || !rawInput.trim()) return;
+    
+    const parsed = parseLocationInput(rawInput);
+    if (!parsed) return;
 
-    if (!rawVal.trim()) return;
-
-    const formatted = formatSearchAddress(rawVal);
+    const formatted = parsed.formatted || formatSearchAddress(rawInput);
     setAddressText(formatted);
+    setSearchQuery(formatted);
 
-    const detectedCity = extractCityFromQuery(rawVal) || city || 'Islamabad';
+    const detectedCity = extractCityFromQuery(rawInput) || extractCityFromQuery(formatted) || city || 'Islamabad';
     setCity(detectedCity);
 
     const detectedProvince = getProvinceForCity(detectedCity);
     setProvince(detectedProvince);
 
-    const googleSearchUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(formatted)}`;
-    setMapsUrl(googleSearchUrl);
+    const finalMapsUrl = parsed.mapsUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(formatted)}`;
+    setMapsUrl(finalMapsUrl);
+
+    if (parsed.lat && parsed.lng) {
+      setLat(parsed.lat);
+      setLng(parsed.lng);
+    }
+  }
+
+  // Typing in Search Bar: syncs map, address, city, province, and maps URL
+  function handleSearchInputChange(e) {
+    const val = e.target.value;
+    setSearchQuery(val);
+    updateLocationFromInput(val);
+  }
+
+  // Typing in Street Address field directly: syncs search query, map, city, province, and maps URL
+  function handleAddressInputChange(e) {
+    const val = e.target.value;
+    setAddressText(val);
+    updateLocationFromInput(val);
+  }
+
+  // Pasting/Typing in Google Maps Shareable URL field: syncs search query, address, city, and map!
+  function handleMapsUrlInputChange(e) {
+    const val = e.target.value;
+    setMapsUrl(val);
+    updateLocationFromInput(val);
   }
 
   // Detect GPS Device Location
@@ -247,25 +319,14 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
     );
   }
 
-  // Handle Search submit
+  // Handle Search submit / Sync button click
   function handleSearchSubmit(e) {
     if (e) e.preventDefault();
-    const rawQuery = searchQuery.trim();
-    if (!rawQuery) return;
+    const targetQuery = searchQuery.trim() || addressText.trim();
+    if (!targetQuery) return;
 
-    const formatted = formatSearchAddress(rawQuery);
-    setAddressText(formatted);
-
-    const detectedCity = extractCityFromQuery(rawQuery) || city || 'Islamabad';
-    setCity(detectedCity);
-
-    const detectedProvince = getProvinceForCity(detectedCity);
-    setProvince(detectedProvince);
-
-    const googleSearchUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(formatted)}`;
-    setMapsUrl(googleSearchUrl);
-
-    toast.success(`📍 Map centered to exact query: ${formatted}`, { id: 'gps-toast' });
+    updateLocationFromInput(targetQuery);
+    toast.success(`📍 Map synced to: ${addressText || targetQuery}`, { id: 'gps-toast' });
   }
 
   function handleConfirm() {
@@ -357,7 +418,7 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
               <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px', color: '#f8fafc' }}>
                 <MapPin size={20} color="#ef4444" /> Pin Location Details
               </h3>
-              <p style={{ margin: '2px 0 0', fontSize: '0.75rem', color: '#94a3b8' }}>Type location to update Google Map & details live</p>
+              <p style={{ margin: '2px 0 0', fontSize: '0.75rem', color: '#94a3b8' }}>Type venue name (e.g. Jamia Al Fazal Mosque) to sync map</p>
             </div>
             <button onClick={onClose} className="btn btn-ghost btn-sm" style={{ padding: '6px', borderRadius: '50%' }}>
               <X size={18} />
@@ -371,7 +432,7 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
                 <input
                   className="input"
                   style={{ fontSize: '0.85rem', padding: '10px 14px', width: '100%', borderRadius: '10px' }}
-                  placeholder="Type address, hospital, landmark (e.g. Allama iqbal colony street 39, rawalpindi)..."
+                  placeholder="Type venue/mosque/street (e.g. Jamia Al Fazal Mosque, Rawalpindi)..."
                   value={searchQuery}
                   onChange={handleSearchInputChange}
                 />
@@ -380,9 +441,10 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
                 type="submit"
                 className="btn btn-primary btn-sm"
                 style={{ padding: '10px 16px', background: '#2563eb', display: 'inline-flex', alignItems: 'center', gap: '6px', flexShrink: 0, fontWeight: 700, borderRadius: '10px' }}
+                title="Sync Map to Search"
               >
                 <Search size={16} />
-                <span>Search</span>
+                <span>Sync</span>
               </button>
               <button
                 type="button"
@@ -426,13 +488,22 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
             </div>
 
             <div className="input-group" style={{ margin: 0 }}>
-              <label className="input-label" style={{ fontSize: '0.75rem', marginBottom: '4px', fontWeight: 700 }}>Street Address / Landmark</label>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                <label className="input-label" style={{ fontSize: '0.75rem', margin: 0, fontWeight: 700 }}>Street Address / Landmark / Venue</label>
+                <button
+                  type="button"
+                  onClick={handleSearchSubmit}
+                  style={{ background: 'none', border: 'none', color: '#60a5fa', fontSize: '0.72rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '3px', padding: 0 }}
+                >
+                  <RefreshCw size={12} /> Refresh Map
+                </button>
+              </div>
               <input
                 className="input"
                 style={{ fontSize: '0.85rem', padding: '8px 12px', borderRadius: '8px' }}
                 value={addressText}
-                onChange={e => setAddressText(e.target.value)}
-                placeholder="e.g. Allama Iqbal Colony Street 39, Rawalpindi"
+                onChange={handleAddressInputChange}
+                placeholder="e.g. Jamia Al Fazal Mosque, Allama Iqbal Colony, Rawalpindi"
               />
             </div>
 
@@ -443,8 +514,8 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
                   className="input"
                   style={{ fontSize: '0.8rem', padding: '8px 12px', flex: 1, borderRadius: '8px' }}
                   value={activeMapsUrl}
-                  onChange={e => setMapsUrl(e.target.value)}
-                  placeholder="Google Maps URL"
+                  onChange={handleMapsUrlInputChange}
+                  placeholder="Paste Google Maps URL or Plus Code"
                 />
                 <a
                   href={activeMapsUrl}
