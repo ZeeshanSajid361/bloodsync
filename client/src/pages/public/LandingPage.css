@@ -77,9 +77,9 @@
 .landing-hero {
   position: relative;
   padding: var(--space-16) var(--space-8) var(--space-12);
-  max-width: 1200px;
+  width: 94%;
+  max-width: 1440px;
   margin: 0 auto;
-  width: 100%;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: var(--space-10);
@@ -187,16 +187,16 @@
 
 /* ── Compatibility Checker Section ───────────────────────────────────────── */
 .section-wrapper {
-  max-width: 1200px;
+  width: 94%;
+  max-width: 1440px;
   margin: 0 auto;
   padding: var(--space-12) var(--space-8);
-  width: 100%;
   scroll-margin-top: 90px;
 }
 
 .section-title-wrap {
   text-align: center;
-  max-width: 600px;
+  max-width: 700px;
   margin: 0 auto var(--space-10);
 }
 
@@ -373,7 +373,8 @@
 }
 
 .footer-inner {
-  max-width: 1200px;
+  width: 94%;
+  max-width: 1440px;
   margin: 0 auto;
   display: grid;
   grid-template-columns: 2fr 1fr 1fr 1fr;
@@ -384,7 +385,7 @@
   color: var(--text-muted);
   font-size: 0.875rem;
   margin-top: var(--space-3);
-  max-width: 320px;
+  max-width: 380px;
 }
 
 .footer-col h4 {
@@ -412,7 +413,8 @@
 .footer-col a:hover { color: var(--text-primary); }
 
 .footer-bottom {
-  max-width: 1200px;
+  width: 94%;
+  max-width: 1440px;
   margin: var(--space-8) auto 0;
   padding-top: var(--space-6);
   border-top: 1px solid var(--surface-border);

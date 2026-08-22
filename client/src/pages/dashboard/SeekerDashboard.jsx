@@ -32,33 +32,40 @@ const BLOOD_GROUPS   = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
 const URGENCY_LEVELS = ['routine', 'urgent', 'critical'];
 
 const NAV_ITEMS = [
+  { id: 'history',  label: 'My Requests',  icon: ClipboardList },
   { id: 'search',   label: 'Find Donors',  icon: Search },
   { id: 'request',  label: 'New Request',  icon: FilePlus },
-  { id: 'history',  label: 'My Requests',  icon: ClipboardList },
   { id: 'edit',     label: 'Edit Profile', icon: Edit3 },
 ];
 
 const SEEKER_TOUR_STEPS = [
   {
-    targetSelector: '#nav-search',
-    title: 'Find Compatible Donors',
-    description: 'Your dashboard opens directly here! Search active voluntary donors by blood group and city with real-time location matching.',
-    icon: Search,
+    targetSelector: '#nav-history',
+    title: 'My Requests & Live Tracking',
+    description: 'Your main dashboard! Track your submitted blood requests, verification status, and real-time donor travel pledges ("I\'m On My Way").',
+    icon: ClipboardList,
     preferredPos: 'right',
   },
   {
     targetSelector: '#nav-request',
     title: 'Post Emergency Blood Request',
-    description: 'In an emergency? Click here to submit patient hospital details for team verification and instant broadcast to nearby donors!',
+    description: 'In an urgent trauma emergency? Click here to submit patient hospital details for team verification and instant broadcast to nearby donors!',
     icon: FilePlus,
     preferredPos: 'right',
   },
   {
     targetSelector: '#notification-bell',
-    title: 'Real-Time Status & Hospital Pins',
-    description: 'Get notified immediately when donors pledge to help. Use exact Google Maps location pins so donors reach your ward without delay!',
+    title: 'Instant Emergency Alerts',
+    description: 'Receive real-time push alerts whenever donors pledge to travel or when your blood request gets verified by admins!',
     icon: HelpCircle,
     preferredPos: 'left',
+  },
+  {
+    targetSelector: '#tour-demo-location-card',
+    title: 'Google Maps Gate Pins & Live Tracking',
+    description: 'Exact Google Maps location pins guide volunteer donors straight to your emergency ward without any delay!',
+    icon: MapPin,
+    preferredPos: 'top',
   },
 ];
 
@@ -67,16 +74,17 @@ export default function SeekerDashboard() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
-  const activeTab                      = searchParams.get('tab') || 'search';
+  const [showDemoLocation, setShowDemoLocation] = useState(false);
+  const activeTab                      = searchParams.get('tab') || 'history';
 
   const { requests, loading: reqLoading, error: reqError, total, refetch } = useSeekerRequests();
   const navigate                      = useNavigate();
   const notifs                        = useNotifications();
 
-  // Ensure default URL tab parameter is 'search' on login
+  // Ensure default URL tab parameter is 'history' on login
   useEffect(() => {
     if (!searchParams.get('tab')) {
-      setSearchParams({ tab: 'search' }, { replace: true });
+      setSearchParams({ tab: 'history' }, { replace: true });
     }
   }, [searchParams, setSearchParams]);
 
@@ -275,18 +283,80 @@ export default function SeekerDashboard() {
         </div>
       )}
 
+      {/* Floating Demo Location Card (Triggered during App Onboarding Step 4) */}
+      {showDemoLocation && (
+        <div
+          id="tour-demo-location-card"
+          className="animate-fade-up"
+          style={{
+            position: 'fixed',
+            top: '45%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            zIndex: 9999,
+            background: 'linear-gradient(145deg, #151926, #0f172a)',
+            border: '2px solid rgba(239, 68, 68, 0.6)',
+            borderRadius: '20px',
+            padding: '20px 24px',
+            maxWidth: '380px',
+            width: '92%',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.85), 0 0 35px rgba(239, 68, 68, 0.3)',
+            color: '#f8fafc',
+            textAlign: 'center',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '12px' }}>
+            <MapPin size={22} color="#f87171" />
+            <span style={{ fontSize: '1.05rem', fontWeight: 700, color: '#f87171' }}>
+              Live Hospital Gate Pin & Tracking
+            </span>
+          </div>
+
+          <div style={{
+            background: 'rgba(239, 68, 68, 0.12)',
+            border: '1px solid rgba(239, 68, 68, 0.35)',
+            borderRadius: '12px',
+            padding: '12px',
+            marginBottom: '10px',
+            textAlign: 'left'
+          }}>
+            <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#fff', marginBottom: '4px' }}>
+              🏥 Holy Family Hospital — Emergency Ward Gate 2
+            </div>
+            <div style={{ fontSize: '0.78rem', color: '#94a3b8' }}>
+              📍 Rawalpindi (Exact GPS Pin Attached)
+            </div>
+            <div style={{ marginTop: '8px', fontSize: '0.78rem', color: '#38bdf8', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              🚗 Donor <strong>Ali Raza (O-)</strong> is <strong>En Route (ETA: 25 mins)</strong>
+            </div>
+          </div>
+
+          <p style={{ fontSize: '0.78rem', color: '#cbd5e1', margin: 0, lineHeight: 1.35 }}>
+            💡 Direct Google Maps pins help volunteer donors arrive directly at your patient&apos;s hospital ward without delay!
+          </p>
+          <span style={{ fontSize: '0.725rem', color: '#f87171', fontWeight: 600, display: 'block', marginTop: '6px' }}>
+            ✨ (Tour Demo Preview — Auto-disappears when tour finishes)
+          </span>
+        </div>
+      )}
+
       {/* Floating Notification Bell */}
       <NotificationBell {...notifs} />
 
       {/* Interactive Element-Targeted Spotlight Guided Tour */}
       <AppSpotlightTour
         isOpen={showOnboarding}
-        onClose={() => setShowOnboarding(false)}
+        onClose={() => {
+          setShowOnboarding(false);
+          setShowDemoLocation(false);
+        }}
         steps={SEEKER_TOUR_STEPS}
         tourKey="seeker"
         onStepChange={(stepIndex) => {
-          if (stepIndex === 0) setTab('search');
-          if (stepIndex === 1) setTab('request');
+          if (stepIndex === 0) { setTab('history'); setShowDemoLocation(false); }
+          if (stepIndex === 1) { setTab('request'); setShowDemoLocation(false); }
+          if (stepIndex === 2) { setShowDemoLocation(false); }
+          if (stepIndex === 3) { setShowDemoLocation(true); }
         }}
       />
     </div>
@@ -1277,6 +1347,16 @@ function SeekerEditProfileTab({ onSaved }) {
   });
   const [saving,   setSaving]   = useState(false);
   const [apiError, setApiError] = useState('');
+
+  useEffect(() => {
+    if (user) {
+      setForm({
+        name:  user.name  || '',
+        phone: user.phone || '',
+        city:  user.city  || '',
+      });
+    }
+  }, [user]);
 
   function handleChange(e) {
     const { name, value } = e.target;

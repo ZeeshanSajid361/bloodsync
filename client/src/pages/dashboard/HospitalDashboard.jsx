@@ -10,7 +10,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import {
-  Building2, DropletIcon, AlertTriangle, Settings,
+  Building2, Droplets, AlertTriangle, Settings,
   LogOut, Plus, Pencil, Trash2, Siren, X, Loader2,
   CheckCircle, Clock, MapPin, Phone, Mail, QrCode, ClipboardList, Camera, Upload, ChevronRight, Search,
   ExternalLink, Lock,
@@ -1689,7 +1689,7 @@ const HOSPITAL_TOUR_STEPS = [
     targetSelector: '#nav-inventory',
     title: 'Blood Stock & Code Red Alert',
     description: 'Add new blood batches with expiry tracking, set low-stock thresholds, or broadcast urgent 6-hour Code Red alerts to nearby donors!',
-    icon: DropletIcon,
+    icon: Droplets,
     preferredPos: 'right',
   },
   {

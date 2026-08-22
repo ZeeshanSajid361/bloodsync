@@ -103,7 +103,7 @@ export default function AppSpotlightTour({ isOpen, onClose, steps = [], tourKey 
     const preferredPos = step.preferredPos || 'bottom';
     const padding = 16;
     const tooltipWidth = Math.min(340, window.innerWidth - 32);
-    const estimatedHeight = 220; // Estimated height of tooltip card
+    const estimatedHeight = 295; // Increased to 295px to ensure cards with action buttons never overflow screen bottom
 
     let top = 0;
     let left = 0;
@@ -120,7 +120,7 @@ export default function AppSpotlightTour({ isOpen, onClose, steps = [], tourKey 
           top = targetRect.top - estimatedHeight - padding;
           arrow = 'bottom';
         } else {
-          top = Math.max(16, window.innerHeight - estimatedHeight - 16);
+          top = Math.max(16, window.innerHeight - estimatedHeight - 20);
         }
       }
     } else if (preferredPos === 'top') {
@@ -133,7 +133,7 @@ export default function AppSpotlightTour({ isOpen, onClose, steps = [], tourKey 
         arrow = 'top';
       }
     } else if (preferredPos === 'right') {
-      top = Math.max(16, Math.min(targetRect.top, window.innerHeight - estimatedHeight - 16));
+      top = Math.max(16, Math.min(targetRect.top, window.innerHeight - estimatedHeight - 20));
       left = targetRect.left + targetRect.width + padding;
       arrow = 'left';
 
@@ -143,7 +143,7 @@ export default function AppSpotlightTour({ isOpen, onClose, steps = [], tourKey 
         arrow = 'top';
       }
     } else if (preferredPos === 'left') {
-      top = Math.max(16, Math.min(targetRect.top, window.innerHeight - estimatedHeight - 16));
+      top = Math.max(16, Math.min(targetRect.top, window.innerHeight - estimatedHeight - 20));
       left = targetRect.left - tooltipWidth - padding;
       arrow = 'right';
 
@@ -155,7 +155,7 @@ export default function AppSpotlightTour({ isOpen, onClose, steps = [], tourKey 
     }
 
     // Final safety boundary clamp for top & left so tooltip is ALWAYS 100% visible
-    top = Math.max(16, Math.min(top, window.innerHeight - estimatedHeight - 16));
+    top = Math.max(16, Math.min(top, window.innerHeight - estimatedHeight - 20));
     left = Math.max(16, Math.min(left, window.innerWidth - tooltipWidth - 16));
 
     return {

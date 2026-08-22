@@ -769,16 +769,30 @@ function InfoRow({ icon, label, value }) {
 // ═══════════════════════════════════════════════════════════════════════════
 function EditProfileTab({ donor, refetch, onSaved }) {
   const [form, setForm] = useState({
-    name:        donor.name        || '',
-    phone:       donor.phone       || '',
-    city:        donor.city        || '',
-    age:         donor.age         || '',
-    gender:      donor.gender      || 'male',
-    bloodGroup:  donor.bloodGroup  || 'O+',
-    bio:         donor.bio         || '',
+    name:        donor?.name        || '',
+    phone:       donor?.phone       || '',
+    city:        donor?.city        || '',
+    age:         donor?.age         || '',
+    gender:      donor?.gender      || 'male',
+    bloodGroup:  donor?.bloodGroup  || 'O+',
+    bio:         donor?.bio         || '',
   });
   const [saving,   setSaving]   = useState(false);
   const [apiError, setApiError] = useState('');
+
+  useEffect(() => {
+    if (donor) {
+      setForm({
+        name:        donor.name        || '',
+        phone:       donor.phone       || '',
+        city:        donor.city        || '',
+        age:         donor.age         || '',
+        gender:      donor.gender      || 'male',
+        bloodGroup:  donor.bloodGroup  || 'O+',
+        bio:         donor.bio         || '',
+      });
+    }
+  }, [donor]);
 
   function handleChange(e) {
     const { name, value } = e.target;
