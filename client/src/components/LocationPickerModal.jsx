@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { MapPin, Navigation, ExternalLink, CheckCircle2, X, Loader2, Search, Globe } from 'lucide-react';
+import { MapPin, Navigation, ExternalLink, CheckCircle2, X, Loader2, Search } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const CITY_COORDS = {
@@ -143,16 +143,8 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
   const [mapsUrl, setMapsUrl]         = useState(typeof safeInit.mapsUrl === 'string' && safeInit.mapsUrl.trim() ? safeInit.mapsUrl.trim() : '');
 
   const [loading, setLoading]                 = useState(false);
-  const [geocoding, setGeocoding]             = useState(false);
   const [searchQuery, setSearchQuery]         = useState(safeStreet);
   const [debouncedQuery, setDebouncedQuery]   = useState(safeStreet);
-  const [searchResults, setSearchResults]     = useState([]);
-  const [showResultsDropdown, setShowResultsDropdown] = useState(false);
-  const [mapMode, setMapMode]                 = useState('google'); // 'google' or 'leaflet'
-
-  const mapContainerRef = useRef(null);
-  const mapInstanceRef  = useRef(null);
-  const markerRef       = useRef(null);
 
   // Synchronize state when modal opens
   useEffect(() => {
@@ -172,16 +164,13 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
     setCity(initCity);
     setProvince(typeof init.province === 'string' && init.province.trim() ? init.province.trim() : getProvinceForCity(initCity));
     setMapsUrl(typeof init.mapsUrl === 'string' && init.mapsUrl.trim() ? init.mapsUrl.trim() : `https://www.google.com/maps?q=${initialLat},${initialLng}`);
-    setSearchResults([]);
-    setShowResultsDropdown(false);
-    setMapMode('google');
   }, [isOpen, initialLocation]);
 
   // Debounce searchQuery for live Google Map embed updates
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedQuery(searchQuery);
-    }, 400);
+    }, 300);
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
@@ -202,269 +191,25 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
     };
   }, [isOpen]);
 
-  // Smoothly pan map to target coordinates
-  function panMapTo(latitude, longitude, zoom = 17) {
-    setLat(latitude);
-    setLng(longitude);
-    if (mapInstanceRef.current && markerRef.current) {
-      mapInstanceRef.current.flyTo([latitude, longitude], zoom, { duration: 1.2 });
-      markerRef.current.setLatLng([latitude, longitude]);
-    }
+  // Handle typing directly in the Search Input: sync Address, City, Province, and Google Maps URL live!
+  function handleSearchInputChange(e) {
+    const rawVal = e.target.value;
+    setSearchQuery(rawVal);
+
+    if (!rawVal.trim()) return;
+
+    const formatted = formatSearchAddress(rawVal);
+    setAddressText(formatted);
+
+    const detectedCity = extractCityFromQuery(rawVal) || city || 'Islamabad';
+    setCity(detectedCity);
+
+    const detectedProvince = getProvinceForCity(detectedCity);
+    setProvince(detectedProvince);
+
+    const googleSearchUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(formatted)}`;
+    setMapsUrl(googleSearchUrl);
   }
-
-  // Reverse geocoding helper (OpenStreetMap Nominatim)
-  const fetchAddressFromCoords = async (targetLat, targetLng) => {
-    setGeocoding(true);
-    const genUrl = `https://www.google.com/maps?q=${targetLat},${targetLng}`;
-    setMapsUrl(genUrl);
-
-    try {
-      const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${targetLat}&lon=${targetLng}&zoom=18&addressdetails=1`);
-      if (!res.ok) throw new Error('Network error');
-      const data = await res.json();
-      
-      if (data && data.address) {
-        const addr = data.address;
-        const detCity = addr.city || addr.town || addr.municipality || addr.county || addr.city_district || addr.suburb || city || 'Islamabad';
-        const detProv = addr.state || addr.region || getProvinceForCity(detCity);
-        
-        const mainRoad = addr.hospital || addr.amenity || addr.road || addr.suburb || addr.neighbourhood || '';
-        const cleanAddress = mainRoad ? `${mainRoad}, ${detCity}` : (data.display_name ? data.display_name.split(',').slice(0, 3).join(', ') : detCity);
-
-        setCity(detCity);
-        setProvince(detProv);
-        setAddressText(cleanAddress);
-        setSearchQuery(cleanAddress);
-      }
-    } catch (e) {
-      console.warn('Reverse geocode fallback:', e);
-      setAddressText(`Location Pin (${targetLat}, ${targetLng})`);
-    } finally {
-      setGeocoding(false);
-    }
-  };
-
-  // Live Debounced Autocomplete Search as user types in Search Input
-  useEffect(() => {
-    if (!isOpen) return;
-    const query = searchQuery.trim();
-    if (!query || query.length < 3) {
-      setSearchResults([]);
-      setShowResultsDropdown(false);
-      return;
-    }
-
-    const timer = setTimeout(async () => {
-      const formatted = formatSearchAddress(query);
-      const cleanQuery = formatted.replace(/,\s*/g, ' ');
-      
-      try {
-        const [photonRes, nomRes] = await Promise.allSettled([
-          fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(cleanQuery + ' Pakistan')}&limit=6`),
-          fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cleanQuery + ' Pakistan')}&addressdetails=1&limit=6&countrycodes=pk`)
-        ]);
-
-        let items = [];
-
-        if (nomRes.status === 'fulfilled' && nomRes.value.ok) {
-          const nomData = await nomRes.value.json();
-          if (Array.isArray(nomData)) {
-            items.push(...nomData.map(d => ({
-              lat: parseFloat(d.lat),
-              lon: parseFloat(d.lon),
-              display_name: d.display_name,
-              address: d.address || {},
-            })));
-          }
-        }
-
-        if (photonRes.status === 'fulfilled' && photonRes.value.ok) {
-          const photonData = await photonRes.value.json();
-          if (photonData?.features) {
-            items.push(...photonData.features.map(f => {
-              const p = f.properties || {};
-              const coords = f.geometry?.coordinates || [];
-              const nameParts = [p.name, p.street, p.district, p.city, p.state].filter(Boolean);
-              return {
-                lat: coords[1],
-                lon: coords[0],
-                display_name: nameParts.join(', ') || p.name || 'Location Result',
-                address: {
-                  city: p.city || p.district,
-                  state: p.state,
-                  road: p.street || p.name,
-                },
-              };
-            }));
-          }
-        }
-
-        // Deduplicate results
-        const unique = [];
-        for (const it of items) {
-          if (!it.lat || !it.lon) continue;
-          const exists = unique.some(u => Math.abs(u.lat - it.lat) < 0.001 && Math.abs(u.lon - it.lon) < 0.001);
-          if (!exists) unique.push(it);
-        }
-
-        if (unique.length > 0) {
-          setSearchResults(unique);
-          setShowResultsDropdown(true);
-        } else {
-          setSearchResults([]);
-          setShowResultsDropdown(false);
-        }
-      } catch (err) {
-        console.warn('Live search error:', err);
-      }
-    }, 350);
-
-    return () => clearTimeout(timer);
-  }, [searchQuery, isOpen]);
-
-  // Select location result from search dropdown
-  function handleSelectSearchResult(item) {
-    const targetLat = parseFloat(parseFloat(item.lat).toFixed(6));
-    const targetLng = parseFloat(parseFloat(item.lon).toFixed(6));
-
-    setLat(targetLat);
-    setLng(targetLng);
-    panMapTo(targetLat, targetLng, 17);
-
-    const addr = item.address || {};
-    const detCity = addr.city || addr.town || addr.village || addr.district || extractCityFromQuery(item.display_name) || city;
-    const detProv = addr.state || getProvinceForCity(detCity);
-    const cleanName = item.display_name.split(',').slice(0, 3).join(', ');
-
-    setCity(detCity);
-    setProvince(detProv);
-    setAddressText(cleanName);
-    setSearchQuery(cleanName);
-    setDebouncedQuery(cleanName);
-    setMapsUrl(`https://www.google.com/maps?q=${targetLat},${targetLng}`);
-
-    setShowResultsDropdown(false);
-    setSearchResults([]);
-    toast.success(`📍 Pinned: ${cleanName.split(',')[0]}`, { id: 'gps-toast' });
-  }
-
-  // Initialize Leaflet Map when in Leaflet mode
-  useEffect(() => {
-    if (!isOpen || mapMode !== 'leaflet') return;
-    let isMounted = true;
-
-    async function initMap() {
-      if (!document.getElementById('leaflet-css-pkg')) {
-        const link = document.createElement('link');
-        link.id = 'leaflet-css-pkg';
-        link.rel = 'stylesheet';
-        link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
-        document.head.appendChild(link);
-      }
-
-      if (!window.L) {
-        await new Promise((resolve) => {
-          if (document.getElementById('leaflet-js-pkg')) {
-            const timer = setInterval(() => {
-              if (window.L) { clearInterval(timer); resolve(); }
-            }, 50);
-            return;
-          }
-          const script = document.createElement('script');
-          script.id = 'leaflet-js-pkg';
-          script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
-          script.onload = resolve;
-          document.head.appendChild(script);
-        });
-      }
-
-      if (!isMounted || !mapContainerRef.current) return;
-      const L = window.L;
-
-      const customRedIcon = L.divIcon({
-        className: 'custom-leaflet-marker',
-        html: `<div style="
-          background: #ef4444;
-          width: 32px;
-          height: 32px;
-          border-radius: 50% 50% 50% 0;
-          transform: rotate(-45deg);
-          border: 3px solid #ffffff;
-          box-shadow: 0 4px 20px rgba(239,68,68,0.85);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-        "><div style="width: 10px; height: 10px; background: #ffffff; border-radius: 50%;"></div></div>`,
-        iconSize: [32, 32],
-        iconAnchor: [16, 32],
-      });
-
-      if (mapInstanceRef.current) {
-        mapInstanceRef.current.remove();
-        mapInstanceRef.current = null;
-      }
-
-      const initialLat = lat || 33.6844;
-      const initialLng = lng || 73.0479;
-
-      const map = L.map(mapContainerRef.current, {
-        center: [initialLat, initialLng],
-        zoom: 16,
-        maxZoom: 19,
-        zoomControl: true,
-        scrollWheelZoom: true,
-      });
-      mapInstanceRef.current = map;
-
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors',
-        maxZoom: 19,
-      }).addTo(map);
-
-      const marker = L.marker([initialLat, initialLng], { icon: customRedIcon, draggable: true }).addTo(map);
-      markerRef.current = marker;
-
-      setTimeout(() => {
-        if (mapInstanceRef.current) {
-          mapInstanceRef.current.invalidateSize();
-        }
-      }, 200);
-
-      map.on('click', (e) => {
-        const clickedLat = parseFloat(e.latlng.lat.toFixed(6));
-        const clickedLng = parseFloat(e.latlng.lng.toFixed(6));
-        setLat(clickedLat);
-        setLng(clickedLng);
-        marker.setLatLng([clickedLat, clickedLng]);
-        setShowResultsDropdown(false);
-        fetchAddressFromCoords(clickedLat, clickedLng);
-      });
-
-      marker.on('dragend', () => {
-        const pos = marker.getLatLng();
-        const draggedLat = parseFloat(pos.lat.toFixed(6));
-        const draggedLng = parseFloat(pos.lng.toFixed(6));
-        setLat(draggedLat);
-        setLng(draggedLng);
-        setShowResultsDropdown(false);
-        fetchAddressFromCoords(draggedLat, draggedLng);
-      });
-    }
-
-    const timer = setTimeout(initMap, 100);
-
-    return () => {
-      isMounted = false;
-      clearTimeout(timer);
-      if (mapInstanceRef.current) {
-        mapInstanceRef.current.remove();
-        mapInstanceRef.current = null;
-      }
-    };
-  }, [isOpen, mapMode]);
-
-  if (!isOpen) return null;
 
   // Detect GPS Device Location
   function handleDetectGps() {
@@ -481,8 +226,15 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
         const longitude = parseFloat(pos.coords.longitude.toFixed(6));
         setLat(latitude);
         setLng(longitude);
-        panMapTo(latitude, longitude, 17);
-        fetchAddressFromCoords(latitude, longitude);
+
+        const gpsQuery = `${latitude},${longitude}`;
+        setSearchQuery(gpsQuery);
+        setDebouncedQuery(gpsQuery);
+        setAddressText(`GPS Location (${latitude}, ${longitude})`);
+
+        const genUrl = `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
+        setMapsUrl(genUrl);
+
         setLoading(false);
         toast.success('Current GPS location pinned!', { id: 'gps-toast' });
       },
@@ -495,96 +247,30 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
     );
   }
 
-  // Handle Search Location submit
-  async function handleSearchLocation(e) {
+  // Handle Search submit
+  function handleSearchSubmit(e) {
     if (e) e.preventDefault();
     const rawQuery = searchQuery.trim();
     if (!rawQuery) return;
 
-    // If dropdown already has results, select the top one
-    if (searchResults && searchResults.length > 0) {
-      handleSelectSearchResult(searchResults[0]);
-      return;
-    }
+    const formatted = formatSearchAddress(rawQuery);
+    setAddressText(formatted);
 
-    setGeocoding(true);
+    const detectedCity = extractCityFromQuery(rawQuery) || city || 'Islamabad';
+    setCity(detectedCity);
 
-    // 1. Direct Lat/Lng or Google Maps URL pattern check
-    const coordsMatch = rawQuery.match(/@?(-?\d+\.\d+),\s*(-?\d+\.\d+)/);
-    if (coordsMatch) {
-      const latitude  = parseFloat(parseFloat(coordsMatch[1]).toFixed(6));
-      const longitude = parseFloat(parseFloat(coordsMatch[2]).toFixed(6));
-      setLat(latitude);
-      setLng(longitude);
-      panMapTo(latitude, longitude, 17);
-      fetchAddressFromCoords(latitude, longitude);
-      toast.success(`📍 Coordinates pinned (${latitude}, ${longitude})`, { id: 'gps-toast' });
-      setGeocoding(false);
-      return;
-    }
+    const detectedProvince = getProvinceForCity(detectedCity);
+    setProvince(detectedProvince);
 
-    // 2. Multi-geocoder fetch (Photon + Nominatim)
-    try {
-      const formatted = formatSearchAddress(rawQuery);
-      const cleanQuery = formatted.replace(/,\s*/g, ' ');
+    const googleSearchUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(formatted)}`;
+    setMapsUrl(googleSearchUrl);
 
-      const [photonRes, nomRes] = await Promise.allSettled([
-        fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(cleanQuery + ' Pakistan')}&limit=5`),
-        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cleanQuery + ' Pakistan')}&addressdetails=1&limit=5&countrycodes=pk`)
-      ]);
-
-      let items = [];
-      if (photonRes.status === 'fulfilled' && photonRes.value.ok) {
-        const pData = await photonRes.value.json();
-        if (pData?.features) {
-          items.push(...pData.features.map(f => ({
-            lat: f.geometry?.coordinates[1],
-            lon: f.geometry?.coordinates[0],
-            display_name: [f.properties?.name, f.properties?.street, f.properties?.city, f.properties?.state].filter(Boolean).join(', '),
-            address: { city: f.properties?.city, state: f.properties?.state }
-          })));
-        }
-      }
-
-      if (items.length === 0 && nomRes.status === 'fulfilled' && nomRes.value.ok) {
-        const nData = await nomRes.value.json();
-        if (Array.isArray(nData)) {
-          items.push(...nData.map(d => ({
-            lat: parseFloat(d.lat),
-            lon: parseFloat(d.lon),
-            display_name: d.display_name,
-            address: d.address || {}
-          })));
-        }
-      }
-
-      if (items.length > 0 && items[0].lat && items[0].lon) {
-        handleSelectSearchResult(items[0]);
-      } else {
-        // Fallback to city center
-        const detectedCity = extractCityFromQuery(rawQuery) || city || 'Islamabad';
-        const cityCoord = CITY_COORDS[detectedCity.toLowerCase()] || CITY_COORDS['islamabad'];
-        setLat(cityCoord.lat);
-        setLng(cityCoord.lng);
-        panMapTo(cityCoord.lat, cityCoord.lng, 15);
-        const detProv = getProvinceForCity(detectedCity);
-        setCity(detectedCity);
-        setProvince(detProv);
-        setAddressText(formatted);
-        setMapsUrl(`https://www.google.com/maps?q=${cityCoord.lat},${cityCoord.lng}`);
-        toast.success(`📍 Pinned to ${detectedCity}`, { id: 'gps-toast' });
-      }
-    } catch (err) {
-      console.warn('Geocoding error:', err);
-      toast.error('Could not find location online. Pin manually on map.', { id: 'gps-toast' });
-    } finally {
-      setGeocoding(false);
-    }
+    toast.success(`📍 Map centered to exact query: ${formatted}`, { id: 'gps-toast' });
   }
 
   function handleConfirm() {
     const finalAddress = addressText || searchQuery || 'Hospital Location';
-    const finalUrl = mapsUrl || `https://www.google.com/maps?q=${lat},${lng}`;
+    const finalUrl = mapsUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(activeEmbedQuery)}`;
     
     onSelectLocation({
       latitude:  lat,
@@ -595,12 +281,15 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
       province:  province || 'Islamabad Capital Territory',
       mapsUrl:   finalUrl,
     });
-    toast.success('Location pin confirmed!', { id: 'gps-toast' });
+    toast.success('Location confirmed!', { id: 'gps-toast' });
     onClose();
   }
 
   // Active query for live Google Maps Embed iframe
   const activeEmbedQuery = formatSearchAddress(debouncedQuery.trim() || searchQuery.trim() || addressText || (lat && lng ? `${lat},${lng}` : `${city}, Pakistan`));
+  const activeMapsUrl    = mapsUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(activeEmbedQuery)}`;
+
+  if (!isOpen) return null;
 
   const modalContent = (
     <div
@@ -624,71 +313,33 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
         position: 'relative',
       }}>
 
-        {/* ── LEFT COLUMN: Real Live Google Maps View OR Interactive Leaflet Map ── */}
+        {/* ── LEFT COLUMN: 100% Real Google Maps View ── */}
         <div style={{ flex: '1.2', position: 'relative', height: '100%', background: '#1e293b', display: 'flex', flexDirection: 'column' }}>
           
-          {/* Mode Switcher Header over map */}
-          <div style={{
-            position: 'absolute', top: '12px', left: '12px', zIndex: 1000,
-            display: 'flex', gap: '6px', background: 'rgba(15, 23, 42, 0.9)',
-            padding: '4px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.15)',
-            backdropFilter: 'blur(6px)'
-          }}>
-            <button
-              type="button"
-              className={`btn btn-sm ${mapMode === 'google' ? 'btn-primary' : 'btn-ghost'}`}
-              onClick={() => setMapMode('google')}
-              style={{
-                fontSize: '0.75rem', padding: '4px 10px', display: 'inline-flex', alignItems: 'center', gap: '5px',
-                background: mapMode === 'google' ? '#2563eb' : 'transparent', fontWeight: mapMode === 'google' ? 700 : 500,
-                borderRadius: '6px', color: '#fff'
-              }}
-            >
-              <Globe size={13} color="#60a5fa" /> Live Google Map
-            </button>
-            <button
-              type="button"
-              className={`btn btn-sm ${mapMode === 'leaflet' ? 'btn-primary' : 'btn-ghost'}`}
-              onClick={() => setMapMode('leaflet')}
-              style={{
-                fontSize: '0.75rem', padding: '4px 10px', display: 'inline-flex', alignItems: 'center', gap: '5px',
-                background: mapMode === 'leaflet' ? '#2563eb' : 'transparent', fontWeight: mapMode === 'leaflet' ? 700 : 500,
-                borderRadius: '6px', color: '#fff'
-              }}
-            >
-              <MapPin size={13} color="#ef4444" /> Interactive Pin Map
-            </button>
-          </div>
-
-          {/* MAP AREA */}
-          <div style={{ width: '100%', height: '100%', position: 'relative' }}>
-            {mapMode === 'google' ? (
-              <iframe
-                title="Real Google Map View"
-                width="100%"
-                height="100%"
-                style={{ border: 0 }}
-                loading="lazy"
-                allowFullScreen
-                referrerPolicy="no-referrer-when-downgrade"
-                src={`https://maps.google.com/maps?q=${encodeURIComponent(activeEmbedQuery)}&t=&z=17&ie=UTF8&iwloc=&output=embed`}
-              />
-            ) : (
-              <div ref={mapContainerRef} style={{ width: '100%', height: '100%', zIndex: 1 }} />
-            )}
-          </div>
+          <iframe
+            title="Real Google Map View"
+            width="100%"
+            height="100%"
+            style={{ border: 0 }}
+            loading="lazy"
+            allowFullScreen
+            referrerPolicy="no-referrer-when-downgrade"
+            src={`https://maps.google.com/maps?q=${encodeURIComponent(activeEmbedQuery)}&t=&z=17&ie=UTF8&iwloc=&output=embed`}
+          />
           
-          {/* Live Pinned Badge Over Map */}
+          {/* Live Location Badge Over Map */}
           <div style={{
             position: 'absolute', bottom: '16px', left: '16px', zIndex: 1000,
             background: 'rgba(15, 23, 42, 0.92)', padding: '8px 14px', borderRadius: '12px',
             fontSize: '0.78rem', color: '#34d399', fontWeight: 700,
             border: '1px solid rgba(16, 185, 129, 0.4)', backdropFilter: 'blur(6px)',
             pointerEvents: 'none', display: 'flex', alignItems: 'center', gap: '8px',
-            boxShadow: '0 8px 20px rgba(0,0,0,0.4)'
+            boxShadow: '0 8px 20px rgba(0,0,0,0.4)', maxWidth: '85%'
           }}>
-            <MapPin size={16} color="#ef4444" />
-            <span>📍 Map View: {activeEmbedQuery}</span>
+            <MapPin size={16} color="#ef4444" style={{ flexShrink: 0 }} />
+            <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              📍 Map View: {activeEmbedQuery}
+            </span>
           </div>
 
         </div>
@@ -701,38 +352,36 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
         }}>
 
           {/* Header */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexShrink: 0 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexShrink: 0 }}>
             <div>
               <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px', color: '#f8fafc' }}>
                 <MapPin size={20} color="#ef4444" /> Pin Location Details
               </h3>
-              <p style={{ margin: '2px 0 0', fontSize: '0.75rem', color: '#94a3b8' }}>Type address to update live Google Map instantly</p>
+              <p style={{ margin: '2px 0 0', fontSize: '0.75rem', color: '#94a3b8' }}>Type location to update Google Map & details live</p>
             </div>
             <button onClick={onClose} className="btn btn-ghost btn-sm" style={{ padding: '6px', borderRadius: '50%' }}>
               <X size={18} />
             </button>
           </div>
 
-          {/* Search Bar & GPS Button with Autocomplete Dropdown */}
-          <div style={{ marginBottom: '16px', flexShrink: 0, position: 'relative', zIndex: 99999 }}>
-            <form onSubmit={handleSearchLocation} style={{ display: 'flex', gap: '8px' }}>
+          {/* Search Bar & GPS Button */}
+          <div style={{ marginBottom: '16px', flexShrink: 0 }}>
+            <form onSubmit={handleSearchSubmit} style={{ display: 'flex', gap: '8px' }}>
               <div style={{ position: 'relative', flex: 1 }}>
                 <input
                   className="input"
                   style={{ fontSize: '0.85rem', padding: '10px 14px', width: '100%', borderRadius: '10px' }}
-                  placeholder="Type address, hospital, landmark (e.g. Allama iqbal street 39, rawalpindi)..."
+                  placeholder="Type address, hospital, landmark (e.g. Allama iqbal colony street 39, rawalpindi)..."
                   value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
-                  onFocus={() => { if (searchResults.length > 0) setShowResultsDropdown(true); }}
+                  onChange={handleSearchInputChange}
                 />
               </div>
               <button
                 type="submit"
                 className="btn btn-primary btn-sm"
-                disabled={geocoding}
                 style={{ padding: '10px 16px', background: '#2563eb', display: 'inline-flex', alignItems: 'center', gap: '6px', flexShrink: 0, fontWeight: 700, borderRadius: '10px' }}
               >
-                {geocoding ? <Loader2 size={16} className="spin" /> : <Search size={16} />}
+                <Search size={16} />
                 <span>Search</span>
               </button>
               <button
@@ -747,39 +396,6 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
                 <span>GPS</span>
               </button>
             </form>
-
-            {/* Live Autocomplete Results Dropdown Menu */}
-            {showResultsDropdown && searchResults.length > 0 && (
-              <div style={{
-                position: 'absolute', top: '100%', left: 0, right: 0, marginTop: '6px',
-                background: '#1e293b', border: '1px solid rgba(59, 130, 246, 0.5)',
-                borderRadius: '12px', maxHeight: '180px', overflowY: 'auto', zIndex: 100000,
-                boxShadow: '0 16px 36px rgba(0,0,0,0.85)',
-              }}>
-                <div style={{ padding: '6px 12px', fontSize: '0.72rem', color: '#94a3b8', background: '#0f172a', fontWeight: 700, letterSpacing: '0.5px' }}>
-                  MATCHING LOCATIONS ({searchResults.length} FOUND):
-                </div>
-                {searchResults.map((item, idx) => (
-                  <div
-                    key={idx}
-                    onClick={() => handleSelectSearchResult(item)}
-                    style={{
-                      padding: '10px 14px', fontSize: '0.82rem', color: '#f8fafc',
-                      borderBottom: '1px solid rgba(255,255,255,0.06)', cursor: 'pointer',
-                      display: 'flex', alignItems: 'center', gap: '10px',
-                      transition: 'background 0.15s ease',
-                    }}
-                    onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(59, 130, 246, 0.25)'}
-                    onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-                  >
-                    <MapPin size={15} color="#38bdf8" style={{ flexShrink: 0 }} />
-                    <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontWeight: 500 }}>
-                      {item.display_name}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
 
           {/* Form Fields: All visible in single view without scrolling! */}
@@ -793,7 +409,7 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
                   style={{ fontSize: '0.85rem', padding: '8px 12px', borderRadius: '8px' }}
                   value={city}
                   onChange={e => setCity(e.target.value)}
-                  placeholder="e.g. Islamabad"
+                  placeholder="e.g. Rawalpindi"
                 />
               </div>
 
@@ -816,7 +432,7 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
                 style={{ fontSize: '0.85rem', padding: '8px 12px', borderRadius: '8px' }}
                 value={addressText}
                 onChange={e => setAddressText(e.target.value)}
-                placeholder="e.g. PIMS Hospital, Sector G-8/3"
+                placeholder="e.g. Allama Iqbal Colony Street 39, Rawalpindi"
               />
             </div>
 
@@ -826,12 +442,12 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
                 <input
                   className="input"
                   style={{ fontSize: '0.8rem', padding: '8px 12px', flex: 1, borderRadius: '8px' }}
-                  value={mapsUrl || `https://www.google.com/maps?q=${encodeURIComponent(activeEmbedQuery)}`}
+                  value={activeMapsUrl}
                   onChange={e => setMapsUrl(e.target.value)}
                   placeholder="Google Maps URL"
                 />
                 <a
-                  href={mapsUrl || `https://www.google.com/maps?q=${encodeURIComponent(activeEmbedQuery)}`}
+                  href={activeMapsUrl}
                   target="_blank"
                   rel="noreferrer"
                   className="btn btn-ghost btn-sm"
