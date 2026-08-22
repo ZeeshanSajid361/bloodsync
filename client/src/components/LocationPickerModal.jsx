@@ -391,7 +391,7 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
           }}>
             <MapPin size={16} color="#ef4444" style={{ flexShrink: 0 }} />
             <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              📍 Map View: {activeEmbedQuery}
+              📍 Google Map View: {activeEmbedQuery}
             </span>
           </div>
 
@@ -408,9 +408,9 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexShrink: 0 }}>
             <div>
               <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px', color: '#f8fafc' }}>
-                <MapPin size={20} color="#ef4444" /> Pin Location Details
+                <MapPin size={20} color="#ef4444" /> Location Details
               </h3>
-              <p style={{ margin: '2px 0 0', fontSize: '0.75rem', color: '#94a3b8' }}>Type location to update Google Map & details live</p>
+              <p style={{ margin: '2px 0 0', fontSize: '0.75rem', color: '#94a3b8' }}>See location on Google Map & update details live</p>
             </div>
             <button onClick={onClose} className="btn btn-ghost btn-sm" style={{ padding: '6px', borderRadius: '50%' }}>
               <X size={18} />
@@ -524,7 +524,7 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
               onClick={handleConfirm}
               style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: '#10b981', color: '#fff', fontSize: '0.85rem', padding: '10px 22px', fontWeight: 800, borderRadius: '10px' }}
             >
-              <CheckCircle2 size={18} /> Confirm Location Pin
+              <CheckCircle2 size={18} /> Confirm Location Details
             </button>
           </div>
 
