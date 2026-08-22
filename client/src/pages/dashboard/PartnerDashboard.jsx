@@ -17,6 +17,7 @@ import {
 import toast from 'react-hot-toast';
 import PhoneInput from '../../components/PhoneInput';
 import AppSpotlightTour from '../../components/AppSpotlightTour';
+import LocationPickerModal from '../../components/LocationPickerModal';
 import '../../styles/dashboard.css';
 import '../../styles/hospital.css';
 

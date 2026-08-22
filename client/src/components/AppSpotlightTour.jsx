@@ -23,10 +23,19 @@ export default function AppSpotlightTour({ isOpen, onClose, steps = [], tourKey 
       return;
     }
 
-    const el = document.querySelector(step.targetSelector);
+    let el = null;
+    try {
+      if (step.targetSelector) {
+        el = document.querySelector(step.targetSelector);
+      }
+    } catch (err) {
+      console.warn('AppSpotlightTour querySelector error:', err);
+    }
+
     if (el) {
-      // Scroll target element directly to the vertical center of the window
-      el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+      try {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+      } catch {}
       const rect = el.getBoundingClientRect();
       setTargetRect({
         top: rect.top,
