@@ -2,32 +2,38 @@ import { useState, useEffect } from 'react';
 import { Droplets, Activity, Zap, User, Building2, Siren, Stethoscope, Sparkles } from 'lucide-react';
 
 export default function CinematicSplashScreen({ onComplete }) {
-  const [stage, setStage] = useState(1); // 1: Slow Motion Teardrop Falling to Surface, 2: Surface Impact & Orbital Galaxy Reveal, 3: Fade Out
+  const [stage, setStage] = useState(1); // 1: Slow Motion Teardrop Falling, 2: Impact & Splitting, 3: Orbital System, 4: Fade Out
 
   useEffect(() => {
-    // Stage 1 (Teardrop falls in slow-mo & impacts obsidian surface plane) -> Stage 2 (Orbital Galaxy)
+    // Stage 1 (Falling) -> Stage 2 (Impact ground & split into liquid droplets)
     const timer1 = setTimeout(() => {
       setStage(2);
-    }, 1800);
+    }, 1200);
 
-    // Stage 2 -> Stage 3 (Fade Out)
+    // Stage 2 (Splitting) -> Stage 3 (Orbital System & Brand Reveal)
     const timer2 = setTimeout(() => {
       setStage(3);
-    }, 4800);
+    }, 2200);
+
+    // Stage 3 -> Stage 4 (Fade Out)
+    const timer3 = setTimeout(() => {
+      setStage(4);
+    }, 5200);
 
     // Complete callback
-    const timer3 = setTimeout(() => {
+    const timer4 = setTimeout(() => {
       if (onComplete) onComplete();
-    }, 5400);
+    }, 5800);
 
     return () => {
       clearTimeout(timer1);
       clearTimeout(timer2);
       clearTimeout(timer3);
+      clearTimeout(timer4);
     };
   }, [onComplete]);
 
-  if (stage === 4) return null;
+  if (stage === 5) return null;
 
   return (
     <div
@@ -42,13 +48,13 @@ export default function CinematicSplashScreen({ onComplete }) {
         justifyContent: 'center',
         overflow: 'hidden',
         transition: 'opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
-        opacity: stage === 3 ? 0 : 1,
-        pointerEvents: stage === 3 ? 'none' : 'auto',
+        opacity: stage === 4 ? 0 : 1,
+        pointerEvents: stage === 4 ? 'none' : 'auto',
         color: '#ffffff',
         fontFamily: 'Inter, system-ui, sans-serif',
       }}
     >
-      {/* Deep Radial Background Glow */}
+      {/* Ambient Background Glow */}
       <div
         style={{
           position: 'absolute',
@@ -66,53 +72,70 @@ export default function CinematicSplashScreen({ onComplete }) {
       <div className="micro-particle p3" />
       <div className="micro-particle p4" />
 
-      {/* ── PHASE 1: Perfect 3D Teardrop Falling in Slow-Motion onto Surface Plane (NO LINE) ── */}
-      {stage === 1 && (
-        <div className="phase1-surface-stage">
-          
-          {/* Perfect Upright 3D Teardrop (Slow Motion Descent) */}
-          <div className="slow-mo-teardrop">
-            <svg viewBox="0 0 100 130" width="70" height="91" fill="none">
-              <defs>
-                <linearGradient id="dropGrad" x1="30%" y1="10%" x2="70%" y2="90%">
-                  <stop offset="0%" stopColor="#ff5252" />
-                  <stop offset="50%" stopColor="#e11d48" />
-                  <stop offset="100%" stopColor="#7f1d1d" />
-                </linearGradient>
-                <filter id="dropGlow" x="-20%" y="-20%" width="140%" height="140%">
-                  <feGaussianBlur stdDeviation="4" result="blur" />
-                  <feComposite in="SourceGraphic" in2="blur" operator="over" />
-                </filter>
-              </defs>
-              {/* Perfectly mathematically contoured teardrop shape */}
-              <path
-                d="M50,4 C50,4 90,65 90,90 C90,112 72,126 50,126 C28,126 10,112 10,90 C10,65 50,4 50,4 Z"
-                fill="url(#dropGrad)"
-                filter="url(#dropGlow)"
-              />
-              {/* 3D Specular Curved Light Reflection */}
-              <ellipse cx="38" cy="72" rx="10" ry="18" fill="rgba(255, 255, 255, 0.75)" transform="rotate(-15 38 72)" />
-              <ellipse cx="32" cy="62" rx="4" ry="7" fill="rgba(255, 255, 255, 0.9)" transform="rotate(-15 32 62)" />
-            </svg>
-          </div>
+      {/* ── STAGE 1 & 2: Natural Teardrop Falling, Hitting Ground & Splitting Outward ── */}
+      {stage <= 2 && (
+        <div className="natural-drop-stage">
 
-          {/* Polished Obsidian Surface Plane at Ground */}
-          <div className="surface-impact-plane">
-            <div className="surface-plane-ellipse" />
-            <div className="surface-plane-glow" />
+          {/* Upright 3D Teardrop - Lands directly on ground surface */}
+          {stage === 1 && (
+            <div className="teardrop-descent-wrapper">
+              <svg viewBox="0 0 100 130" width="70" height="91" fill="none">
+                <defs>
+                  <linearGradient id="dropGrad" x1="30%" y1="10%" x2="70%" y2="90%">
+                    <stop offset="0%" stopColor="#ff5252" />
+                    <stop offset="50%" stopColor="#e11d48" />
+                    <stop offset="100%" stopColor="#7f1d1d" />
+                  </linearGradient>
+                  <filter id="dropGlow" x="-20%" y="-20%" width="140%" height="140%">
+                    <feGaussianBlur stdDeviation="4" result="blur" />
+                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                  </filter>
+                </defs>
+                <path
+                  d="M50,4 C50,4 90,65 90,90 C90,112 72,126 50,126 C28,126 10,112 10,90 C10,65 50,4 50,4 Z"
+                  fill="url(#dropGrad)"
+                  filter="url(#dropGlow)"
+                />
+                <ellipse cx="38" cy="72" rx="10" ry="18" fill="rgba(255, 255, 255, 0.75)" transform="rotate(-15 38 72)" />
+                <ellipse cx="32" cy="62" rx="4" ry="7" fill="rgba(255, 255, 255, 0.9)" transform="rotate(-15 32 62)" />
+              </svg>
+            </div>
+          )}
+
+          {/* Liquid Impact Crown & Splitting Droplets upon touching ground */}
+          {stage === 2 && (
+            <div className="impact-splitting-wrapper">
+              {/* Flattening Liquid Disc */}
+              <div className="flattening-impact-disc" />
+
+              {/* Splitting Radial Liquid Droplets */}
+              <div className="split-droplet d1" />
+              <div className="split-droplet d2" />
+              <div className="split-droplet d3" />
+              <div className="split-droplet d4" />
+              <div className="split-droplet d5" />
+              <div className="split-droplet d6" />
+
+              {/* Liquid Crown Splash Ring */}
+              <div className="liquid-crown-ring" />
+            </div>
+          )}
+
+          {/* Ground Surface Contact Line / Base */}
+          <div className="ground-contact-plane">
+            <div className="ground-shadow-ellipse" />
           </div>
 
         </div>
       )}
 
-      {/* ── PHASE 2: Refined Orbital Galaxy System & Impact Ripple ── */}
-      {stage >= 2 && (
+      {/* ── STAGE 3: Refined Orbital Galaxy System & Brand Reveal (Appears After Split) ── */}
+      {stage >= 3 && (
         <div className="splash-main-content">
 
           {/* Central System + Orbital Path Galaxy */}
           <div className="orbital-galaxy-wrapper">
             
-            {/* SVG Elliptical Orbital Path Lines (Separated Micro-Galaxy Paths) */}
             <svg className="orbital-svg-paths" viewBox="0 0 400 240" fill="none">
               <ellipse
                 cx="200" cy="120" rx="160" ry="75"
@@ -148,9 +171,7 @@ export default function CinematicSplashScreen({ onComplete }) {
               <Activity size={52} color="#ffffff" style={{ filter: 'drop-shadow(0 0 12px #ffffff)' }} />
             </div>
 
-            {/* 4 Sleek Glowing Function Pills (Distinct Orbital Nodes - No Overlap) */}
-
-            {/* 1. Top-Left Pill: Voluntary Donor */}
+            {/* 4 Sleek Glowing Function Pills */}
             <div className="orbital-capsule-node node-top-left">
               <div className="node-icon-capsule">
                 <User size={16} color="#ffffff" />
@@ -161,7 +182,6 @@ export default function CinematicSplashScreen({ onComplete }) {
               </div>
             </div>
 
-            {/* 2. Top-Right Pill: Hospital Network */}
             <div className="orbital-capsule-node node-top-right">
               <div className="node-pill-label">
                 <Building2 size={14} color="#fb7185" />
@@ -172,7 +192,6 @@ export default function CinematicSplashScreen({ onComplete }) {
               </div>
             </div>
 
-            {/* 3. Bottom-Left Pill: Emergency Units */}
             <div className="orbital-capsule-node node-bottom-left">
               <div className="node-icon-capsule">
                 <Siren size={16} color="#ffffff" />
@@ -183,7 +202,6 @@ export default function CinematicSplashScreen({ onComplete }) {
               </div>
             </div>
 
-            {/* 4. Bottom-Right Pill: Life Savers */}
             <div className="orbital-capsule-node node-bottom-right">
               <div className="node-pill-label">
                 <Stethoscope size={14} color="#fb7185" />
@@ -215,7 +233,7 @@ export default function CinematicSplashScreen({ onComplete }) {
             </div>
           </div>
 
-          {/* Polished Obsidian Surface Base with Water Crown Splash */}
+          {/* Polished Obsidian Base */}
           <div className="obsidian-splash-base">
             <div className="water-crown-splash" />
             <div className="bouncing-liquid-bead bead-left" />
@@ -225,87 +243,131 @@ export default function CinematicSplashScreen({ onComplete }) {
         </div>
       )}
 
-      {/* Embedded High-End CSS */}
+      {/* Embedded Physics & Animation CSS */}
       <style>{`
         @keyframes bgPulse {
           0% { transform: scale(1); opacity: 0.8; }
           100% { transform: scale(1.1); opacity: 1; }
         }
 
-        /* ── Phase 1 Surface & Teardrop Slow Motion Descent ── */
-        .phase1-surface-stage {
-          position: relative;
-          width: 100vw;
-          height: 100vh;
+        /* ── Stage 1 & 2 Natural Drop Physics ── */
+        .natural-drop-stage {
+          position: absolute;
+          inset: 0;
           display: flex;
           flex-direction: column;
           align-items: center;
-          justify-content: flex-end;
-          padding-bottom: 120px;
+          justify-content: center;
         }
 
-        .slow-mo-teardrop {
+        /* Teardrop falls straight down until bottom touches ground plane exactly */
+        .teardrop-descent-wrapper {
           position: absolute;
-          animation: teardropSlowFall 1.7s cubic-bezier(0.33, 1, 0.68, 1) forwards;
-          filter: drop-shadow(0 15px 25px rgba(225, 29, 72, 0.8));
+          bottom: 48%;
+          animation: naturalFallToGround 1.2s cubic-bezier(0.45, 0, 0.75, 0.9) forwards;
           z-index: 10;
         }
 
-        @keyframes teardropSlowFall {
+        @keyframes naturalFallToGround {
           0% {
-            transform: translateY(-90vh) scale(0.7);
-            opacity: 0;
+            transform: translateY(-90vh) scale(0.65);
+            opacity: 0.2;
           }
-          30% {
-            opacity: 1;
-          }
-          85% {
-            transform: translateY(-130px) scale(1);
+          60% {
             opacity: 1;
           }
           100% {
-            transform: translateY(-110px) scale(1.1, 0.8);
+            transform: translateY(0) scale(1);
             opacity: 1;
           }
         }
 
-        /* Ground Surface Impact Plane */
-        .surface-impact-plane {
-          position: relative;
-          width: 320px;
-          height: 60px;
+        /* Ground Contact Base */
+        .ground-contact-plane {
+          position: absolute;
+          bottom: 48%;
+          width: 300px;
+          height: 20px;
           display: flex;
           align-items: center;
           justify-content: center;
         }
 
-        .surface-plane-ellipse {
-          width: 260px;
-          height: 30px;
+        .ground-shadow-ellipse {
+          width: 220px;
+          height: 18px;
           border-radius: 50%;
-          background: radial-gradient(ellipse at center, rgba(225, 29, 72, 0.35) 0%, rgba(18, 7, 22, 0.8) 60%, transparent 100%);
-          border: 1px solid rgba(244, 63, 94, 0.4);
-          box-shadow: 0 0 30px rgba(225, 29, 72, 0.6);
+          background: radial-gradient(ellipse at center, rgba(244, 63, 94, 0.6) 0%, rgba(18, 7, 22, 0.9) 60%, transparent 100%);
+          box-shadow: 0 0 25px rgba(244, 63, 94, 0.8);
         }
 
-        .surface-plane-glow {
+        /* Stage 2 Liquid Impact & Splitting */
+        .impact-splitting-wrapper {
           position: absolute;
-          width: 180px;
+          bottom: 48%;
+          width: 300px;
+          height: 100px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 12;
+        }
+
+        .flattening-impact-disc {
+          width: 140px;
           height: 14px;
           border-radius: 50%;
-          background: #f43f5e;
-          filter: blur(12px);
-          opacity: 0.7;
-          animation: surfaceGlowPulse 1.7s ease-out forwards;
+          background: linear-gradient(135deg, #ff5252, #e11d48);
+          box-shadow: 0 0 40px rgba(244, 63, 94, 1);
+          animation: flattenDisc 0.4s ease-out forwards;
         }
 
-        @keyframes surfaceGlowPulse {
-          0% { transform: scale(0.3); opacity: 0.2; }
-          85% { transform: scale(1); opacity: 0.8; }
-          100% { transform: scale(1.4); opacity: 1; }
+        @keyframes flattenDisc {
+          0% { transform: scale(0.2, 2); opacity: 1; }
+          100% { transform: scale(2.2, 0.2); opacity: 0.2; }
         }
 
-        /* ── Main Orbital Galaxy Layout ── */
+        /* Splitting Liquid Droplets radiating outwards */
+        .split-droplet {
+          position: absolute;
+          width: 12px;
+          height: 12px;
+          border-radius: 50%;
+          background: radial-gradient(circle at 30% 30%, #ff5252, #be123c);
+          box-shadow: 0 0 15px rgba(244, 63, 94, 0.9);
+          animation: splitRadiate 0.6s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+        }
+
+        .d1 { animation-name: splitUpLeft; }
+        .d2 { animation-name: splitUpRight; }
+        .d3 { animation-name: splitLeft; }
+        .d4 { animation-name: splitRight; }
+        .d5 { animation-name: splitDownLeft; }
+        .d6 { animation-name: splitDownRight; }
+
+        @keyframes splitUpLeft    { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(-100px, -60px) scale(0.4); opacity: 0; } }
+        @keyframes splitUpRight   { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(100px, -60px) scale(0.4); opacity: 0; } }
+        @keyframes splitLeft      { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(-140px, 0px) scale(0.3); opacity: 0; } }
+        @keyframes splitRight     { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(140px, 0px) scale(0.3); opacity: 0; } }
+        @keyframes splitDownLeft  { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(-90px, 40px) scale(0.4); opacity: 0; } }
+        @keyframes splitDownRight { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(90px, 40px) scale(0.4); opacity: 0; } }
+
+        /* Liquid Crown Splash Ring */
+        .liquid-crown-ring {
+          position: absolute;
+          width: 80px;
+          height: 30px;
+          border-radius: 50%;
+          border: 3px solid rgba(244, 63, 94, 0.9);
+          animation: crownExpand 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes crownExpand {
+          0% { transform: scale(0.3); opacity: 1; }
+          100% { transform: scale(2.8); opacity: 0; }
+        }
+
+        /* ── Stage 3 Main Orbital Galaxy Layout ── */
         .splash-main-content {
           display: flex;
           flex-direction: column;
@@ -314,10 +376,11 @@ export default function CinematicSplashScreen({ onComplete }) {
           width: 100%;
           max-width: 680px;
           padding: 0 20px;
-          animation: mainFadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+          animation: mainFadeIn 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
+
         @keyframes mainFadeIn {
-          0% { opacity: 0; transform: translateY(20px) scale(0.96); }
+          0% { opacity: 0; transform: translateY(30px) scale(0.92); }
           100% { opacity: 1; transform: translateY(0) scale(1); }
         }
 
@@ -362,6 +425,7 @@ export default function CinematicSplashScreen({ onComplete }) {
           border: 2px stroke rgba(244, 63, 94, 0.4);
           animation: ringRotate 8s linear infinite;
         }
+
         @keyframes orbPulse {
           0% { transform: scale(0.97); boxShadow: 0 0 40px rgba(244, 63, 94, 0.8); }
           100% { transform: scale(1.06); boxShadow: 0 0 80px rgba(244, 63, 94, 1); }
