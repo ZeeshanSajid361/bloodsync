@@ -362,6 +362,7 @@ export default function DonorDashboard() {
         onClose={() => {
           setShowOnboarding(false);
           setShowDemoQR(false);
+          setActiveTab('overview');
         }}
         steps={DONOR_TOUR_STEPS}
         tourKey="donor"

@@ -7,7 +7,7 @@ import { useState, useEffect } from 'react';
 import {
   ShieldCheck, Building2, FileText, Users, LogOut,
   CheckCircle, XCircle, Key, Lock, Unlock, ExternalLink,
-  Loader2, AlertTriangle, TrendingUp, Menu, X, Trash2,
+  Loader2, AlertTriangle, TrendingUp, Menu, X, Trash2, HelpCircle,
 } from 'lucide-react';
 
 import { useAuth } from '../../context/AuthContext';
@@ -752,9 +752,14 @@ export default function AdminDashboard() {
         </nav>
 
         <div className="sidebar-footer">
-          <div style={{ padding: 'var(--space-2) var(--space-3)', marginBottom: 'var(--space-2)' }}>
-            <NotificationBell {...notifs} />
-          </div>
+          <button
+            className="sidebar-nav-link"
+            onClick={() => setShowOnboarding(true)}
+            style={{ color: '#38bdf8' }}
+          >
+            <HelpCircle size={20} />
+            <span>App Guide & Tour</span>
+          </button>
           <button className="sidebar-nav-link" onClick={logout} style={{ color: 'var(--red-400)' }}>
             <LogOut size={20} />
             <span>Sign out</span>
@@ -773,14 +778,23 @@ export default function AdminDashboard() {
             <div className="mobile-header-title">Blood<span>Sync</span></div>
           </div>
 
-          {/* User Avatar Pill */}
-          <button
-            className="user-avatar-pill"
-            onClick={() => setShowProfileModal(true)}
-            aria-label="View admin profile"
-          >
-            {initials}
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <button
+              onClick={() => setShowOnboarding(true)}
+              className="btn btn-ghost btn-sm"
+              style={{ padding: '6px', color: '#38bdf8' }}
+              title="Open App Guide & Tour"
+            >
+              <HelpCircle size={20} />
+            </button>
+            <button
+              className="user-avatar-pill"
+              onClick={() => setShowProfileModal(true)}
+              aria-label="View admin profile"
+            >
+              {initials}
+            </button>
+          </div>
         </header>
 
         {/* Main Content */}
@@ -847,6 +861,13 @@ export default function AdminDashboard() {
 
             <div className="profile-modal-actions">
               <button
+                className="btn btn-secondary btn-full"
+                style={{ marginBottom: 8 }}
+                onClick={() => { setShowProfileModal(false); setShowOnboarding(true); }}
+              >
+                <HelpCircle size={18} /> Replay App Tour
+              </button>
+              <button
                 className="btn btn-ghost btn-full"
                 style={{ color: 'var(--red-400)' }}
                 onClick={logout}
@@ -864,7 +885,10 @@ export default function AdminDashboard() {
       {/* Interactive Element-Targeted Spotlight Guided Tour */}
       <AppSpotlightTour
         isOpen={showOnboarding}
-        onClose={() => setShowOnboarding(false)}
+        onClose={() => {
+          setShowOnboarding(false);
+          setTab('overview');
+        }}
         steps={ADMIN_TOUR_STEPS}
         tourKey="admin"
         onStepChange={(stepIndex) => {

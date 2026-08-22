@@ -13,7 +13,7 @@ import {
   Building2, Droplets, AlertTriangle, Settings,
   LogOut, Plus, Pencil, Trash2, Siren, X, Loader2,
   CheckCircle, Clock, MapPin, Phone, Mail, QrCode, ClipboardList, Camera, Upload, ChevronRight, Search,
-  ExternalLink, Lock,
+  ExternalLink, Lock, HelpCircle,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
@@ -1834,6 +1834,14 @@ export default function HospitalDashboard() {
         </nav>
 
         <div className="sidebar-footer">
+          <button
+            className="sidebar-nav-link"
+            onClick={() => setShowOnboarding(true)}
+            style={{ color: '#38bdf8' }}
+          >
+            <HelpCircle size={20} />
+            <span>App Guide & Tour</span>
+          </button>
           <button className="sidebar-nav-link" onClick={handleLogout} style={{ color: 'var(--red-400)' }}>
             <LogOut size={20} />
             <span>Sign out</span>
@@ -1852,15 +1860,25 @@ export default function HospitalDashboard() {
             <div className="mobile-header-title">{profile?.org?.name || 'Hospital'}</div>
           </div>
 
-          {/* User Avatar Pill */}
-          <button
-            className="user-avatar-pill"
-            style={{ background: 'linear-gradient(135deg, var(--blue-600), var(--blue-900))' }}
-            onClick={() => setShowProfileModal(true)}
-            aria-label="View profile details"
-          >
-            {initials}
-          </button>
+          {/* User Avatar Pill & Tour Button */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <button
+              onClick={() => setShowOnboarding(true)}
+              className="btn btn-ghost btn-sm"
+              style={{ padding: '6px', color: '#38bdf8' }}
+              title="Open App Guide & Tour"
+            >
+              <HelpCircle size={20} />
+            </button>
+            <button
+              className="user-avatar-pill"
+              style={{ background: 'linear-gradient(135deg, var(--blue-600), var(--blue-900))' }}
+              onClick={() => setShowProfileModal(true)}
+              aria-label="View profile details"
+            >
+              {initials}
+            </button>
+          </div>
         </header>
 
         {/* Main Content Area */}
@@ -1993,6 +2011,13 @@ export default function HospitalDashboard() {
                 <Settings size={18} /> Edit Organisation Profile
               </button>
               <button
+                className="btn btn-secondary btn-full"
+                style={{ marginTop: 8 }}
+                onClick={() => { setShowProfileModal(false); setShowOnboarding(true); }}
+              >
+                <HelpCircle size={18} /> Replay App Tour
+              </button>
+              <button
                 className="btn btn-ghost btn-full"
                 style={{ color: 'var(--red-400)' }}
                 onClick={handleLogout}
@@ -2010,7 +2035,10 @@ export default function HospitalDashboard() {
       {/* Interactive Element-Targeted Spotlight Guided Tour */}
       <AppSpotlightTour
         isOpen={showOnboarding}
-        onClose={() => setShowOnboarding(false)}
+        onClose={() => {
+          setShowOnboarding(false);
+          setTab('overview');
+        }}
         steps={HOSPITAL_TOUR_STEPS}
         tourKey="hospital"
         onStepChange={(stepIndex) => {

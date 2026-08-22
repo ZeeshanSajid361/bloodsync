@@ -349,6 +349,7 @@ export default function SeekerDashboard() {
         onClose={() => {
           setShowOnboarding(false);
           setShowDemoLocation(false);
+          setTab('history');
         }}
         steps={SEEKER_TOUR_STEPS}
         tourKey="seeker"

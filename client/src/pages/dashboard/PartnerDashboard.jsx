@@ -12,7 +12,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Building2, Calendar, Users, HeartHandshake, ClipboardList, Clock, MapPin, Phone, Mail,
-  Plus, CheckCircle2, AlertCircle, FileText, Upload, LogOut, Loader2, ExternalLink, X, ShieldCheck, ChevronRight, Lock
+  Plus, CheckCircle2, AlertCircle, FileText, Upload, LogOut, Loader2, ExternalLink, X, ShieldCheck, ChevronRight, Lock, HelpCircle
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import PhoneInput from '../../components/PhoneInput';
@@ -299,6 +299,14 @@ export default function PartnerDashboard({ profile, hooks, onLogout }) {
         </nav>
 
         <div className="sidebar-footer">
+          <button
+            className="sidebar-nav-link"
+            onClick={() => setShowOnboarding(true)}
+            style={{ color: '#38bdf8' }}
+          >
+            <HelpCircle size={20} />
+            <span>App Guide & Tour</span>
+          </button>
           <button className="sidebar-nav-link" onClick={onLogout} style={{ color: 'var(--red-400)' }}>
             <LogOut size={20} />
             <span>Sign out</span>
@@ -317,14 +325,24 @@ export default function PartnerDashboard({ profile, hooks, onLogout }) {
             <div className="mobile-header-title">{org?.name || 'Partner'}</div>
           </div>
 
-          <button
-            className="user-avatar-pill"
-            style={{ background: 'linear-gradient(135deg, var(--blue-600), var(--blue-900))' }}
-            onClick={() => setActiveTab('profile')}
-            aria-label="View partner profile"
-          >
-            {initials}
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <button
+              onClick={() => setShowOnboarding(true)}
+              className="btn btn-ghost btn-sm"
+              style={{ padding: '6px', color: '#38bdf8' }}
+              title="Open App Guide & Tour"
+            >
+              <HelpCircle size={20} />
+            </button>
+            <button
+              className="user-avatar-pill"
+              style={{ background: 'linear-gradient(135deg, var(--blue-600), var(--blue-900))' }}
+              onClick={() => setActiveTab('profile')}
+              aria-label="View partner profile"
+            >
+              {initials}
+            </button>
+          </div>
         </header>
 
         {/* Main Content Area */}
@@ -939,7 +957,10 @@ export default function PartnerDashboard({ profile, hooks, onLogout }) {
       {/* Interactive Element-Targeted Spotlight Guided Tour */}
       <AppSpotlightTour
         isOpen={showOnboarding}
-        onClose={() => setShowOnboarding(false)}
+        onClose={() => {
+          setShowOnboarding(false);
+          setActiveTab('overview');
+        }}
         steps={PARTNER_TOUR_STEPS}
         tourKey="partner"
         onStepChange={(stepIndex) => {
