@@ -80,7 +80,8 @@ function PrewarmBackend() {
 
 export default function App() {
   const [showSplash, setShowSplash] = useState(() => {
-    return !sessionStorage.getItem('bloodsync_splash_seen');
+    // Show on every landing page load/refresh at https://blood-sync-app.vercel.app/
+    return window.location.pathname === '/' || !sessionStorage.getItem('bloodsync_splash_seen');
   });
 
   const handleSplashComplete = () => {
