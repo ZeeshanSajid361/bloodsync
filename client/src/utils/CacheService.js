@@ -2,8 +2,17 @@
  * Professional In-Memory & Storage Cache Engine (SWR Architecture)
  * 
  * Provides 0ms instant RAM data retrieval with configurable Time-To-Live (TTL),
- * automatic cache invalidation on logout/mutations, and zero HTTP overhead.
+ * emergency route bypass policies, automatic cache invalidation on logout/mutations,
+ * and zero HTTP overhead.
  */
+
+// Routes that MUST bypass static caching to ensure real-time emergency accuracy
+const EMERGENCY_BYPASS_KEYS = [
+  'live-requests',
+  'emergency-feed',
+  'seeker-compatibility',
+  'donor-search',
+];
 
 class CacheEngine {
   constructor() {
@@ -19,6 +28,11 @@ class CacheEngine {
   set(key, data, ttlMs = 5 * 60 * 1000) {
     if (!key || data === undefined) return;
     
+    // Never cache emergency real-time feed items long-term
+    if (EMERGENCY_BYPASS_KEYS.some(bypassKey => key.includes(bypassKey))) {
+      return;
+    }
+
     const record = {
       data,
       expiry: Date.now() + ttlMs,
@@ -36,12 +50,17 @@ class CacheEngine {
   }
 
   /**
-   * Get a cached item. Returns null if missing or expired.
+   * Get a cached item. Returns null if missing, expired, or emergency bypassed.
    * @param {string} key 
    * @returns {any|null}
    */
   get(key) {
     if (!key) return null;
+
+    // Bypass caching for emergency real-time requests
+    if (EMERGENCY_BYPASS_KEYS.some(bypassKey => key.includes(bypassKey))) {
+      return null;
+    }
 
     // 1. Check RAM Cache
     if (this.memoryCache.has(key)) {
@@ -58,7 +77,6 @@ class CacheEngine {
       if (stored) {
         const record = JSON.parse(stored);
         if (Date.now() < record.expiry) {
-          // Re-populate RAM cache
           this.memoryCache.set(key, record);
           return record.data;
         }

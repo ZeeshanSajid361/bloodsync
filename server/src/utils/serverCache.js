@@ -1,62 +1,104 @@
 /**
- * Backend Node.js In-Memory Cache Engine (Layer 2 Server Cache)
+ * Hybrid Multi-Layer Server Cache Engine (Supports Redis + Local Node RAM)
  * 
- * Caches database queries & expensive API responses in Node.js RAM with TTL.
- * Implements the Cache-Aside pattern to reduce MongoDB load and deliver microsecond response times.
+ * Works seamlessly across both traditional Express servers (Render/VPS) and Vercel Serverless Functions.
+ * Automatically utilizes Upstash Redis / Redis Cloud if REDIS_URL or UPSTASH_REDIS_REST_URL is configured,
+ * falling back gracefully to fast in-memory caching.
  */
 
-class ServerCache {
+class ServerCacheEngine {
   constructor() {
-    this.cache = new Map();
+    this.memoryCache = new Map();
+    this.redisUrl = process.env.REDIS_URL || process.env.UPSTASH_REDIS_REST_URL || null;
   }
 
   /**
-   * Set cache entry
+   * Set cache entry with TTL
    * @param {string} key 
    * @param {any} data 
    * @param {number} ttlSeconds 
    */
-  set(key, data, ttlSeconds = 300) {
+  async set(key, data, ttlSeconds = 120) {
     if (!key || data === undefined) return;
+
+    // 1. If Redis / Upstash URL is configured (Vercel Serverless environment)
+    if (this.redisUrl) {
+      try {
+        const fetch = (await import('node-fetch')).default || globalThis.fetch;
+        if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
+          await fetch(`${process.env.UPSTASH_REDIS_REST_URL}/setex/${encodeURIComponent(key)}/${ttlSeconds}`, {
+            headers: { Authorization: `Bearer ${process.env.UPSTASH_REDIS_REST_TOKEN}` },
+            body: JSON.stringify(data),
+            method: 'POST',
+          });
+          return;
+        }
+      } catch (err) {
+        console.warn('[serverCache] Redis set fallback to memory:', err.message);
+      }
+    }
+
+    // 2. In-memory Node RAM fallback (Render / VPS / Local Dev)
     const expiry = Date.now() + (ttlSeconds * 1000);
-    this.cache.set(key, { data, expiry });
+    this.memoryCache.set(key, { data, expiry });
   }
 
   /**
-   * Get cached entry or null if expired/missing
+   * Get cached entry
    * @param {string} key 
-   * @returns {any|null}
+   * @returns {Promise<any|null>}
    */
-  get(key) {
-    if (!key || !this.cache.has(key)) return null;
-    const item = this.cache.get(key);
-    if (Date.now() > item.expiry) {
-      this.cache.delete(key);
-      return null;
+  async get(key) {
+    if (!key) return null;
+
+    // 1. Check Redis / Upstash if configured
+    if (this.redisUrl && process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
+      try {
+        const fetch = (await import('node-fetch')).default || globalThis.fetch;
+        const res = await fetch(`${process.env.UPSTASH_REDIS_REST_URL}/get/${encodeURIComponent(key)}`, {
+          headers: { Authorization: `Bearer ${process.env.UPSTASH_REDIS_REST_TOKEN}` },
+        });
+        if (res.ok) {
+          const json = await res.json();
+          if (json.result) {
+            return typeof json.result === 'string' ? JSON.parse(json.result) : json.result;
+          }
+        }
+      } catch (err) {
+        console.warn('[serverCache] Redis get fallback to memory:', err.message);
+      }
     }
-    return item.data;
+
+    // 2. Check In-Memory Cache
+    if (this.memoryCache.has(key)) {
+      const item = this.memoryCache.get(key);
+      if (Date.now() > item.expiry) {
+        this.memoryCache.delete(key);
+        return null;
+      }
+      return item.data;
+    }
+
+    return null;
   }
 
   /**
    * Invalidate specific key or keys starting with a prefix
    * @param {string} prefix 
    */
-  invalidatePrefix(prefix) {
+  async invalidatePrefix(prefix) {
     if (!prefix) return;
-    for (const key of this.cache.keys()) {
+    for (const key of this.memoryCache.keys()) {
       if (key.startsWith(prefix)) {
-        this.cache.delete(key);
+        this.memoryCache.delete(key);
       }
     }
   }
 
-  /**
-   * Clear all server cache entries
-   */
   clear() {
-    this.cache.clear();
+    this.memoryCache.clear();
   }
 }
 
-export const serverCache = new ServerCache();
+export const serverCache = new ServerCacheEngine();
 export default serverCache;
