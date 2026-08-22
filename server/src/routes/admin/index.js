@@ -415,63 +415,63 @@ router.get('/users', async (req, res, next) => {
       User.countDocuments(filter),
     ]);
 
-    const enrichedUsers = await Promise.all(
-      users.map(async (u) => {
-        try {
-          const reqs = await Request.find({ seeker: u._id }).select('status unitsNeeded').lean();
-          const totalRequests = reqs.length;
-          const pendingReqs = reqs.filter(r => r.status === 'pending_review' || r.status === 'approved');
-          const pendingRequests = pendingReqs.length;
-          const pendingUnits = pendingReqs.reduce((acc, curr) => acc + (curr.unitsNeeded || 1), 0);
+    const userIds = users.map(u => u._id);
 
-          const fulfilledReqs = reqs.filter(r => r.status === 'fulfilled');
-          const fulfilledRequests = fulfilledReqs.length;
-          const fulfilledUnits = fulfilledReqs.reduce((acc, curr) => acc + (curr.unitsNeeded || 1), 0);
+    const [donorProfiles, seekerRequests] = await Promise.all([
+      DonorProfile.find({ user: { $in: userIds } }).select('user confirmedDonations bloodGroup').lean(),
+      Request.find({ seeker: { $in: userIds } }).select('seeker status unitsNeeded patientBloodGroup').lean(),
+    ]);
 
-          let confirmedDonations = 0;
-          let bloodGroup = '—';
+    const dpMap = new Map(donorProfiles.map(dp => [dp.user.toString(), dp]));
+    const reqsMap = new Map();
+    seekerRequests.forEach(r => {
+      if (!r.seeker) return;
+      const sId = r.seeker.toString();
+      if (!reqsMap.has(sId)) reqsMap.set(sId, []);
+      reqsMap.get(sId).push(r);
+    });
 
-          if (u.role === 'donor') {
-            const dp = await DonorProfile.findOne({ user: u._id }).select('confirmedDonations bloodGroup').lean();
-            confirmedDonations = dp?.confirmedDonations || 0;
-            bloodGroup = dp?.bloodGroup || '—';
-          } else if (u.role === 'seeker') {
-            const seekerReqs = await Request.find({ seeker: u._id }).select('patientBloodGroup').lean();
-            const uniqueGroups = [...new Set(seekerReqs.map(r => r.patientBloodGroup).filter(Boolean))];
-            if (uniqueGroups.length === 1) {
-              bloodGroup = uniqueGroups[0];
-            } else if (uniqueGroups.length > 1) {
-              bloodGroup = uniqueGroups.join(', ');
-            }
-          }
+    const enrichedUsers = users.map((u) => {
+      const uIdStr = u._id.toString();
+      const reqs = reqsMap.get(uIdStr) || [];
+      const totalRequests = reqs.length;
+      const pendingReqs = reqs.filter(r => r.status === 'pending_review' || r.status === 'approved');
+      const pendingRequests = pendingReqs.length;
+      const pendingUnits = pendingReqs.reduce((acc, curr) => acc + (curr.unitsNeeded || 1), 0);
 
-          return {
-            ...u,
-            bloodGroup,
-            stats: {
-              totalRequests,
-              pendingRequests,
-              pendingUnits,
-              fulfilledRequests,
-              fulfilledUnits,
-              confirmedDonations,
-            },
-          };
-        } catch (err) {
-          return {
-            ...u,
-            stats: {
-              totalRequests: 0,
-              pendingRequests: 0,
-              pendingUnits: 0,
-              fulfilledRequests: 0,
-              fulfilledUnits: 0,
-              confirmedDonations: 0,
-            },
-          };
+      const fulfilledReqs = reqs.filter(r => r.status === 'fulfilled');
+      const fulfilledRequests = fulfilledReqs.length;
+      const fulfilledUnits = fulfilledReqs.reduce((acc, curr) => acc + (curr.unitsNeeded || 1), 0);
+
+      let confirmedDonations = 0;
+      let bloodGroup = '—';
+
+      if (u.role === 'donor') {
+        const dp = dpMap.get(uIdStr);
+        confirmedDonations = dp?.confirmedDonations || 0;
+        bloodGroup = dp?.bloodGroup || '—';
+      } else if (u.role === 'seeker') {
+        const uniqueGroups = [...new Set(reqs.map(r => r.patientBloodGroup).filter(Boolean))];
+        if (uniqueGroups.length === 1) {
+          bloodGroup = uniqueGroups[0];
+        } else if (uniqueGroups.length > 1) {
+          bloodGroup = uniqueGroups.join(', ');
         }
-      })
-    );
+      }
+
+      return {
+        ...u,
+        bloodGroup,
+        stats: {
+          totalRequests,
+          pendingRequests,
+          pendingUnits,
+          fulfilledRequests,
+          fulfilledUnits,
+          confirmedDonations,
+        },
+      };
+    });
 
     res.json({ success: true, data: { users: enrichedUsers, total, page: Number(page) } });
   } catch (err) {
